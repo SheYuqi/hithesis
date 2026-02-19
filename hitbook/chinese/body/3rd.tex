@@ -1,0 +1,948 @@
+% !Mode:: "TeX:UTF-8"
+
+\chapter{预设阻尼比滑模反步控制器设计与分析}[Preset damping-ratio sliding-mode backstepping control]
+
+\section{引言}[Introduction]
+
+本章研究预设阻尼比滑模反步控制器的设计与稳定性分析，作为后续第3章（观测器型）与第4章（扰动补偿型）的“基准方案”。
+
+传统反步控制通常以“稳定/收敛”为首要目标，瞬态过程（超调、振荡频率、峰值时间等）多依赖经验调参；同时在不确定非线性与外部扰动存在时，往往需要引入鲁棒项或自适应项，但鲁棒项的引入又可能导致控制输入抖振、以及性能指标难以解释。
+
+为此，本章采用本章前半部分建立的“二阶类李雅普诺夫判据”思想：不直接对一阶导数不等式进行设计，而是把输出误差主导动态显式塑形为二阶标准型，从而将阻尼比（或等价超调量/峰值时间）转化为可解释的参数选取问题；同时引入滑模鲁棒项，以对匹配不确定项实现强鲁棒抑制，并通过边界层/连续化实现工程可用的“准滑模”控制。
+
+本章结构安排如下：第\ref{sec:ch3_prob}节给出问题描述与预备条件；第\ref{sec:ch3_principle}节回顾“预设阻尼比”在二阶跟踪中的落地形式；第\ref{sec:ch3_design2}节给出二阶不确定系统的完整控制器设计；第\ref{sec:ch3_stab2}节给出稳定性与性能可调性证明；第\ref{sec:ch3_extension}节将结构推广到一般严格反馈系统；第\ref{sec:ch3_tuning}节总结选参规律与离散实现要点；第\ref{sec:ch3_sim}节给出面向板球平衡系统的仿真设置与结果组织方式；最后在第\ref{sec:ch3_summary}节小结本章。
+
+本章给出本文研究对象的系统模型与控制目标，明确不确定性与扰动的建模方式；随后回顾二阶系统阻尼比的物理含义及其与超调量、峰值时间、调节时间等瞬态指标之间的定量关系；在此基础上，给出本文所采用的二阶类李雅普诺夫稳定性判据（等式型与不等式型），并推导阻尼比（或超调量）到控制参数的可解释映射；最后补充滑模鲁棒化、边界层连续化、状态观测与扰动补偿等预备知识，并说明观测误差与扰动估计误差如何进入二阶判据中的“扰动项”，从而为后续章节的三类控制器设计提供统一的建模与分析框架。
+
+\section{系统模型与控制目标}[System model and objectives]
+
+\subsection{符号与记号}[Notations]
+
+为避免混淆，先给出本文常用记号约定：
+
+
+；$\mathbb{R}$ 表示实数域；$\|\cdot\|$ 表示欧氏范数；$|\cdot|$ 表示绝对值。
+；对于标量信号 $x$，$\dot{x}$、$\ddot{x}$ 分别表示一阶、二阶时间导数。
+；记 $\mathrm{sgn}(\cdot)$ 为符号函数；$\mathrm{sat}(\cdot)$ 为饱和函数（用于边界层抑制抖振）。
+；“一致最终有界”表示：存在常数 $T>0$ 与有界集 $\Omega$，使得任意初值下系统轨迹在 $t\ge T$ 时进入并保持在 $\Omega$ 内。
+；若矩阵 $A$ 对称，则 $\lambda_{\min}$、$\lambda_{\max}$ 分别表示其最小/最大特征值。
+
+
+\subsection{严格反馈非线性系统模型}[Strict-feedback nonlinear system]
+
+本文考虑一类严格反馈结构不确定非线性系统（包含匹配扰动/建模误差），其一般形式写为
+\begin{equation}\label{eq:sf_system}
+\left\{
+\begin{aligned}
+  \dot{x}_1 &= b_1 x_2 + f_1(x_1) + d_1,\\
+  \dot{x}_2 &= b_2 x_3 + f_2(x_1,x_2) + d_2,\\
+  &\ \ \vdots \\
+  \dot{x}_{n-1} &= b_{n-1} x_n + f_{n-1}(x_1,\dots,x_{n-1}) + d_{n-1},\\
+  \dot{x}_n &= b_n u + f_n(x_1,\dots,x_n) + d_n,\\
+  y &= x_1,
+\end{aligned}
+\right.
+\end{equation}
+其中 $x=[x_1,\dots,x_n]^{\mathrm T}$ 为系统状态，$u\in\mathbb{R}$ 为控制输入，$y$ 为可测输出；
+$b_i\neq 0$ 为已知（或已知符号且有下界）的控制增益常数；$f_i(\cdot)$ 为未知非线性函数，
+$d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
+
+严格反馈结构是反步控制的典型适用对象。通过逐层设计虚拟控制量并构造误差变量，可递推得到稳定的闭环结构。
+然而，当 $f_i(\cdot)$ 与 $d_i$ 不可精确获知时，必须引入鲁棒项（例如滑模项、自适应项或观测/补偿项）以抵消不确定性影响。
+
+\subsection{二阶受控对象的统一表达}[Unified second-order representation]
+
+尽管式\eqref{eq:sf_system}覆盖高阶系统，本文的“预设阻尼比/超调量”指标主要面向二阶主导动态。
+因此在核心推导中，常将系统在误差坐标下化为如下二阶形式（可视为反步递推中的某一层、或输出误差主导部分）：
+\begin{equation}\label{eq:2nd_general}
+  \ddot{y} = \varphi + b\,u + \Delta,
+\end{equation}
+其中 $b\neq 0$ 为已知或已知符号的控制增益；$\varphi$ 表示可建模/可近似的已知部分（或经坐标变换后得到的名义项）；
+$\Delta$ 汇总了未知非线性、外部扰动、未建模动态以及后续引入观测误差、估计误差等因素。
+
+\begin{remark}\label{rem:delta_meaning}
+式\eqref{eq:2nd_general} 中的 $\Delta$ 并不要求“只包含外部扰动”。在后续章节中，
+当引入滑模观测器与扰动观测器时，观测误差项与扰动估计误差项同样会以“等效扰动”的方式进入 $\Delta$，
+并最终体现为二阶类李雅普诺夫不等式右端的界 $\Delta$（或 $\bar\Delta$）。
+这使得本文能够用同一套二阶判据统一分析三类控制结构的稳定性与性能退化。
+\end{remark}
+
+\subsection{不确定性与扰动的分类}[Uncertainties and disturbances]
+
+为便于后续鲁棒项设计，将不确定性/扰动按“是否匹配控制通道”粗略分类：
+
+\begin{definition}[匹配与不匹配不确定性]\label{def:matched}
+对系统\eqref{eq:2nd_general}，若不确定项以 $b\,u$ 相同通道进入（例如 $\Delta$ 可等效为加到输入通道的项），称为匹配不确定性；
+若不确定项通过与输入不同的通道进入（例如出现在状态方程的其他通道或输出方程中且无法等效为输入通道项），称为不匹配不确定性。
+\end{definition}
+
+滑模控制对匹配不确定性具有较强鲁棒性；对不匹配不确定性则通常需要借助动态扩张（如引入滤波器/观测器）或采用更保守的界估计方式。
+
+\subsection{跟踪误差与控制目标}[Tracking error and design goal]
+
+给定参考轨迹 $y_d$，定义跟踪误差
+\begin{equation}\label{eq:e1_def}
+  e_1 \triangleq y-y_d=x_1-y_d.
+\end{equation}
+在二阶描述\eqref{eq:2nd_general}下，引入误差状态
+\begin{equation}\label{eq:e2_def}
+  e_2\triangleq \dot{e}_1=\dot{y}-\dot{y}_d.
+\end{equation}
+将误差向量记为 $e=[e_1,e_2]^{\mathrm T}$。
+
+本文的核心目标不仅是保证闭环稳定（或一致最终有界），还希望误差的瞬态过程满足“可预设阻尼比”
+所刻画的振荡/衰减特性。直观上，这意味着：在欠阻尼情形下，误差峰值（超调）与振荡频率可通过少量参数调节，
+从而将“经验调参”转化为“按指标选参”。
+
+因此，本文的控制目标概括为：
+
+
+；稳定性目标： 闭环系统所有信号有界，且 $e_1$（以及递推误差）一致最终有界；
+；性能目标： $e_1$ 的主导动态呈现近似二阶欠阻尼响应，其阻尼比 $\zeta$ 可由设计者预先指定（或等价地，超调量上界可由参数计算得到）；
+；工程可实现性： 在状态不可测、存在外部扰动或噪声时，通过观测器/扰动补偿结构维持上述目标，并避免高阶导数“爆炸性复杂性”。
+
+
+\subsection{问题陈述（对应三类方案）}[Problem statement for three schemes]
+
+为与后续章节结构一致，将研究问题按可获得信息与补偿能力分为三种情形：
+
+情形I：全状态/名义可得（基准控制器）。假设误差及其所需导数可获得（或可通过可实现的滤波器获得），设计控制输入 $u$，
+使误差满足预设阻尼比的二阶动态（等式或不等式意义下），并在未知有界扰动存在时保持鲁棒性；
+情形II：状态不可测（观测器型控制器）。仅测得输出 $y$（或部分状态），需设计状态观测器与控制律的联合结构，
+在观测误差存在时仍保持误差的“近似预设阻尼比”动态与UUB稳定；
+情形III：状态不可测且扰动显著（观测 + 主动补偿）。在情形II基础上进一步引入扰动观测器（或扩张状态观测器），
+在线估计等效扰动并补偿，以减小稳态误差与峰值超调，提高预设指标的达成度。
+
+\subsection{基本假设}[Assumptions]
+
+为保证后续推导可闭合，给出常用技术假设（后续章节将根据具体方案对假设作放宽或替换）：
+
+\begin{assumption}\label{assump:yd}
+参考信号 $y_d$ 连续可导（或至少二阶可导），且 $y_d$、$\dot{y}_d$、$\ddot{y}_d$ 有界。
+\end{assumption}
+
+\begin{assumption}\label{assump:dist}
+扰动项有界，即存在未知常数 $\bar\Delta>0$ 使得 $|\Delta|\le \bar\Delta$。
+\end{assumption}
+
+\begin{assumption}\label{assump:b}
+控制增益 $b$ 的符号已知且有下界，即存在已知常数 $\underline b>0$ 使得 $|b|\ge \underline b$。
+\end{assumption}
+
+\begin{remark}\label{rem:assump_relax}
+当引入扰动观测器时，假设\ref{assump:dist}可替换为“扰动导数有界”或“扰动在一定带宽内可估计”等条件；
+当引入滑模观测器/微分器时，关于可导性与噪声的假设可更贴近工程采样条件。
+\end{remark}
+
+\section{二阶系统阻尼比预设与瞬态指标}[Damping-ratio presetting and transient indices]
+
+本节从经典二阶系统出发，回顾阻尼比的定义及其与超调量、峰值时间、调节时间等指标的关系，
+并给出本文后续二阶类李雅普诺夫判据所需的参数化形式与工程化选参流程。
+
+\subsection{二阶标准型与阻尼比定义}[Second-order standard form and damping ratio]
+
+考虑标准二阶线性系统
+\begin{equation}\label{eq:second_order_std}
+  \ddot{z} + 2\zeta\omega_n \dot{z} + \omega_n^2 z = 0,
+\end{equation}
+其中 $\omega_n>0$ 为自然频率，$\zeta\ge 0$ 为阻尼比。
+
+式\eqref{eq:second_order_std} 的特征方程为
+\begin{equation}\label{eq:char_poly}
+  s^2 + 2\zeta\omega_n s + \omega_n^2 = 0.
+\end{equation}
+其根的分布决定响应类型：
+
+；$0\le\zeta<1$：欠阻尼，存在振荡并出现峰值；
+；$\zeta=1$：临界阻尼，无振荡且响应最快之一；
+；$\zeta>1$：过阻尼，无振荡但响应变慢。
+
+
+为方便与后续判据对应，引入等价参数化
+\begin{equation}\label{eq:alpha_beta}
+  \alpha \triangleq \zeta\omega_n,\qquad
+  \beta \triangleq \omega_n\sqrt{1-\zeta^2}\quad (0\le\zeta<1),
+\end{equation}
+则欠阻尼情形下可将\eqref{eq:second_order_std} 写成
+\begin{equation}\label{eq:second_order_ab}
+  \ddot{z} + 2\alpha \dot{z} + (\alpha^2+\beta^2) z = 0,
+\end{equation}
+并有
+\begin{equation}\label{eq:zeta_from_ab}
+  \zeta = \frac{\alpha}{\sqrt{\alpha^2+\beta^2}},\qquad
+  \omega_n = \sqrt{\alpha^2+\beta^2}.
+\end{equation}
+因此，$(\alpha,\beta)$ 可看作“衰减速度参数 + 振荡频率参数”，具有清晰物理意义：
+$\alpha$ 越大衰减越快，$\beta$ 越大振荡频率越高。
+
+\subsection{阶跃响应下的典型瞬态指标}[Typical transient indices]
+
+为将“预设阻尼比”转化为工程可观测指标，给出阶跃响应下常用指标定义（跟踪情形可类比）：
+
+\begin{definition}[超调量、峰值时间、调节时间]\label{def:transient}
+对欠阻尼二阶响应，记稳态值为 $z(\infty)$，峰值为 $z(t_p)$，则最大超调量定义为
+\begin{equation}\label{eq:Mp_def}
+  M_p \triangleq \frac{|z-z|}{|z|}.
+\end{equation}
+峰值时间 $t_p$ 为达到峰值的时间。
+给定误差带 $\pm \varepsilon$（常取 $2\%$ 或 $5\%$），调节时间定义为
+\begin{equation}\label{eq:ts_def}
+  t_s \triangleq \inf\left\{t\ge 0: |z-z|\le \varepsilon |z|,\ \forall \tau\ge t\right\}.
+\end{equation}
+\end{definition}
+
+上述指标在后续实验部分将用于量化“阻尼比预设”对超调与收敛速度的影响。
+
+\subsection{超调量与峰值时间的定量关系}[Overshoot and peak time]
+
+在欠阻尼条件下，二阶系统的振荡频率为 $\omega_d=\beta$，因此峰值时间近似为
+\begin{equation}\label{eq:tp}
+  t_p = \frac{\pi}{\beta}.
+\end{equation}
+对应最大超调量满足经典关系
+\begin{equation}\label{eq:Mp}
+  M_p = \exp\!\left(-\frac{\pi \zeta}{\sqrt{1-\zeta^2}}\right).
+\end{equation}
+
+此外，对给定误差带 $\varepsilon$，调节时间常用近似公式
+\begin{equation}\label{eq:ts_approx}
+  t_s \approx \frac{1}{\zeta\omega_n}\ln\!\left(\frac{1}{\varepsilon}\right)
+  =\frac{1}{\alpha}\ln\!\left(\frac{1}{\varepsilon}\right),
+\end{equation}
+表明 $\alpha$ 直接决定收敛速度量级，而 $\zeta$ 则在“振荡强弱/超调”与“收敛速度”之间起到关键平衡作用。
+
+\subsection{跟踪场景下的超调量定义}[Overshoot definition for tracking]
+
+当参考信号 $y_d$ 为常值或缓变信号时，可将跟踪误差 $e_1$ 的峰值视为“超调”现象。
+为便于工程评估，沿用如下定义：
+
+\begin{definition}[峰值时间与相对超调量]\label{def:overshoot}
+设 $e_1$ 在 $t\ge 0$ 上连续，定义峰值时间
+\begin{equation}\label{eq:tp_def}
+  t_p \triangleq \arg\max_{t\ge 0} |e_1|.
+\end{equation}
+若 $y_d(t_p)\neq 0$，则定义相对超调量
+\begin{equation}\label{eq:sigma_def}
+  \sigma \triangleq \frac{|e_1(t_p)|}{|y_d(t_p)|}.
+\end{equation}
+当 $y_d$ 为单位阶跃且系统无稳态误差时，$\sigma$ 与\eqref{eq:Mp}中的 $M_p$ 一致。
+\end{definition}
+
+\subsection{工程化选参流程与数值示例}[Practical parameter selection and example]
+
+在后续控制器中，我们将通过构造某个标量函数 $V$（通常与误差直接相关）满足二阶动态来“植入”阻尼比。
+因此需要一个从指标到参数的工程化流程。
+
+\subsubsection{按阻尼比与带宽预设}[Preset by damping ratio and bandwidth]
+
+给定期望阻尼比 $\zeta_d\in(0,1)$ 与期望自然频率 $\omega_{n,d}>0$，则可直接得到二阶系数
+\begin{equation}\label{eq:coef_from_zeta}
+  2\zeta_d\omega_{n,d},\qquad \omega_{n,d}^2.
+\end{equation}
+其中 $\omega_{n,d}$ 越大，系统响应越快，但对噪声与未建模动态更敏感。
+
+\subsubsection{按超调量与峰值时间预设}[Preset by overshoot and peak time]
+
+若希望直接约束超调量 $M_{p,d}$ 与峰值时间 $t_{p,d}$，则可按如下步骤选取 $(\alpha,\beta)$：
+\begin{equation}\label{eq:beta_from_tp}
+  \beta = \frac{\pi}{t_{p,d}},\qquad
+  \alpha = -\frac{\beta}{\pi}\ln M_{p,d}.
+\end{equation}
+由此得到
+\begin{equation}\label{eq:wn_zeta_from_ab}
+  \omega_{n,d}=\sqrt{\alpha^2+\beta^2},\qquad
+  \zeta_d=\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}.
+\end{equation}
+该流程的优势是：参数含义直观（$\beta$ 管峰值时间，$\alpha/\beta$ 管超调），便于实验调参。
+
+\subsubsection{数值示例}[Numerical example]
+
+例如希望超调量不超过 $M_{p,d}=10\%$，峰值时间约 $t_{p,d}=0.4\text{s}$，则
+\[
+  \beta=\frac{\pi}{0.4}\approx 7.854,\qquad
+  \alpha=-\frac{7.854}{\pi}\ln(0.1)\approx 5.756.
+\]
+进而 $\omega_{n,d}=\sqrt{\alpha^2+\beta^2}\approx 9.74$，$\zeta_d=\alpha/\omega_{n,d}\approx 0.59$。
+该例说明：当同时要求“峰值时间更短”与“超调更小”时，往往需要更大的带宽（更大的 $\omega_{n,d}$），
+这在工程上意味着更高的控制增益与对噪声更敏感的实现风险。
+
+\section{二阶类李雅普诺夫稳定性判据}[Second-order Lyapunov-like criterion]
+
+本节给出本文所使用的核心工具：二阶类李雅普诺夫等式/不等式判据。其思想是：不直接要求
+传统一阶李雅普诺夫导数 $\dot{W}\le 0$，而是让某个与输出误差直接相关的标量函数 $V$
+满足一个二阶线性微分方程（或其扰动形式），从而把“阻尼比/超调量”以参数形式嵌入稳定性分析与控制器设计。
+
+\subsection{传统一阶李雅普诺夫法的局限与动机}[Motivation]
+
+传统方法往往构造正定函数 $W$ 并证明 $\dot{W}\le -c\|e\|^2$，从而得到指数收敛。
+但这类结论通常难以直接回答工程问题：“超调量是多少？峰值时间是多少？参数怎样选才能满足指标？”
+二阶系统中阻尼比与超调量的关系非常明确，因此本文希望将误差动力学“塑形”为二阶标准形式（或其扰动形式），
+从而将指标预设转化为明确的参数选择规则。
+
+\subsection{等式型判据（理想二阶响应）}[Equality-type criterion]
+
+\begin{lemma}[二阶类李雅普诺夫等式判据]\label{lem:sol_eq}
+若存在常数 $m_1>0,m_2>0$ 与标量函数 $V$，使其满足
+\begin{equation}\label{eq:V_eq}
+  \ddot{V}+m_2\dot{V}+m_1 V=0,
+\end{equation}
+则当 $m_2^2<4m_1$ 时，$V$ 呈欠阻尼指数衰减振荡。其阻尼比与自然频率为
+\begin{equation}\label{eq:zeta_wn_m}
+  \zeta=\frac{m_2}{2\sqrt{m_1}},\qquad \omega_n=\sqrt{m_1},
+\end{equation}
+并可定义
+\begin{equation}\label{eq:alpha_beta_m}
+  \alpha=\frac{m_2}{2},\qquad \beta=\frac{\sqrt{4m_1-m_2^2}}{2}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+特征方程 $s^2+m_2 s+m_1=0$。当 $m_2^2<4m_1$ 时，
+$s_{1,2}=-\frac{m_2}{2}\pm j\frac{\sqrt{4m_1-m_2^2}}{2}$，
+解可写为 $V=e^{-\alpha t}(A\cos\beta t+B\sin\beta t)$，并由与标准型\eqref{eq:second_order_std}对比得到\eqref{eq:zeta_wn_m}--\eqref{eq:alpha_beta_m}。
+\end{proof}
+
+\subsection{不等式型判据（含扰动的近似二阶响应）}[Inequality-type criterion]
+
+工程系统中严格满足\eqref{eq:V_eq}通常不现实（存在建模误差、扰动、观测误差等），因此采用扰动不等式版本：
+
+\begin{lemma}[二阶类李雅普诺夫不等式判据（显式最终界）]\label{lem:sol_ineq_strong}
+若存在常数 $m_1>0,m_2>0$ 与 $\Delta>0$，使得标量函数 $V$ 满足
+\begin{equation}\label{eq:V_ineq}
+  \left|\ddot{V}+m_2\dot{V}+m_1 V\right|\le \Delta,
+\end{equation}
+则系统状态 $\xi=[V,\dot{V}]^{\mathrm T}$ 一致最终有界。并且存在常数 $c_1,c_2>0$（与 $m_1,m_2$ 有关）
+使得
+\begin{equation}\label{eq:ultimate_bound}
+  \|\xi\|\le c_1 e^{-c_2 t}\|\xi(0)\| + c_1\Delta,\qquad \forall t\ge 0.
+\end{equation}
+特别地，当 $m_2^2<4m_1$ 时，$V$ 在过渡阶段呈近似欠阻尼二阶响应，主导阻尼比仍可由\eqref{eq:zeta_wn_m}给出，
+而最终误差界与 $\Delta$ 同阶。
+\end{lemma}
+
+\begin{proof}
+将\eqref{eq:V_ineq}写成状态形式。令 $\xi_1=V,\ \xi_2=\dot{V}$，
+则存在可测函数 $\delta$ 满足 $|\delta|\le \Delta$ 且
+\begin{equation}\label{eq:state_form}
+  \dot{\xi} = A\xi + B\delta,\quad
+  A=\begin{bmatrix}0&1\\-m_1&-m_2\end{bmatrix},\quad
+  B=\begin{bmatrix}0\\1\end{bmatrix}.
+\end{equation}
+由于 $m_1>0,m_2>0$，矩阵 $A$ 为Hurwitz。故对任意给定对称正定矩阵 $Q>0$，
+存在唯一对称正定矩阵 $P>0$ 满足李雅普诺夫方程
+\begin{equation}\label{eq:lyap_eq}
+  A^{\mathrm T}P + PA = -Q.
+\end{equation}
+取候选函数 $W(\xi)=\xi^{\mathrm T}P\xi$，则
+\begin{equation}\label{eq:Wdot}
+  \dot{W} = -\xi^{\mathrm T}Q\xi + 2\xi^{\mathrm T}PB\,\delta
+          \le -\lambda_{\min}\|\xi\|^2 + 2\|PB\|\|\xi\|\Delta.
+\end{equation}
+对任意 $\epsilon\in(0,1)$，利用不等式 $2ab\le \epsilon a^2 + \frac{1}{\epsilon}b^2$ 得
+\[
+  2\|PB\|\|\xi\|\Delta \le \epsilon\lambda_{\min}\|\xi\|^2
+  + \frac{\|PB\|^2}{\epsilon\lambda_{\min}}\Delta^2.
+\]
+代入\eqref{eq:Wdot}可得
+\begin{equation}\label{eq:Wdot2}
+  \dot{W}\le -(1-\epsilon)\lambda_{\min}\|\xi\|^2
+            + \frac{\|PB\|^2}{\epsilon\lambda_{\min}}\Delta^2.
+\end{equation}
+又由于 $\lambda_{\min}\|\xi\|^2\le W \le \lambda_{\max}\|\xi\|^2$，
+可将\eqref{eq:Wdot2}化为标准ISS型不等式，推出 $W$ 指数收敛到与 $\Delta^2$ 同阶的邻域。
+从而存在 $c_1,c_2>0$ 使\eqref{eq:ultimate_bound}成立（取平方根后得到与 $\Delta$ 同阶的最终界）。
+欠阻尼情形下，$A$ 的特征根具有\eqref{eq:alpha_beta_m}所示结构，因此过渡响应仍呈近似欠阻尼形态。
+\end{proof}
+
+\subsection{由指标到参数：$(m_1,m_2)$ 与 $(\zeta,\omega_n)$ 的映射}[Mapping from specifications to parameters]
+
+为将引理\ref{lem:sol_eq}--\ref{lem:sol_ineq_strong}用于控制设计，需要将“期望阻尼比/超调量”等指标映射为 $(m_1,m_2)$。
+最常用的对应关系为
+\begin{equation}\label{eq:m_from_zeta}
+  m_1 = \omega_{n,d}^2,\qquad m_2 = 2\zeta_d\omega_{n,d}.
+\end{equation}
+若按 $(\alpha,\beta)$ 选参，则
+\begin{equation}\label{eq:m_from_ab}
+  m_2 = 2\alpha,\qquad m_1 = \alpha^2+\beta^2,
+\end{equation}
+且欠阻尼条件等价于 $m_2^2<4m_1$，即 $\alpha>0,\beta>0$。
+
+\subsection{推论：误差最终界与“预设指标偏差”}[Corollary: deviation from preset specs]
+
+当\eqref{eq:V_ineq}成立时，$V$ 的真实响应不再严格等同于理想二阶系统，但仍可得到两个重要结论：
+
+\begin{corollary}[最终界与稳态精度]\label{cor:ss_error}
+在引理\ref{lem:sol_ineq_strong}条件下，若 $V$ 有界且 $m_1>0$，则存在常数 $C>0$ 使得
+\begin{equation}\label{eq:V_ss_bound}
+  \limsup_{t\to\infty}|V| \le C\Delta.
+\end{equation}
+当把 $V$ 选为输出误差 $e_1$（或与其等价的标量函数）时，$\Delta$ 越小稳态误差界越小；
+这也是引入扰动观测器（减小等效 $\Delta$）能提升精度与降低超调的根本原因之一。
+\end{corollary}
+
+\begin{remark}\label{rem:overshoot_deviation}
+“预设阻尼比”在扰动不等式意义下应理解为：$(m_1,m_2)$ 决定了齐次部分的主导阻尼比与振荡频率，
+而 $\Delta$ 决定了偏离程度（最终界与峰值偏差）。因此，控制设计的关键不仅是选取 $(m_1,m_2)$，
+还要通过鲁棒项、观测与补偿尽可能减小等效扰动界 $\Delta$。
+\end{remark}
+
+\section{滑模鲁棒化预备知识}[Sliding-mode robustification preliminaries]
+
+本节给出滑模控制的基本到达律、连续化处理以及二阶/超扭转思想，并说明其在反步结构中的典型嵌入方式。
+
+\subsection{滑模面设计与到达律}[Sliding surface and reaching law]
+
+对二阶误差系统，常用线性滑模面取为
+\begin{equation}\label{eq:sm_surface}
+  s = e_2 + c\,e_1,\qquad c>0.
+\end{equation}
+若 $s=0$ 恒成立，则误差满足 $\dot{e}_1=-c e_1$，指数收敛且无振荡。
+然而该面对应“强抑振”的一阶动态，未显式体现阻尼比预设。后续章节将把\eqref{eq:sm_surface}与二阶判据相结合：
+一方面用二阶判据决定主导欠阻尼动态，另一方面用滑模项抵消不确定性并保证到达与鲁棒性。
+
+典型到达律为
+\begin{equation}\label{eq:reaching_law}
+  \dot{s} = -k\,\mathrm{sgn}(s),\qquad k>0,
+\end{equation}
+取 $W_s=\frac12 s^2$ 得 $\dot{W}_s=s\dot{s}=-k|s|\le 0$，从而可保证有限时间到达滑模面邻域。
+
+\subsection{边界层与抖振抑制}[Boundary layer and chattering reduction]
+
+实际系统中符号函数会引入高频抖振，常用饱和函数替代：
+\begin{equation}\label{eq:sat}
+  \mathrm{sat}\!\left(\frac{s}{\phi}\right)=
+  \left\{
+  \begin{aligned}
+    &\mathrm{sgn}, && |s|>\phi,\\
+    &\frac{s}{\phi}, && |s|\le \phi,
+  \end{aligned}
+  \right.
+\end{equation}
+其中 $\phi>0$ 为边界层宽度。此时到达律近似为 $\dot{s}=-k\,\mathrm{sat}(s/\phi)$，
+可在抑制抖振与稳态精度之间折中：$\phi$ 越小精度越高但抖振风险增大。
+
+\begin{remark}\label{rem:phi_tradeoff}
+边界层会引入残余误差（稳态附近 $s$ 不再严格为零），在二阶判据框架下可理解为：
+边界层等效地增大了\eqref{eq:V_ineq}右端的 $\Delta$，从而放大最终误差界并可能带来更大的峰值偏差。
+因此，$\phi$ 的选取应与采样频率、执行器带宽及噪声水平共同考虑。
+\end{remark}
+
+\subsection{二阶滑模与超扭转思想（可选）}[Second-order sliding mode ]
+
+当系统相对阶为1且希望在连续控制下获得更强鲁棒性时，可采用超扭转类算法。
+其基本形式（仅作预备知识）可写为
+\begin{equation}\label{eq:stw}
+\left\{
+\begin{aligned}
+  u &= u_{eq} + u_{st},\\
+  u_{st} &= -k_1 |s|^{1/2}\mathrm{sgn} - k_2 \int_0^t \mathrm{sgn})\,d\tau,
+\end{aligned}
+\right.
+\end{equation}
+其中 $k_1,k_2>0$。该类算法在一定条件下可实现 $s\to 0$ 的有限时间收敛并减弱抖振。
+本文后续以“预设阻尼比滑模反步”为主线，若在实验平台上对连续性要求更高，可将符号函数项替换为超扭转结构。
+
+\subsection{滑模项在反步递推中的嵌入位置}[Embedding into backstepping]
+
+对严格反馈系统\eqref{eq:sf_system}，反步递推通常引入误差变量
+\[
+  z_1 = x_1 - y_d,\quad z_2 = x_2 - \alpha_1,\quad \dots
+\]
+并逐层设计虚拟控制 $\alpha_i$ 与最终控制 $u$。当存在不确定性时，常见做法是在每一层或关键层加入鲁棒项：
+\[
+  \alpha_i = \alpha_{i,\text{nom}} - \rho_i\,\mathrm{sgn}(z_i)\quad \text{或}\quad
+  u = u_{\text{nom}} - \rho\,\mathrm{sgn},
+\]
+以保证误差到达并抑制匹配不确定性。本文的特点在于：名义部分不再仅追求“收敛”，而是追求满足二阶阻尼比预设的动态形状；
+鲁棒项则用于将不确定性影响压缩到二阶判据中的 $\Delta$。
+
+\section{观测器与扰动补偿预备知识}[Observers and disturbance compensation preliminaries]
+
+为支撑后续“状态观测器型控制器”与“扰动观测补偿型控制器”，本节补充状态估计与扰动估计的基本结构，
+并说明误差如何进入二阶判据。
+
+\subsection{仅输出可测时的误差动力学困难}[Difficulty under output measurement]
+
+若仅测得 $y=x_1$，则 $e_2=\dot{e}_1$ 不可直接获得；同时反步控制递推中常出现虚拟控制导数 $\dot{\alpha}_i$，
+其解析求导会放大噪声并导致实现复杂度上升。因此需要引入观测器或微分跟踪器。
+
+\subsection{滑模观测器与微分器的典型结构}[Sliding-mode observer/differentiator]
+
+以二阶系统为例，若仅测得 $y$，可用滑模微分器估计 $y$ 与 $\dot{y}$：
+\begin{equation}\label{eq:levant_2nd}
+\left\{
+\begin{aligned}
+  \dot{\hat{y}}_0 &= \hat{y}_1 - \lambda_0 | \hat{y}_0 - y |^{1/2}\,\mathrm{sgn}(\hat{y}_0-y),\\
+  \dot{\hat{y}}_1 &= -\lambda_1\,\mathrm{sgn}(\hat{y}_0-y),
+\end{aligned}
+\right.
+\end{equation}
+其中 $\hat{y}_0,\hat{y}_1$ 分别为 $y,\dot{y}$ 的估计，$\lambda_0,\lambda_1>0$ 为增益。
+在一定正则性与噪声约束下，估计误差可在有限时间内收敛到小邻域。
+
+\subsection{扰动观测器：等效扰动的在线估计}[Disturbance observer]
+
+对\eqref{eq:2nd_general}，将未知项合并为等效扰动
+\begin{equation}\label{eq:delta_def}
+  \Delta = \ddot{y} - \varphi - b u.
+\end{equation}
+扰动观测器（或扩张状态观测器）通过引入额外状态 $\hat{\Delta}$ 进行估计，并在控制律中补偿：
+\[
+  u = u_{\text{nom}} - \frac{1}{b}\hat{\Delta} + u_{\text{rob}}.
+\]
+直观上，若 $\hat{\Delta}\approx \Delta$，则闭环“剩余扰动” $\Delta-\hat{\Delta}$ 变小，
+从而能显著减小二阶判据不等式中的界 $\Delta$（记号上可用 $\Delta_{\text{res}}$ 区分）。
+
+\subsection{观测误差如何进入二阶判据}[How estimation errors enter the criterion]
+
+在后续章节中，常将 $V$ 选为输出误差 $e_1$（或与其线性等价的组合）。
+若控制律使用的是估计量 $\hat{e}_2$、$\hat{\Delta}$，则实际闭环往往满足
+\begin{equation}\label{eq:V_ineq_with_errors}
+  \left|\ddot{V}+m_2\dot{V}+m_1 V\right|
+  \le \underbrace{\bar\Delta}_{\text{真实不确定性}}
+   + \underbrace{c_o\|\tilde{x}\|}_{\text{观测误差}}
+   + \underbrace{c_d|\tilde{\Delta}|}_{\text{扰动估计误差}}
+   + \underbrace{c_\phi \phi}_{\text{边界层残差}},
+\end{equation}
+其中 $\tilde{x}$ 为状态估计误差，$\tilde{\Delta}=\Delta-\hat{\Delta}$，$\phi$ 为边界层宽度，
+$c_o,c_d,c_\phi$ 为与控制结构相关的常数。式\eqref{eq:V_ineq_with_errors}表明：
+只要能分别界定上述误差项，就能用同一条二阶不等式判据完成稳定性与最终界分析。
+
+\begin{remark}\label{rem:design_principle}
+式\eqref{eq:V_ineq_with_errors}给出本文后续设计的一条明确原则：
+先用 $(m_1,m_2)$ 规定期望阻尼比/超调，再通过鲁棒项、观测器与补偿项尽可能减小右端界。
+这使得“性能预设”和“鲁棒实现”在数学形式上解耦：前者决定齐次二阶形状，后者决定偏离程度。
+\end{remark}
+
+\section{本章小结}[Summary]
+
+本章建立了本文研究的统一模型与指标体系。首先给出了严格反馈不确定非线性系统的通用描述与二阶主导表达，
+明确了不确定性、扰动以及观测/估计误差可被统一视作“等效扰动”；随后回顾二阶系统阻尼比的定义以及超调量、
+峰值时间、调节时间等指标与阻尼比/带宽参数之间的定量关系，并给出工程化选参流程与数值示例；
+在此基础上给出了二阶类李雅普诺夫等式/不等式判据，并通过矩阵李雅普诺夫方法给出显式最终界形式；
+最后补充了滑模鲁棒化、边界层连续化、状态观测与扰动补偿等预备知识，说明观测误差与估计误差如何进入二阶判据，
+从而为后续章节的三类控制器设计与稳定性证明提供统一的理论支撑。
+
+% Local Variables:
+% TeX-master: "../thesis"
+% TeX-engine: xetex
+% End:
+
+\section{问题描述与预备条件}[Problem statement]\label{sec:ch3_prob}
+
+\subsection{二阶不确定非线性系统模型}[Second-order uncertain nonlinear system]
+
+考虑输入通道匹配不确定性的二阶不确定非线性系统
+\begin{equation}\label{eq:ch3_2nd_sys}
+\left\{
+\begin{aligned}
+  \dot{x}_1 &= x_2,\\
+  \dot{x}_2 &= b\,u + f(x_1,x_2) + d,\\
+  y &= x_1,
+\end{aligned}
+\right.
+\end{equation}
+其中 $x_1,x_2\in\mathbb{R}$ 为状态，$u\in\mathbb{R}$ 为控制输入，$y$ 为输出；$b\neq 0$ 为已知（或符号已知且有下界）的控制增益；$f(\cdot)$ 为未知/未建模非线性项；$d$ 为外部扰动或参数摄动。
+
+给定参考轨迹 $y_d$，定义跟踪误差
+\begin{equation}\label{eq:ch3_e12}
+  e_1 \triangleq y-y_d = x_1-y_d,\qquad
+  e_2 \triangleq \dot{y}-\dot{y}_d = x_2-\dot{y}_d.
+\end{equation}
+
+\subsection{基本假设与不确定性界}[Assumptions and bounds]
+
+为保证鲁棒项设计与稳定性分析闭合，作如下假设（第4章、第5章将分别在“状态不可测/扰动未知”情形下进一步调整）：
+
+\begin{assumption}\label{ass:ch3_ref}
+参考信号 $y_d$ 二阶可导，且 $y_d$、$\dot{y}_d$、$\ddot{y}_d$ 有界。
+\end{assumption}
+
+\begin{assumption}\label{ass:ch3_b}
+控制增益 $b$ 的符号已知且存在下界：$|b|\ge \underline b>0$。
+\end{assumption}
+
+\begin{assumption}\label{ass:ch3_unc}
+存在名义模型 $\hat f(x_1,x_2)$（可取 $0$ 或经验模型），并存在未知但有界的建模误差
+\begin{equation}\label{eq:ch3_f_tilde}
+  \tilde f(x_1,x_2)\triangleq f(x_1,x_2)-\hat f(x_1,x_2),\qquad
+  |\tilde f|\le \bar f,
+\end{equation}
+外部扰动满足 $|d|\le \bar d$。
+\end{assumption}
+
+定义总不确定性
+\begin{equation}\label{eq:ch3_delta}
+  \Delta\triangleq \tilde f(x_1,x_2)+d,\qquad
+  |\Delta|\le \bar\Delta\triangleq \bar f+\bar d.
+\end{equation}
+
+\subsection{控制目标与评价指标}[Objectives and metrics]
+
+本章目标同时包含稳定性与瞬态指标约束：
+
+
+；稳定性： 闭环系统所有信号有界，$e_1$ 一致最终有界（理想情况下可渐近收敛）。
+；瞬态性能： $e_1$ 的主导动态满足预设阻尼比 $\zeta_d$（或等价的最大超调量 $M_{p,d}$、峰值时间 $t_{p,d}$）所刻画的衰减振荡特性。
+；鲁棒性： 在未知 $f(\cdot)$ 与扰动 $d$ 存在时仍保证滑模可达与性能可调。
+
+
+为便于后续仿真/实验比较，常用的工程评价指标包括：最大超调量（或误差峰值）、峰值时间、稳态误差（或最终误差界）、均方误差、最大控制幅值与控制变化率等。
+
+\section{预设阻尼比思想在二阶跟踪中的落地}[Principle of damping-ratio presetting]\label{sec:ch3_principle}
+
+第2章已给出二阶标准型、阻尼比与超调量/峰值时间之间的定量关系。为将“阻尼比”直接嵌入误差动力学，本章采用如下二阶类目标动态：
+\begin{equation}\label{eq:ch3_target}
+  \ddot{e}_1 + m_2 \dot{e}_1 + m_1 e_1 = 0,\qquad m_1>0,\ m_2>0.
+\end{equation}
+其阻尼比与自然频率为（参见第2章参数映射）
+\begin{equation}\label{eq:ch3_zeta_map}
+  \zeta = \frac{m_2}{2\sqrt{m_1}},\qquad \omega_n=\sqrt{m_1}.
+\end{equation}
+在欠阻尼条件 $m_2^2<4m_1$ 下，可定义
+\begin{equation}\label{eq:ch3_beta}
+  \beta \triangleq \frac{\sqrt{4m_1-m_2^2}}{2},
+\end{equation}
+并得到经典近似关系
+\begin{equation}\label{eq:ch3_mp_tp}
+  M_p \approx \exp\!\left(-\frac{\pi m_2}{\sqrt{4m_1-m_2^2}}\right),\qquad
+  t_p \approx \frac{\pi}{\beta}=\frac{2\pi}{\sqrt{4m_1-m_2^2}}.
+\end{equation}
+
+\paragraph{说明：} 参数对 $(m_1,m_2)$ 的可解释性体现在：$m_1$ 主要决定系统带宽/响应速度，$m_2$ 决定衰减强度与振荡程度；通过预设 $(\zeta_d,\omega_{n,d})$ 或 $(M_{p,d},t_{p,d})$，可以直接反求 $(m_1,m_2)$（见第\ref{sec:ch3_tuning}节）。
+
+因此，本章的关键在于：在不确定性存在时{构造一种可实现的闭环结构，使 $e_1$ 的主导动态满足（或近似满足）式\eqref{eq:ch3_target}}，并用滑模鲁棒项保证可达与抗扰。
+
+\section{二阶基准方案：预设阻尼比滑模反步控制器设计}[Baseline controller design]\label{sec:ch3_design2}
+
+\subsection{积分扩张与滑模变量构造}[Integral extension and sliding variable]
+
+为构造与\eqref{eq:ch3_target}一致的“可实现二阶结构”，引入积分状态
+\begin{equation}\label{eq:ch3_q}
+  q\triangleq \int_{0}^{t} e_1\,d\tau,\qquad \dot q = e_1.
+\end{equation}
+定义滑模变量（含积分终端的线性滑模结构）
+\begin{equation}\label{eq:ch3_s}
+  s \triangleq \dot e_1 + m_2 e_1 + m_1 q.
+\end{equation}
+由 $\dot e_1=e_2$，可写为
+\begin{equation}\label{eq:ch3_s_e12}
+  s = e_2 + m_2 e_1 + m_1 q.
+\end{equation}
+
+对\eqref{eq:ch3_s}求导得到关键恒等式
+\begin{equation}\label{eq:ch3_sdot_key}
+  \dot s = \ddot e_1 + m_2 \dot e_1 + m_1 e_1.
+\end{equation}
+这表明：只要能够设计控制律使 $s$ 进入并保持在零邻域，则 $e_1$ 自动满足一个二阶类微分方程/不等式，从而实现阻尼比（或超调量）可调。
+
+\subsection{滑模到达律选择}[Reaching law]
+
+为兼顾可达性与工程实现，采用“线性项 + 切换项”的到达律：
+\begin{equation}\label{eq:ch3_reach_law}
+  \dot s = -k_s s - (\rho+\varepsilon)\,\mathrm{sat}\!\left(\frac{s}{\phi}\right),
+  \qquad k_s>0,\ \varepsilon>0,\ \phi>0,
+\end{equation}
+其中 $\mathrm{sat}(\cdot)$ 为饱和函数（第2章已给出定义）。当 $\phi\to 0$ 时，$\mathrm{sat}(s/\phi)\to \mathrm{sgn}(s)$，该到达律退化为典型滑模到达律；$k_s s$ 项用于改善边界层内的收敛平滑性与离散实现效果。
+
+\subsection{控制律推导}[Control law derivation]
+
+由\eqref{eq:ch3_2nd_sys}与\eqref{eq:ch3_e12}可得
+\begin{equation}\label{eq:ch3_e2dot}
+  \dot e_2
+  = \dot x_2 - \ddot y_d
+  = b\,u + f + d - \ddot y_d.
+\end{equation}
+结合\eqref{eq:ch3_s_e12}，有
+\begin{equation}\label{eq:ch3_sdot_expand}
+\begin{aligned}
+  \dot s
+  &= \dot e_2 + m_2 \dot e_1 + m_1 e_1 \\
+  &= b\,u + f + d - \ddot y_d + m_2 e_2 + m_1 e_1.
+\end{aligned}
+\end{equation}
+
+采用“名义补偿 + 稳定化项 + 鲁棒项”结构，令控制输入为
+\begin{equation}\label{eq:ch3_u}
+  u = \frac{1}{b}\Big(
+  -\hat f + \ddot y_d - m_2 e_2 - m_1 e_1
+  -k_s s
+  -(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
+  \Big).
+\end{equation}
+代入\eqref{eq:ch3_sdot_expand}并利用\eqref{eq:ch3_delta}，得到闭环滑模变量动力学
+\begin{equation}\label{eq:ch3_s_closed}
+  \dot s = -k_s s -(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right) + \Delta.
+\end{equation}
+
+\paragraph{鲁棒增益条件：} 若 $\rho$ 满足
+\begin{equation}\label{eq:ch3_rho_cond}
+  \rho\ge \bar\Delta,
+\end{equation}
+则可保证到达性与边界层不变性。
+
+\paragraph{备注（界未知情形）：}
+若 $\bar\Delta$ 不可获得，可先采用保守常数 $\rho=\rho_0$（确保覆盖最坏工况），但可能带来控制保守；第5章将通过扰动观测器显著降低这种保守性。另外也可在本章引入简单的增益自适应律（不依赖精确上界），作为工程折中方案（可放在附录或实现章节）。
+
+\subsection{阻尼比可调性的“结构化解释”}[Interpretability of preset damping ratio]
+
+由\eqref{eq:ch3_sdot_key}可知
+\begin{equation}\label{eq:ch3_e1_forced}
+  \ddot e_1 + m_2 \dot e_1 + m_1 e_1 = \dot s.
+\end{equation}
+当系统进入理想滑模（Filippov 意义下 $s\equiv 0,\ \dot s\equiv 0$）时，\eqref{eq:ch3_e1_forced}退化为
+\begin{equation}\label{eq:ch3_e1_ideal}
+  \ddot e_1 + m_2 \dot e_1 + m_1 e_1 = 0,
+\end{equation}
+即误差主导动态严格满足预设二阶标准型，阻尼比由\eqref{eq:ch3_zeta_map}给出。
+
+当采用边界层（$\phi>0$）时，$s$ 收敛到集合 $\Omega_\phi=\{|s|\le \phi\}$，从而 $\dot s$ 有界，\eqref{eq:ch3_e1_forced}成为二阶类不等式系统。结合第2章二阶类李雅普诺夫不等式判据，可解释为：短时段峰值/超调主要由 $(m_1,m_2)$ 决定，而最终误差界与边界层宽度、扰动上界等同阶相关。
+
+\section{稳定性与性能分析（二阶基准方案）}[Stability and performance]\label{sec:ch3_stab2}
+
+\subsection{滑模可达性与边界层不变性}[Reachability and invariance]
+
+取Lyapunov函数
+\begin{equation}\label{eq:ch3_Vs}
+  V_s=\frac12 s^2.
+\end{equation}
+由\eqref{eq:ch3_s_closed}得
+\begin{equation}\label{eq:ch3_Vsdot}
+\begin{aligned}
+  \dot V_s
+  &= s\dot s \\
+  &= -k_s s^2 -(\rho+\varepsilon)\,s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right) + s\,\Delta.
+\end{aligned}
+\end{equation}
+注意到对任意 $s$ 有 $s\,\mathrm{sat}(s/\phi)\ge 0$，且 $|s\,\Delta|\le |s|\,|\Delta|$。当 $\rho\ge \bar\Delta$ 时，
+\begin{equation}\label{eq:ch3_Vsdot_bound}
+  \dot V_s \le -k_s s^2 -\varepsilon\,|s| \le 0,
+\end{equation}
+从而 $s$ 有界并趋向于零邻域。进一步可证明：存在有限时间 $T_\phi$ 使得 $t\ge T_\phi$ 时 $|s|\le \phi$，且该集合在闭环系统下保持不变（分段讨论 $|s|>\phi$ 与 $|s|\le \phi$ 即可）。
+
+\subsection{误差系统有界性与最终界}[Boundedness and ultimate bound]
+
+由\eqref{eq:ch3_s_relation}
+\begin{equation}\label{eq:ch3_s_relation}
+  \dot e_1 = -m_2 e_1 - m_1 q + s,\qquad \dot q=e_1,
+\end{equation}
+可写成线性系统加输入：
+\begin{equation}\label{eq:ch3_lin}
+\begin{bmatrix}\dot e_1\\ \dot q\end{bmatrix}
+=
+\underbrace{\begin{bmatrix}
+ -m_2 & -m_1\\
+  1   &  0
+\end{bmatrix}}_{A(m_1,m_2)}
+\begin{bmatrix} e_1\\ q\end{bmatrix}
++
+\begin{bmatrix} 1\\ 0\end{bmatrix}s.
+\end{equation}
+由于 $m_1>0,m_2>0$ 时矩阵 $A(m_1,m_2)$ 为Hurwitz，故系统对输入 $s$ 具有ISS性质：当 $s$ 有界时 $(e_1,q)$ 一致最终有界；当 $s	o 0$ 时 $(e_1,q)	o 0$。特别地，若进入边界层后 $|s|\le \phi$，则可推出存在常数 $c>0$ 使得
+\begin{equation}\label{eq:ch3_ultimate}
+  \limsup_{t\to\infty}|e_1| \le c\,\phi,
+\end{equation}
+其中 $c$ 与 $m_1,m_2$ 及ISS增益有关。该结论给出了“边界层宽度 $\phi$ 与稳态精度”的直接折中关系。
+
+\subsection{预设阻尼比与超调的定量联系}[Quantitative link to overshoot]
+
+由\eqref{eq:ch3_e1_forced}可知，边界层下系统满足
+\begin{equation}\label{eq:ch3_2nd_like}
+  \ddot e_1 + m_2 \dot e_1 + m_1 e_1 = \dot s,
+\end{equation}
+其中 $\dot s$ 有界。因而在峰值出现的短时段内，$e_1$ 的主导形态可视为二阶欠阻尼响应叠加有界扰动。工程上可将\eqref{eq:ch3_mp_tp}作为理论预估值，并在仿真/实验中统计实际超调量与峰值时间，与理论值对比以验证“预设阻尼比”的有效性（第\ref{sec:ch3_sim}节给出组织方式；第6章进行实机验证）。
+
+\section{推广：严格反馈系统的预设阻尼比滑模反步结构}[Extension to strict-feedback systems]\label{sec:ch3_extension}
+
+本节给出对第2章严格反馈模型\eqref{eq:sf_system}的结构化推广，突出“反步递推 + 预设二阶指标注入 + 滑模鲁棒项”的统一框架。为避免符号冗长，本节以“结构化表达”为主，具体系统项可在实现时按 $f_i(\cdot)$ 展开。
+
+\subsection{误差变量与积分扩张}[Error variables and integral state]
+
+对严格反馈系统，定义递推误差
+\begin{equation}\label{eq:ch3_zi}
+  z_1 \triangleq x_1-y_d,\qquad
+  z_i \triangleq x_i-\alpha_{i-1},\ \ i=2,\dots,n,
+\end{equation}
+其中 $\alpha_i$ 为第 $i$ 步虚拟控制量（$\alpha_0\triangleq y_d$）。
+
+引入积分状态
+\begin{equation}\label{eq:ch3_eta}
+  \eta\triangleq \int_0^t z_1(\tau)\,d\tau,\qquad \dot\eta=z_1.
+\end{equation}
+
+\subsection{预设阻尼比滑模面构造}[Sliding surface with preset damping ratio]
+
+与中期报告一致，可构造“高阶误差压缩 + 二阶指标注入”的滑模面，例如
+\begin{equation}\label{eq:ch3_s_n}
+  s \triangleq z_n + \sum_{i=3}^{n-1} c_i z_i + c_2\Big(z_2 + m_2 z_1 + m_1 \eta\Big),
+  \qquad c_i>0,
+\end{equation}
+其中 $(m_1,m_2)$ 由期望阻尼比/超调量确定，$c_i$ 用于调节高阶误差的衰减速度与耦合强度。
+
+对\eqref{eq:ch3_s_n}求导得
+\begin{equation}\label{eq:ch3_s_n_dot}
+  \dot s = \dot z_n + \sum_{i=3}^{n-1} c_i \dot z_i + c_2\Big(\dot z_2 + m_2 \dot z_1 + m_1 z_1\Big).
+\end{equation}
+注意到 $\dot z_1=\dot x_1-\dot y_d$，$\dot z_2=\dot x_2-\dot\alpha_1$，等等，因此 $\dot s$ 中包含 $u$ 的线性项 $b_n u$，以及未知项与扰动项。
+
+\subsection{递推虚拟控制与实际控制器}[Recursive virtual controls and actual input]
+
+\paragraph{（1）递推目标：} 通过设计 $\alpha_1,\dots,\alpha_{n-1}$ 使中间误差链 $z_2,\dots,z_n$ 稳定，并使 $\dot s$ 满足到达律，从而保证滑模可达与鲁棒性。
+
+\paragraph{（2）Lyapunov递推框架：}
+可选取递推Lyapunov函数
+\begin{equation}\label{eq:ch3_Vrec}
+  V_i \triangleq V_{i-1} + \frac12 z_i^2,\qquad i=1,\dots,n,
+\end{equation}
+并在每一步选择 $\alpha_i$ 抵消交叉项、注入衰减项 $-k_i z_i^2$（$_>0$）。典型结构（示意）为
+\begin{equation}\label{eq:ch3_alpha_i}
+  \alpha_i = \frac{1}{b_i}\Big(-\hat f_i(\cdot)+\dot\alpha_{i-1}-k_i z_i\Big),\qquad i=1,\dots,n-1,
+\end{equation}
+其中 $\hat f_i(\cdot)$ 为名义项，$\dot\alpha_{i-1}$ 在解析实现中需要求导；若存在“爆炸性复杂性”，则第4章将采用微分跟踪器/指令滤波替代解析求导。
+
+\paragraph{（3）实际控制输入：}
+在最后一步，根据 $\dot s$ 的展开式，选取
+\begin{equation}\label{eq:ch3_u_n}
+  u=\frac{1}{b_n}\Big(
+  -\hat f_n+\dot\alpha_{n-1}
+  - \sum_{i=3}^{n-1} c_i \dot z_i
+  - c_2
+  -k_s s
+  -(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
+  \Big),
+\end{equation}
+使得闭环满足类似\eqref{eq:ch3_s_closed}的形式
+\begin{equation}\label{eq:ch3_s_n_closed}
+  \dot s = -k_s s -(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right) + \Delta^\star,
+\end{equation}
+其中 $\Delta^\star$ 汇总了未建模项、扰动项以及递推近似/滤波误差等。若 $\rho\ge \bar\Delta^\star$，则可得到与二阶基准方案同型的可达性与有界性结论。
+
+\subsection{阻尼比可调性的二阶类不等式解释}[Second-order inequality interpretation]
+
+当 $s$ 进入边界层并保持有界时，由\eqref{eq:ch3_s_n}可将高阶误差链压缩到关于 $z_1$ 的二阶类关系，得到
+\begin{equation}\label{eq:ch3_z1_ineq}
+  \left|\ddot z_1 + m_2 \dot z_1 + m_1 z_1\right|\le \Delta^\star_1,
+\end{equation}
+其中 $\Delta^\star_1$ 与边界层宽度、鲁棒项保守度、上层误差衰减速度及滤波/观测误差有关。结合第2章二阶类李雅普诺夫不等式判据，可得系统实用稳定，且 $z_1$ 的短时峰值与超调主要由 $(m_1,m_2)$ 决定。
+
+\section{参数选择与实现要点}[Tuning and implementation]\label{sec:ch3_tuning}
+
+\subsection{由阻尼比/超调量到 $(m_1,m_2)$}[Selecting $(m_1,m_2)$]
+
+\paragraph{按阻尼比预设：}
+给定 $\zeta_d\in(0,1)$ 与 $\omega_{n,d}>0$，直接取
+\begin{equation}\label{eq:ch3_m_from_zeta}
+  m_1=\omega_{n,d}^2,\qquad m_2=2\zeta_d\omega_{n,d}.
+\end{equation}
+
+\paragraph{按超调量与峰值时间预设：}
+给定 $M_{p,d}\in(0,1)$ 与 $t_{p,d}>0$，可先令
+\begin{equation}\label{eq:ch3_alpha_beta_rule}
+  \beta=\frac{\pi}{t_{p,d}},\qquad
+  \frac{\alpha}{\beta}=-\frac{\ln M_{p,d}}{\pi},
+\end{equation}
+得到 $\alpha=\beta(-\ln M_{p,d}/\pi)$，再取
+\begin{equation}\label{eq:ch3_m_from_ab}
+  m_2=2\alpha,\qquad m_1=\alpha^2+\beta^2.
+\end{equation}
+
+\paragraph{建议：}
+工程上通常先根据期望响应速度确定 $\omega_{n,d}$（或 $t_{s,d}$），再由允许的超调上限确定 $\zeta_d$（或 $M_{p,d}$），最后反求 $(m_1,m_2)$。
+
+\subsection{鲁棒增益与边界层宽度}[Robust gain and boundary layer]
+
+
+；鲁棒增益 $\rho$： 至少满足 $\rho\ge \bar\Delta$。若只能取常数，可按“最坏工况 + 裕度”取值，并通过 $\varepsilon$ 抵消界估计误差与离散实现误差。
+；边界层 $\phi$： $\phi$ 越小稳态精度越高，但对噪声与采样更敏感，抖振风险更高。可依据执行器带宽、采样周期与测量噪声方差反推合理范围。
+；线性到达项 $k_s$： 增大 $k_s$ 可加快边界层内的指数收敛并改善控制平滑性，但过大可能放大噪声对 $s$ 的影响。
+
+
+\subsection{离散实现细节建议}[Discrete-time notes]
+
+
+；积分状态 $q$（或 $\eta$）建议使用限幅积分或带泄漏积分以防积分漂移：
+  \[
+    q_{k+1} = \mathrm{clip}\big(q_k + T_s e_1[k],\,-q_{\max},\,q_{\max}\big),
+  \]
+  其中 $T_s$ 为采样周期。
+；若 $\ddot y_d$ 不易直接获得，可通过轨迹规划器输出（自然提供 $\dot y_d,\ddot y_d$），或采用平滑微分跟踪器估计（第4章详述）。
+；若速度 $x_2$ 不可测，则二阶基准方案需配合观测器/微分器（第4章）。
+
+
+\section{面向板球平衡系统的仿真组织与结果呈现}[Simulation setup for BPS]\label{sec:ch3_sim}
+
+本节给出将本章基准控制器应用于板球平衡系统时，仿真建模、任务设置、对比方式与结果呈现的推荐写法（与中期报告一致）。具体动力学模型、参数表与降阶/解耦过程可放在第6章实验章节或本节附录中；此处强调“如何把预设阻尼比指标落到可观测曲线与统计量”。
+
+\subsection{模型与降阶思路（写作建议）}[Model and reduction ]
+
+仿真中可采用“含未建模动态与扰动”的高阶板球模型，并通过小角度近似与解耦得到 $x$/$y$ 两个方向的子系统，再在每个子系统上应用本章控制器。为避免论文初稿阶段因图片/模型文件不齐导致编译失败，可先用占位框展示图与表（后续替换为真实图片）。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.85\textwidth}{\centering
+  （占位）此处放置 Simulink/BPS 模型结构图：包含执行器、板角、球位置、扰动注入与控制器模块。}}
+  \caption{板球平衡系统仿真模型结构示意（占位）}
+  \label{fig:ch3_bps_model}
+\end{figure}
+
+\subsection{任务设置与预设指标}[Tasks and preset specs]
+
+建议至少包含两类任务（与中期报告一致）：
+
+
+；固定目标点跟踪： 给定 $x_d,y_d$ 常值目标，统计两方向的最大超调量、峰值时间、稳态误差与整定时间，并对比不同 $\zeta_d$ 的效果。
+；封闭轨迹跟踪： 例如圆形轨迹（也可加入三角形/方形等非光滑轨迹），比较不同 $\zeta_d$ 下轨迹误差与控制输入平滑性。
+
+
+\subsection{结果呈现与指标对比（写作模板）}[Result presentation template]
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.85\textwidth}{\centering（占位）固定目标点：$x$方向跟踪曲线与误差曲线}}
+  \caption{$x$方向固定目标点跟踪结果（占位）}
+  \label{fig:ch3_step_x}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.85\textwidth}{\centering（占位）固定目标点：$y$方向跟踪曲线与误差曲线}}
+  \caption{$y$方向固定目标点跟踪结果（占位）}
+  \label{fig:ch3_step_y}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.85\textwidth}{\centering（占位）圆形轨迹：俯视图（实际轨迹 期望轨迹）}}
+  \caption{圆形轨迹跟踪俯视图（占位）}
+  \label{fig:ch3_circle_top}
+\end{figure}
+
+同时建议给出“理论预估超调量 vs 实际统计超调量”的对比表，用于验证预设阻尼比映射的有效性：
+
+\begin{table}[htbp]
+  \centering
+  \caption{预设阻尼比下超调量与峰值时间的理论/仿真对比（模板）}
+  \label{tab:ch3_mp_compare}
+  \begin{tabular}{cccccc}
+    \hline
+    $\zeta_d$ & $(m_1,m_2)$ & $M_p$（理论） & $M_p$（仿真） & $t_p$（理论） & $t_p$（仿真） \\
+    \hline
+    0.3 & -- & -- & -- & -- & -- \\
+    0.6 & -- & -- & -- & -- & -- \\
+    0.9 & -- & -- & -- & -- & -- \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\section{本章小结}[Summary]\label{sec:ch3_summary}
+
+本章提出并系统推导了预设阻尼比滑模反步控制器的基准方案。针对二阶不确定非线性系统，通过构造含积分扩张的滑模变量
+\[
+  s=\dot e_1+m_2 e_1+m_1\int_0^t e_1\,d\tau,
+\]
+将输出误差的二阶标准型动力学显式嵌入闭环；通过名义补偿与滑模鲁棒项，保证在未知非线性与外部扰动存在时仍具备滑模可达性与实用稳定性；在滑模建立（或准滑模）后，误差主导动态满足二阶类微分方程/不等式，从而实现阻尼比（或超调量、峰值时间）可调。随后给出了对严格反馈结构系统的结构化推广写法，并总结了 $(m_1,m_2)$ 选参、鲁棒增益与边界层的工程折中以及离散实现注意事项。最后给出了面向板球平衡系统的仿真组织模板，为第6章实验验证提供可复用的结果呈现框架。
+
+% Local Variables:
+% TeX-master: "../thesis"
+% TeX-engine: xetex
+% End:

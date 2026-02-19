@@ -3,9 +3,9 @@
 
 \title{The title of the English paper}
 
-\textbf{Abstract:} As one of the most widely used techniques in operations
-research, \emph{ mathematical programming} is defined as a means of maximizing a
-quantity known as \emph{bjective function}, subject to a set of constraints
+Abstract: As one of the most widely used techniques in operations
+research,  mathematical programming is defined as a means of maximizing a
+quantity known as bjective function, subject to a set of constraints
 represented by equations and inequalities. Some known subtopics of mathematical
 programming are linear programming, nonlinear programming, multiobjective
 programming, goal programming, dynamic programming, and multilevel
@@ -18,14 +18,14 @@ throughout the book$^{[2,3]}$.
 
 
 \section{Single-Objective Programming}
-The general form of single-objective programming (SOP) is written
+The general form of single-objective programming  is written
 as follows,
 \begin{equation}\tag*{(123)} % 如果附录中的公式不想让它出现在公式索引中，那就请
                              % 用 \tag*{xxxx}
 \left\{\begin{array}{l}
-\max \,\,f(x)\\[0.1 cm]
+\max \,\,f\\[0.1 cm]
 \mbox{subject to:} \\ [0.1 cm]
-\qquad g_j(x)\le 0,\quad j=1,2,\cdots,p
+\qquad g_j\le 0,\quad j=1,2,\cdots,p
 \end{array}\right.
 \end{equation}
 which maximizes a real-valued function $f$ of
@@ -37,7 +37,7 @@ In SOP, we call $x$ a decision vector, and
 $x_1,x_2,\cdots,x_n$ decision variables. The function
 $f$ is called the objective function. The set
 \begin{equation}\tag*{(456)} % 这里同理，其它不再一一指定。
-S=\left\{x\in\Re^n\bigm|g_j(x)\le 0,\,j=1,2,\cdots,p\right\}
+S=\left\{x\in\Re^n\bigm|g_j\le 0,\,j=1,2,\cdots,p\right\}
 \end{equation}
 is called the feasible set. An element $x$ in $S$ is called a
 feasible solution.
@@ -48,31 +48,31 @@ feasible solution.
 A feasible solution $x^*$ is called the optimal
 solution of SOP if and only if
 \begin{equation}
-f(x^*)\ge f(x)
+f(^*)\ge f
 \end{equation}
 for any feasible solution $x$.
 \end{mpdefop}
 
 One of the outstanding contributions to mathematical programming was known as
 the Kuhn-Tucker conditions\ref{eq:ktc}. In order to introduce them, let us give
-some definitions. An inequality constraint $g_j(x)\le 0$ is said to be active at
-a point $x^*$ if $g_j(x^*)=0$. A point $x^*$ satisfying $g_j(x^*)\le 0$ is said
-to be regular if the gradient vectors $\nabla g_j(x)$ of all active constraints
+some definitions. An inequality constraint $g_j\le 0$ is said to be active at
+a point $x^*$ if $g_j(^*)=0$. A point $x^*$ satisfying $g_j(^*)\le 0$ is said
+to be regular if the gradient vectors $\nabla g_j$ of all active constraints
 are linearly independent.
 
 Let $x^*$ be a regular point of the constraints of SOP and assume that all the
-functions $f(x)$ and $g_j(x),j=1,2,\cdots,p$ are differentiable. If $x^*$ is a
+functions $f$ and $g_j,j=1,2,\cdots,p$ are differentiable. If $x^*$ is a
 local optimal solution, then there exist Lagrange multipliers
 $\lambda_j,j=1,2,\cdots,p$ such that the following Kuhn-Tucker conditions hold,
 \begin{equation}
 \label{eq:ktc}
 \left\{\begin{array}{l}
-    \nabla f(x^*)-\sum\limits_{j=1}^p\lambda_j\nabla g_j(x^*)=0\\[0.3cm]
-    \lambda_jg_j(x^*)=0,\quad j=1,2,\cdots,p\\[0.2cm]
+    \nabla f(^*)-\sum\limits_{j=1}^p\lambda_j\nabla g_j(^*)=0\\[0.3cm]
+    \lambda_jg_j(^*)=0,\quad j=1,2,\cdots,p\\[0.2cm]
     \lambda_j\ge 0,\quad j=1,2,\cdots,p.
 \end{array}\right.
 \end{equation}
-If all the functions $f(x)$ and $g_j(x),j=1,2,\cdots,p$ are convex and
+If all the functions $f$ and $g_j,j=1,2,\cdots,p$ are convex and
 differentiable, and the point $x^*$ satisfies the Kuhn-Tucker conditions
 (\ref{eq:ktc}), then it has been proved that the point $x^*$ is a global optimal
 solution of SOP.
@@ -80,7 +80,7 @@ solution of SOP.
 \subsection{Linear Programming}
 \label{sec:lp}
 
-If the functions $f(x),g_j(x),j=1,2,\cdots,p$ are all linear, then SOP is called
+If the functions $f,g_j,j=1,2,\cdots,p$ are all linear, then SOP is called
 a {\em linear programming}.
 
 The feasible set of linear is always convex. A point $x$ is called an extreme
@@ -118,7 +118,7 @@ extreme point is the optimal solution.
 
 \subsection{Nonlinear Programming}
 
-If at least one of the functions $f(x),g_j(x),j=1,2,\cdots,p$ is nonlinear, then
+If at least one of the functions $f,g_j,j=1,2,\cdots,p$ is nonlinear, then
 SOP is called a {\em nonlinear programming}.
 
 A large number of classical optimization methods have been developed to treat
@@ -165,10 +165,10 @@ the {\em branch-and-bound enumeration} developed by Balas (1965) and Dakin
   not real citations in the original text.}
 
 \begin{translationbib}
-\item Donald E. Knuth. The \TeX book. Addison-Wesley, 1984. ISBN: 0-201-13448-9
-\item Paul W. Abrahams, Karl Berry and Kathryn A. Hargreaves. \TeX\ for the
+；Donald E. Knuth. The \TeX book. Addison-Wesley, 1984. ISBN: 0-201-13448-9
+；Paul W. Abrahams, Karl Berry and Kathryn A. Hargreaves. \TeX\ for the
   Impatient. Addison-Wesley, 1990. ISBN: 0-201-51375-7
-\item David Salomon. The advanced \TeX book.  New York : Springer, 1995. ISBN:0-387-94556-3
+；David Salomon. The advanced \TeX book.  New York : Springer, 1995. ISBN:0-387-94556-3
 \end{translationbib}
 
 \chapter{外文资料的调研阅读报告或书面翻译}
@@ -182,8 +182,8 @@ the {\em branch-and-bound enumeration} developed by Balas (1965) and Dakin
 北冥有鱼，其名为鲲。鲲之大，不知其几千里也。化而为鸟，其名为鹏。鹏之背，不知其几
 千里也。怒而飞，其翼若垂天之云。是鸟也，海运则将徙于南冥。南冥者，天池也。
 \begin{equation}\tag*{(123)}
- p(y|\mathbf{x}) = \frac{p(\mathbf{x},y)}{p(\mathbf{x})}=
-\frac{p(\mathbf{x}|y)p(y)}{p(\mathbf{x})}
+ p = \frac{p}{p}=
+\frac{p(\mathbf{x}|y)p}{p(\mathbf{x})}
 \end{equation}
 
 吾生也有涯，而知也无涯。以有涯随无涯，殆已！已而为知者，殆而已矣！为善无近名，为

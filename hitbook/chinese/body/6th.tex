@@ -1,0 +1,276 @@
+% !Mode:: "TeX:UTF-8"
+
+\chapter{预设阻尼比自适应滑模反步控制在板球系统上的验证}
+[Experimental verification of preset damping-ratio adaptive sliding-mode backstepping on a ball-and-plate system]
+
+本章面向板球平衡系统（Ball-and-Plate System, BPS），对前述预设阻尼比滑模反步控制思想进行验证与分析。验证目标主要包括：
+（1）检查预设阻尼比参数对瞬态超调与响应速度的调节规律是否清晰可观察；
+（2）在板球系统典型任务（固定目标点、闭合轨迹）下评估控制器的跟踪性能；
+（3）给出工程实现链路（视觉测量—嵌入式控制—执行机构）的实现要点，并为后续更强鲁棒/自适应版本的实物实验留出接口。
+
+依据中期报告阶段性工作，本章已完成板球系统实验平台搭建与基于 Simulink 的仿真验证；其中固定目标点跟踪与圆形轨迹跟踪结果用于展示不同阻尼比设定下的瞬态差异。对于中期报告尚未给出细节的“自适应律完整推导”“三角轨迹跟踪实测结果”“三类控制器的系统对比统计”等内容，本章保留相应小节标题作为后续论文完善的插入位置。
+
+\section{引言}[Introduction]
+
+板球系统是一类典型的非线性、强耦合与参数不确定系统：执行器（舵机）通过改变平板姿态间接驱动小球运动，系统存在视觉测量噪声、离散采样、执行器死区与饱和等工程因素，能够较好检验控制方法的可落地性。
+
+本章将“预设阻尼比”作为核心瞬态指标：通过调整阻尼比（或等价参数）来观察固定点响应的超调/振荡程度与收敛速度变化，并在闭合轨迹任务中观察相位滞后与稳态误差随阻尼比设定的变化规律。
+
+\section{板球系统控制平台部署}[Control platform deployment of BPS]
+
+\subsection{系统硬件组成与信号链路}[Hardware components and signal chain]
+
+中期报告阶段已完成板球实验平台搭建。控制系统由嵌入式控制板、驱动板、两路舵机执行机构以及上位机视觉测量模块组成。执行机构通过两路舵机分别对平板在 $x$、$y$ 两个方向的倾角进行调节，从而实现二维位置跟踪控制。
+
+嵌入式端以 STM32F407 作为核心控制器，采用 Keil 进行软件开发，程序基于 STM32 HAL 库，使用 C 语言实现串口通信、定时器中断、ADC 采样等功能。驱动板选用 PD6010B，用于生成 PWM 信号并驱动舵机动作。视觉模块通过上位机获取小球位置，并以约 $33\,\mathrm{Hz}$ 的频率给出小球位置与速度信息，用于控制反馈。
+
+\subsection{软件架构与实时控制周期}[Software architecture and real-time control cycle]
+
+从工程实现角度，板球系统闭环一般包含以下链路：
+\[
+\text{视觉测量(PC)} \rightarrow \text{串口/通信} \rightarrow \text{控制律计算(STM32)} \rightarrow
+\text{PWM 输出} \rightarrow \text{舵机/平板姿态} \rightarrow \text{小球运动}.
+\]
+中期报告中给出的视觉输出频率约为 $33\,\mathrm{Hz}$，因此控制周期可按
+\[
+T_s \approx 1/33 \approx 0.03\,\mathrm{s}
+\]
+设计，并在嵌入式端以定时器中断节拍执行“数据接收—状态更新—控制计算—PWM 刷新”。
+
+\subsection{控制任务与对比控制器设置}[Tasks and controller configurations]
+
+按照中期报告的实验设计，板球系统验证任务包括：
+\begin{itemize}
+  \item \textbf{固定目标点跟踪：}考察不同阻尼比设定下的超调、振荡与收敛速度差异；
+  \item \textbf{闭合轨迹跟踪：}考察圆形轨迹（以及计划中的三角形轨迹）跟踪效果与稳态误差。
+\end{itemize}
+
+中期报告计划测试三类控制器：（1）预设阻尼比滑模反步控制器；（2）基于状态观测器的预设阻尼比滑模反步控制器；（3）基于扰动观测器与状态观测器的预设阻尼比滑模反步控制器。中期报告当前已给出平台与仿真验证结果，本章在结果小节中先呈现已完成部分，并保留完整对比统计的章节接口。
+
+\section{板球系统模型与降阶表述}[Modeling and reduced-order description]
+
+\subsection{耦合动力学模型（中期报告）}[Coupled dynamics in the midterm report]
+
+中期报告给出了板球系统的耦合动力学形式。设小球质量为 $m$，小球半径为 $r$，转动惯量相关项为 $I_b$，平板在 $x$、$y$ 方向的倾角分别为 $\alpha,\beta$，并考虑摩擦/扰动等影响，可写为（与中期报告一致的形式）：
+\begin{equation}\label{eq:ch5_full_dyn}
+\left\{
+\begin{aligned}
+\left(m+\frac{I_b}{r^2}\right)\ddot x - m x \dot{\alpha}^2 - m y\dot{\alpha}\dot{\beta} - m g\sin\alpha &= -f_x,\\
+\left(m+\frac{I_b}{r^2}\right)\ddot y - m y \dot{\beta}^2 - m x\dot{\alpha}\dot{\beta} - m g\sin\beta &= -f_y,\\
+\left(m x^2 + I_x\right)\ddot{\alpha} + 2mx\dot x\dot\alpha + (m\dot x y + mx\dot y)\dot\beta + mxy\ddot\beta &= mgx\cos\alpha,\\
+\left(m y^2 + I_y\right)\ddot{\beta} + 2my\dot y\dot\beta + (m\dot x y + mx\dot y)\dot\alpha + mxy\ddot\alpha &= mgy\cos\beta.
+\end{aligned}
+\right.
+\end{equation}
+其中 $f_x,f_y$ 用于描述摩擦/阻尼等综合效应（也可等效归入不确定项与扰动项）。
+
+\subsection{状态空间形式与解耦近似}[State-space form and decoupling approximation]
+
+中期报告进一步引入系数
+\begin{equation}\label{eq:ch5_k_def}
+k=\frac{m}{m+I_b/r^2},
+\end{equation}
+并将系统整理为状态空间形式（记 $x_1=x,\ x_2=\dot x,\ x_3=\alpha,\ x_4=\dot\alpha,\ x_5=y,\ x_6=\dot y,\ x_7=\beta,\ x_8=\dot\beta$）：
+\begin{equation}\label{eq:ch5_state_space}
+\left\{
+\begin{aligned}
+\dot x_1 &= x_2 + w_x,\\
+\dot x_2 &= -kgx_3 + kx_1x_4^2 + x_4x_5x_8,\\
+\dot x_3 &= x_4,\\
+\dot x_4 &= u_x,\\
+\dot x_5 &= x_6 + w_y,\\
+\dot x_6 &= -kgx_7 + kx_5x_8^2 + x_1x_4x_8,\\
+\dot x_7 &= x_8,\\
+\dot x_8 &= u_y,
+\end{aligned}
+\right.
+\end{equation}
+其中 $u_x,u_y$ 为输入，$w_x,w_y$ 表示综合扰动/噪声注入项。
+
+在板球系统常见工况下，平板倾角一般不大（例如不超过 $10^\circ$），因此可近似 $\sin x_3\approx x_3,\ \sin x_7\approx x_7$，并将小量项（如 $x_1x_4^2$、$x_4x_5x_8$ 等）作为不确定非线性合并处理，从而可将系统按 $x$ 轴与 $y$ 轴两个方向近似解耦为子系统（中期报告给出的写法）：
+\begin{equation}\label{eq:ch5_xy_subsystems}
+\left\{
+\begin{aligned}
+X:\quad
+\dot x_1 &= x_2 + w_x,\\
+\dot x_2 &= -kgx_3 + kx_1x_4^2 + x_4x_5x_8,\\
+\dot x_3 &= x_4,\\
+\dot x_4 &= u_x,\\
+y_1 &= x_1,
+\end{aligned}
+\right.
+\qquad
+\left\{
+\begin{aligned}
+Y:\quad
+\dot x_5 &= x_6 + w_y,\\
+\dot x_6 &= -kgx_7 + kx_5x_8^2 + x_1x_4x_8,\\
+\dot x_7 &= x_8,\\
+\dot x_8 &= u_y,\\
+y_2 &= x_5.
+\end{aligned}
+\right.
+\end{equation}
+
+\subsection{降阶控制模型（中期报告）}[Reduced-order control-oriented model]
+
+中期报告指出：在实际板球系统中，$X$ 与 $Y$ 方向的控制扭矩由两个舵机产生，且姿态相关的部分状态不可直接测量，因此可进一步得到面向控制的降阶模型：
+\begin{equation}\label{eq:ch5_reduced_model}
+\left\{
+\begin{aligned}
+\dot x_1 &= x_2,\\
+\dot x_2 &= b\big(gk_f u_x + h_x\big),\\
+\dot x_5 &= x_6,\\
+\dot x_6 &= b\big(gk_f u_y + h_y\big),
+\end{aligned}
+\right.
+\end{equation}
+其中 $u_x,u_y$ 为两路多级 PWM 输入，$k_f$ 为增益系数，$h_x,h_y$ 为不确定非线性项：
+\begin{equation}\label{eq:ch5_hx_hy}
+h_x = x_1x_4^2 + x_4x_5x_8 - \frac{F_x}{m},\qquad
+h_y = x_5x_8^2 + x_1x_4x_8 - \frac{F_y}{m}.
+\end{equation}
+式 \eqref{eq:ch5_reduced_model}--\eqref{eq:ch5_hx_hy} 为后续控制器实现与仿真验证提供了统一的建模入口：高阶耦合项与摩擦/扰动可等效吸收至 $h_x,h_y$，并由鲁棒/自适应补偿项处理。
+
+\section{控制器在板球系统中的实现要点}[Implementation of the controller on BPS]
+
+\subsection{控制目标与误差定义}[Objectives and error definitions]
+
+设二维期望轨迹为
+\[
+\bm y_d(t)=\begin{bmatrix}x_d(t)\\y_d(t)\end{bmatrix},\qquad
+\bm y(t)=\begin{bmatrix}x(t)\\y(t)\end{bmatrix},
+\]
+定义误差向量
+\[
+\bm e(t)=\bm y(t)-\bm y_d(t)=\begin{bmatrix}e_x(t)\\e_y(t)\end{bmatrix}.
+\]
+对每个通道（$x$、$y$）均可视为二阶不确定系统形式，进而复用第3章给出的“预设阻尼比 + 滑模反步”设计结构。
+
+\subsection{预设阻尼比参数整定方式}[Tuning via preset damping ratio]
+
+中期报告的仿真验证采用不同阻尼比设定（例如 $\zeta=1,\ 0.707,\ 0.6$）来观察固定点响应差异。对应第3章参数映射，可通过设定
+\[
+m_1=\omega_n^2,\qquad m_2=2\zeta\omega_n
+\]
+将阻尼比显式嵌入误差主导二阶动态中。工程上可固定 $\omega_n$ 来统一响应速度标尺，再通过改变 $\zeta$ 观察超调与振荡程度的变化规律。
+
+\subsection{滑模反步控制结构回顾（用于实现）}[Structure recap for implementation]
+
+为便于嵌入式实现，本章采用“名义项 + 鲁棒项（边界层）”的可实现结构：每个通道构造滑模变量（示意写法，与第3章一致）
+\[
+s = \dot e + m_2 e + m_1 \int_0^t e(\tau)\,d\tau,
+\]
+并用饱和函数替代 $\mathrm{sgn}(\cdot)$ 抑制抖振：
+\[
+\mathrm{sat}\!\left(\frac{s}{\phi}\right)=
+\begin{cases}
+\mathrm{sgn}(s), & |s|>\phi,\\
+s/\phi, & |s|\le \phi.
+\end{cases}
+\]
+将不确定项（如 $h_x,h_y$）统一归入匹配扰动后，可按“名义抵消 + 鲁棒补偿”实现控制律。由于本章重点是验证与实现，控制律的详细推导与稳定性分析在第3章与第4章已给出，此处不再重复展开。
+
+\subsection{自适应律与参数在线调整（预留接口）}[Adaptive law interface (to be completed)]
+
+\textbf{（中期报告未给出完整自适应律推导与实现细节，本节仅保留标题与接口位置。）}
+
+本论文后续版本拟将鲁棒增益的保守常数/上界替换为自适应机制，以降低抖振并减少对不确定性上界先验信息的依赖。可考虑的实现路径包括：自适应增益调节、函数逼近（如神经网络）或扰动估计（DOB/ESO）等。具体自适应律形式、参数更新律及其稳定性证明将在论文完善阶段补充。
+
+\subsection{离散实现注意事项（积分与限幅）}[Discrete implementation notes]
+
+在 $33\,\mathrm{Hz}$ 视觉更新频率下，建议对积分项采用限幅或泄漏积分避免漂移：
+\[
+q[k]=\mathrm{sat}_{q_{\max}}\big(q[k-1]+T_s e[k]\big),
+\]
+并对 PWM 输出做幅值限幅以满足舵机物理约束。边界层宽度 $\phi$ 与采样噪声、执行器带宽相关：$\phi$ 越小稳态误差越小，但更容易抖振；$\phi$ 越大则更平滑但稳态误差界更大。
+
+\section{仿真验证与结果分析（中期报告已完成部分）}[Simulation verification and analysis]
+
+\subsection{Simulink 仿真环境与设置}[Simulink setup]
+
+中期报告基于式 \eqref{eq:ch5_reduced_model}--\eqref{eq:ch5_hx_hy} 在 Simulink 中搭建板球系统模型与控制器模块，并通过改变阻尼比设定观察固定点与闭合轨迹跟踪效果。下述结果均为中期报告阶段的仿真验证输出，用于展示阻尼比预设对瞬态响应的影响规律。
+
+\subsection{固定目标点跟踪实验}[Fixed set-point tracking]
+
+中期报告给出了 $x$ 方向固定目标点跟踪曲线，目标位置为 $100\,\mathrm{mm}$，对比了不同阻尼比设定下的响应过程。总体规律为：阻尼比减小时上升更快但更易产生超调与振荡；阻尼比增大时响应更平稳但收敛相对更慢。该现象与二阶欠阻尼系统的经典关系一致，说明“阻尼比—超调”映射在该控制结构下具有可观察性。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：$x$ 轴方向固定目标点跟踪曲线（不同阻尼比对比）\\
+  你后续可替换为：图3 x轴方向固定目标点跟踪实验}}
+  \caption{$x$ 轴方向固定目标点跟踪结果（中期报告）}
+  \label{fig:ch5_x_step}
+\end{figure}
+
+同理，中期报告给出了 $y$ 方向固定目标点跟踪曲线及顶视图轨迹。两轴结果呈现一致趋势：阻尼比参数能够直观调节系统的超调程度与振荡衰减速度，从而将原本依赖经验的整定过程转化为按指标选参的过程。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：$y$ 轴方向固定目标点跟踪曲线（不同阻尼比对比）\\
+  你后续可替换为：图4 y轴方向固定目标点跟踪实验}}
+  \caption{$y$ 轴方向固定目标点跟踪结果（中期报告）}
+  \label{fig:ch5_y_step}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：固定目标点跟踪顶视图轨迹对比\\
+  你后续可替换为：图5 固定目标点跟踪实验顶视图}}
+  \caption{固定目标点跟踪顶视图结果（中期报告）}
+  \label{fig:ch5_step_top}
+\end{figure}
+
+\subsection{圆形闭合轨迹跟踪实验}[Circular trajectory tracking]
+
+中期报告进一步给出了圆形轨迹跟踪结果，包括 $x$、$y$ 两轴随时间变化的跟踪曲线以及顶视图轨迹。闭合轨迹跟踪相较固定点任务更能体现动态目标下的相位滞后与稳态误差特征。仿真结果表明：在圆形轨迹任务中，控制器能够实现对参考轨迹的有效跟踪，并保持轨迹形状的整体一致性。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：圆形轨迹跟踪实验（$x$ 与 $y$ 方向）\\
+  你后续可替换为：图7 圆形轨迹跟踪实验}}
+  \caption{圆形轨迹跟踪结果（中期报告）}
+  \label{fig:ch5_circle_xy}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：圆形轨迹跟踪实验顶视图\\
+  你后续可替换为：图6 圆形轨迹跟踪实验顶视图}}
+  \caption{圆形轨迹跟踪顶视图结果（中期报告）}
+  \label{fig:ch5_circle_top}
+\end{figure}
+
+\subsection{三角形闭合轨迹跟踪实验（预留）}[Triangular trajectory tracking (to be completed)]
+
+\textbf{（中期报告提及“三角轨迹跟踪”，但当前未给出对应曲线/统计结果，本节预留。）}
+
+后续论文完善阶段将补充三角形轨迹等非光滑参考轨迹的跟踪实验，以验证控制器在参考角点处的鲁棒性与输入平滑性，并对比不同阻尼比设定下的峰值误差与恢复时间。
+
+\subsection{三类控制器对比统计（预留）}[Comparison among three controllers (to be completed)]
+
+\textbf{（中期报告阶段规划了三类控制器对比：基础 PDR-SMB、观测器型 PDR-SMB、扰动观测器+状态观测器型 PDR-SMB，本节预留完整对比表与统计指标。）}
+
+后续将按以下指标给出对比：
+\begin{itemize}
+  \item 峰值超调量 $M_p$、峰值时间 $t_p$、调节时间 $t_s$；
+  \item 轨迹跟踪 RMS 误差、最大瞬时误差；
+  \item 控制输入峰值与饱和比例（PWM 占空比范围）；
+  \item 抖振度量（如高频输入能量或输入变化率统计）。
+\end{itemize}
+
+\section{本章小结}[Summary]
+
+本章围绕板球平衡系统对预设阻尼比滑模反步控制思想进行了验证与实现总结。首先给出了中期报告中的板球系统动力学建模、状态空间表述与降阶控制模型，为控制器实现提供统一入口；随后总结了实验平台硬件与软件部署要点，包括 STM32F407 控制板、PD6010B 驱动板、视觉测量反馈与 $33\,\mathrm{Hz}$ 离散采样条件下的控制实现链路；最后基于中期报告给出的 Simulink 仿真结果，展示了固定目标点与圆形闭合轨迹任务中不同阻尼比设定对瞬态响应（超调/振荡/收敛速度）的影响规律，验证了“阻尼比—瞬态性能”的可解释映射。
+
+对于中期报告尚未完整给出的自适应律细节、三角轨迹跟踪结果以及三类控制器的系统化对比统计，本章保留了对应小节位置，便于后续论文完善时补充实物实验数据与完整对比结论。
+
+% Local Variables:
+% TeX-master: "../thesis"
+% TeX-engine: xetex
+% End:

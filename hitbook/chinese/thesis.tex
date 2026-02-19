@@ -62,7 +62,7 @@
 % openright=true|false
 %   含义：博士论文是否要求章节首页必须在奇数页，此选项不在规范要求中，按个
 %   人喜好自行决定。 默认否。注意，窝工的默认情况是打印版博士论文要求右翻页
-%   ，电子版要求非右翻页且无空白页。如果想DIY（或身不由己DIY）在什么地方右
+%   ，电子版要求非右翻页且无空白页。如果想DIY（或身不由己）在什么地方右
 %   翻页，将这个选项设置为false，然后在目标位置添加`\cleardoublepage`命令即
 %   可。
 % library=true|false
@@ -104,10 +104,10 @@
 %   只在使用\bibliographystyle{hithesis}或者{hitszthesis}时生效。
 % bibmaxauthor=<自然数>
 %   含义：参考文献列表中每条文献显示的最大作者数量，如有更多作者会自动添加
-%   "et al."或“等”（如果本条文献language={zh}或"zh"）。 0为全部显示。默认3.
+%   "et al."或“等”（如果本条文献={}或""）。 0为全部显示。默认3.
 %   该选项只在使用\bibliographystyle{hithesis}或者{hitszthesis}时生效。
 % biblabelalign=left|right
-%   含义：参考文献列表中的标号是左对齐(left)还是右对齐(right)。默认right.
+%   含义：参考文献列表中的标号是左对齐还是右对齐。默认right.
 %   在加入此选项前是左对齐，但这使文献达到100篇时第1-9篇文献标号后空格过大。
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{hithesis}
@@ -116,14 +116,16 @@
 
 \begin{document}
 \frontmatter
-\input{front/cover} % 封面
+\include{front/cover} % 封面
 \makecover
 \input{front/denotation}%物理量名称表,符合规范为主，有要求添加
 \tableofcontents %目录
 \mainmatter
-\include{body/regu}
-\include{body/introduction}
-\include{body/recruit}
+\include{body/1st}
+\include{body/3rd}
+\include{body/4th}
+\include{body/5th}
+\include{body/6th}
 \backmatter
 \include{back/conclusion}   % 结论
 % \bibliographystyle{gbt7714-numerical}
@@ -157,7 +159,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliography{reference} % 参考文献
 \begin{appendix}%附录
-\input{back/appA.tex}
+\input{back/au.tex}
 \end{appendix}
 \include{back/publications}    % 所发文章
 % 博士答辩决议表（以下三种用法择一）：
