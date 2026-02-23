@@ -118,16 +118,17 @@
 \frontmatter
 \include{front/cover} % 封面
 \makecover
-\input{front/denotation}%物理量名称表,符合规范为主，有要求添加
+% \input{front/denotation}%物理量名称表,符合规范为主，有要求添加
 \tableofcontents %目录
 \mainmatter
 \include{body/1st}
+\include{body/2nd}
 \include{body/3rd}
 \include{body/4th}
 \include{body/5th}
-\include{body/6th}
+
 \backmatter
-\include{back/conclusion}   % 结论
+% \include{back/conclusion}   % 结论
 % \bibliographystyle{gbt7714-numerical}
 % \bibliographystyle{gbt7714-numerical-quanjiao} % 全角标点的国标要求的参考文献样式, 哈尔滨硕博用这个
 % \bibliographystyle{hitszthesis} % 深圳校区的同学请使用 hitszthesis 文献样式
@@ -157,6 +158,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 硕博书序
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{back/conclusion.tex}
 \bibliography{reference} % 参考文献
 \begin{appendix}%附录
 \input{back/au.tex}
@@ -172,7 +174,7 @@
 %\authorization[scan.pdf]  % 使用扫描件，不添加页码（扫描件中已有页码时使用）
 %\authorization*[scan.pdf] % 使用扫描件，自动添加页码（扫描件中无页码时使用）
 \include{back/acknowledgements} %致谢
-\include{back/resume}          % 博士学位论文有个人简介
+% \include{back/resume}          % 博士学位论文有个人简介
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 博后书序
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

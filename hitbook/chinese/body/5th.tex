@@ -1,447 +1,274 @@
 % !Mode:: "TeX:UTF-8"
 
-\chapter{输入饱和约束下的预设阻尼比滑模反步控制器设计与分析}
+\chapter{预设阻尼比自适应滑模反步控制在板球系统上的验证}
+[Experimental verification of preset damping-ratio adaptive sliding-mode backstepping on a ball-and-plate system]
 
-本章在第2章“预设阻尼比滑模反步基准方案”的基础上，进一步面向工程系统中普遍存在的执行器输入幅值饱和问题，构建一种抗饱和的预设阻尼比滑模反步控制器，并给出可证明的稳定性与可操作的整定规则。
+本章面向板球平衡系统（Ball-and-Plate System, BPS），对前述预设阻尼比滑模反步控制思想进行验证与分析。验证目标主要包括：
+（1）检查预设阻尼比参数对瞬态超调与响应速度的调节规律是否清晰可观察；
+（2）在板球系统典型任务（固定目标点、闭合轨迹）下评估控制器的跟踪性能；
+（3）给出工程实现链路（视觉测量—嵌入式控制—执行机构）的实现要点，并为后续更强鲁棒/自适应版本的实物实验留出接口。
 
-在真实平台中（例如伺服系统、无刷直流电机、板球平衡系统的舵机驱动等），控制输入通常满足幅值限制 $|u|\le u_{\max}$。若忽略饱和，控制律在瞬态阶段可能给出过大的开关项或补偿项，从而导致：
-性能破坏：饱和引入输入失配，误差不再遵循预设的二阶目标动力学，超调/振荡可能显著变差；；稳定性风险：反步结构中含积分项或滤波环节时易产生“风up”，引发慢恢复或持续振荡；；滑模实现困难：开关项受限后到达条件被削弱，可能出现“到不了滑模面”或边界层内漂移。
+依据中期报告阶段性工作，本章已完成板球系统实验平台搭建与基于 Simulink 的仿真验证；其中固定目标点跟踪与圆形轨迹跟踪结果用于展示不同阻尼比设定下的瞬态差异。对于中期报告尚未给出细节的“自适应律完整推导”“三角轨迹跟踪实测结果”“三类控制器的系统对比统计”等内容，本章保留相应小节标题作为后续论文完善的插入位置。
 
-因此，本章的核心贡献是：将输入饱和作为控制设计的一等公民，把“预设阻尼比”的解释性优势保留下来，同时让闭环在饱和存在时仍能证明一致最终有界，并给出输入不越界的整定准则与可复现实验对比指标。此外，为增强“滑模专属性”，本章进一步引入积分滑模思想，消除到达相，从而在初始瞬态阶段降低对大幅开关增益的依赖，使“抗饱和 + 滑模”形成逻辑闭环。
+\section{引言}[Introduction]
 
-\vspace{0.5em}
-\noindent 本章结构：
-第\ref{sec:ch5_problem}节建立饱和模型与问题表述；
-第\ref{sec:ch5_design}节给出抗饱和控制器结构（含抗饱和补偿与边界层）；
-第\ref{sec:ch5_stability}节给出稳定性与性能界分析；
-第\ref{sec:ch5_ism}节给出积分滑模消除到达相的改进设计；
-第\ref{sec:ch5_tuning_impl}节总结整定规则与离散实现；
-第\ref{sec:ch5_sim}节给出可复现仿真方案与对比指标；
-最后第\ref{sec:ch5_summary}节小结。
+板球系统是一类典型的非线性、强耦合与参数不确定系统：执行器（舵机）通过改变平板姿态间接驱动小球运动，系统存在视觉测量噪声、离散采样、执行器死区与饱和等工程因素，能够较好检验控制方法的可落地性。
 
-% ===================================================================
-\section{问题描述：带输入饱和的不确定系统与控制目标}\label{sec:ch5_problem}
+本章将“预设阻尼比”作为核心瞬态指标：通过调整阻尼比（或等价参数）来观察固定点响应的超调/振荡程度与收敛速度变化，并在闭合轨迹任务中观察相位滞后与稳态误差随阻尼比设定的变化规律。
 
-\subsection{带幅值饱和的二阶不确定系统}\label{sec:ch5_sat_sys}
+\section{板球系统控制平台部署}[Control platform deployment of BPS]
 
-延续第3章基准模型，考虑二阶不确定非线性系统
-\begin{equation}\label{eq:ch5_sys}
+\subsection{系统硬件组成与信号链路}[Hardware components and signal chain]
+
+中期报告阶段已完成板球实验平台搭建。控制系统由嵌入式控制板、驱动板、两路舵机执行机构以及上位机视觉测量模块组成。执行机构通过两路舵机分别对平板在 $x$、$y$ 两个方向的倾角进行调节，从而实现二维位置跟踪控制。
+
+嵌入式端以 STM32F407 作为核心控制器，采用 Keil 进行软件开发，程序基于 STM32 HAL 库，使用 C 语言实现串口通信、定时器中断、ADC 采样等功能。驱动板选用 PD6010B，用于生成 PWM 信号并驱动舵机动作。视觉模块通过上位机获取小球位置，并以约 $33\,\mathrm{Hz}$ 的频率给出小球位置与速度信息，用于控制反馈。
+
+\subsection{软件架构与实时控制周期}[Software architecture and real-time control cycle]
+
+从工程实现角度，板球系统闭环一般包含以下链路：
+\[
+\text{视觉测量(PC)} \rightarrow \text{串口/通信} \rightarrow \text{控制律计算(STM32)} \rightarrow
+\text{PWM 输出} \rightarrow \text{舵机/平板姿态} \rightarrow \text{小球运动}.
+\]
+中期报告中给出的视觉输出频率约为 $33\,\mathrm{Hz}$，因此控制周期可按
+\[
+T_s \approx 1/33 \approx 0.03\,\mathrm{s}
+\]
+设计，并在嵌入式端以定时器中断节拍执行“数据接收—状态更新—控制计算—PWM 刷新”。
+
+\subsection{控制任务与对比控制器设置}[Tasks and controller configurations]
+
+按照中期报告的实验设计，板球系统验证任务包括：
+\begin{itemize}
+  \item \textbf{固定目标点跟踪：}考察不同阻尼比设定下的超调、振荡与收敛速度差异；
+  \item \textbf{闭合轨迹跟踪：}考察圆形轨迹（以及计划中的三角形轨迹）跟踪效果与稳态误差。
+\end{itemize}
+
+中期报告计划测试三类控制器：（1）预设阻尼比滑模反步控制器；（2）基于状态观测器的预设阻尼比滑模反步控制器；（3）基于扰动观测器与状态观测器的预设阻尼比滑模反步控制器。中期报告当前已给出平台与仿真验证结果，本章在结果小节中先呈现已完成部分，并保留完整对比统计的章节接口。
+
+\section{板球系统模型与降阶表述}[Modeling and reduced-order description]
+
+\subsection{耦合动力学模型（中期报告）}[Coupled dynamics in the midterm report]
+
+中期报告给出了板球系统的耦合动力学形式。设小球质量为 $m$，小球半径为 $r$，转动惯量相关项为 $I_b$，平板在 $x$、$y$ 方向的倾角分别为 $\alpha,\beta$，并考虑摩擦/扰动等影响，可写为（与中期报告一致的形式）：
+\begin{equation}\label{eq:ch5_full_dyn}
 \left\{
 \begin{aligned}
-  \dot{x}_1 &= x_2,\\
-  \dot{x}_2 &= b\,u + f + d,\\
-  y &= x_1,
+\left(m+\frac{I_b}{r^2}\right)\ddot x - m x \dot{\alpha}^2 - m y\dot{\alpha}\dot{\beta} - m g\sin\alpha &= -f_x,\\
+\left(m+\frac{I_b}{r^2}\right)\ddot y - m y \dot{\beta}^2 - m x\dot{\alpha}\dot{\beta} - m g\sin\beta &= -f_y,\\
+\left(m x^2 + I_x\right)\ddot{\alpha} + 2mx\dot x\dot\alpha + (m\dot x y + mx\dot y)\dot\beta + mxy\ddot\beta &= mgx\cos\alpha,\\
+\left(m y^2 + I_y\right)\ddot{\beta} + 2my\dot y\dot\beta + (m\dot x y + mx\dot y)\dot\alpha + mxy\ddot\alpha &= mgy\cos\beta.
 \end{aligned}
 \right.
 \end{equation}
-其中 $b\neq 0$ 已知或符号已知且有下界，$f$ 为未知/未建模项，$d$ 为外扰。
+其中 $f_x,f_y$ 用于描述摩擦/阻尼等综合效应（也可等效归入不确定项与扰动项）。
 
-定义参考轨迹 $y_d$ 及误差
-\begin{equation}\label{eq:ch5_e_def}
-  e_1 = y-y_d,\qquad e_2 = \dot y-\dot y_d = x_2-\dot y_d.
+\subsection{状态空间形式与解耦近似}[State-space form and decoupling approximation]
+
+中期报告进一步引入系数
+\begin{equation}\label{eq:ch5_k_def}
+k=\frac{m}{m+I_b/r^2},
 \end{equation}
-
-本章关注幅值饱和（最常见且最破坏瞬态的约束）。原因在于幅值限制对峰值/超调与到达过程影响最大；速率饱和通常可由执行器带宽与滤波近似建模，与本文主线耦合会显著增加推导复杂度，故暂不展开。令控制器计算得到的“期望输入”为 $u_c$，实际进入执行器的输入为
-\begin{equation}\label{eq:ch5_sat_map}
-  u = \mathrm{sat}(u_c)
-  \triangleq
-  \begin{cases}
-    u_{\max}\,\mathrm{sgn}(u_c), & |u_c|>u_{\max},\\
-    u_c, & |u_c|\le u_{\max},
-  \end{cases}
-\end{equation}
-其中 $u_{\max}>0$ 为已知幅值上界。
-
-为了把饱和效应显式纳入分析，定义饱和引起的输入失配（等效扰动）
-\begin{equation}\label{eq:ch5_du_def}
-  \Delta_u \triangleq u-u_c = \mathrm{sat}(u_c)-u_c.
-\end{equation}
-显然，当 $|u_c|\le u_{\max}$ 时 $\Delta_u=0$；当发生饱和时，$\Delta_u$ 与 $u_c$ 同号相反并使输入“被削弱”。该项会进入系统为匹配扰动 $b\Delta_u$。
-
-\subsection{不确定性界与基本假设}\label{sec:ch5_assump}
-
-与第3章一致，设存在名义模型 $\hat f$，并定义模型误差 $\tilde f\triangleq f-\hat f$ 与总不确定性
-\begin{equation}\label{eq:ch5_delta}
-  \Delta \triangleq \tilde f + d,\qquad |\Delta|\le \bar\Delta.
-\end{equation}
-同时假设参考信号 $y_d,\dot y_d,\ddot y_d$ 有界；$|b|\ge \underline b>0$。
-
-饱和引入的 $\Delta_u$ 一般无法先验给出固定上界，因为它依赖 $u_c$；因此本章采用“两层策略”：
-层1（不饱和区间保证）：给出可操作的参数规则，使得在典型工况下 $|u_c|\le u_{\max}$，从而完全避免饱和；；层2（饱和时仍稳定）：即使暂时发生饱和，也通过抗饱和补偿环节把 $\Delta_u$ 的影响吸收进 Lyapunov 分析，保证系统一致最终有界并可估计误差界。
-
-\subsection{控制目标}\label{sec:ch5_goal}
-
-本章目标可表述为：
-稳定性：闭环所有信号有界，$e_1,e_2$ 一致最终有界（理想不饱和时可获得更强收敛性质）；；预设阻尼比：在不饱和或仅小范围饱和时，$e_1$ 的主导瞬态近似满足；输入约束：尽可能保证 $|u|\le u_{\max}$ 且避免长时间饱和；必要时给出饱和下性能退化的可解释界。
-
-% ===================================================================
-\section{抗饱和预设阻尼比滑模反步控制器设计}\label{sec:ch5_design}
-
-\subsection{滑模变量与二阶目标结构复用}
-
-沿用第3章的“含积分终端”结构，定义积分状态
-\begin{equation}\label{eq:ch5_q}
-  q \triangleq \int_0^t e_1\,d\tau,\qquad \dot q = e_1,
-\end{equation}
-并定义滑模变量
-\begin{equation}\label{eq:ch5_s}
-  s \triangleq \dot e_1 + m_2 e_1 + m_1 q = e_2 + m_2 e_1 + m_1 q,
-\end{equation}
-其中 $m_1>0,m_2>0$ 用于嵌入阻尼比目标。注意恒等式
-\begin{equation}\label{eq:ch5_sdot_key}
-  \dot s = \ddot e_1 + m_2 \dot e_1 + m_1 e_1,
-\end{equation}
-因此只要能让 $\dot s$ 满足到达律或其扰动版本，$e_1$ 便呈现二阶可解释响应。
-
-由系统\eqref{eq:ch5_sys}与误差定义\eqref{eq:ch5_e_def}可得
-\begin{equation}\label{eq:ch5_sdot_expand}
+并将系统整理为状态空间形式（记 $x_1=x,\ x_2=\dot x,\ x_3=\alpha,\ x_4=\dot\alpha,\ x_5=y,\ x_6=\dot y,\ x_7=\beta,\ x_8=\dot\beta$）：
+\begin{equation}\label{eq:ch5_state_space}
+\left\{
 \begin{aligned}
-  \dot s
-  &= \dot e_2 + m_2 \dot e_1 + m_1 e_1\\
-  &= b\,u + f+d - \ddot y_d + m_2 e_2 + m_1 e_1\\
-  &= b\,u + \hat f - \ddot y_d + m_2 e_2 + m_1 e_1 + \Delta.
+\dot x_1 &= x_2 + w_x,\\
+\dot x_2 &= -kgx_3 + kx_1x_4^2 + x_4x_5x_8,\\
+\dot x_3 &= x_4,\\
+\dot x_4 &= u_x,\\
+\dot x_5 &= x_6 + w_y,\\
+\dot x_6 &= -kgx_7 + kx_5x_8^2 + x_1x_4x_8,\\
+\dot x_7 &= x_8,\\
+\dot x_8 &= u_y,
 \end{aligned}
+\right.
 \end{equation}
+其中 $u_x,u_y$ 为输入，$w_x,w_y$ 表示综合扰动/噪声注入项。
 
-\subsection{控制律总体结构：名义项 + 滑模鲁棒项 + 抗饱和补偿}
-
-本章将“计算得到的期望输入”写为
-\begin{equation}\label{eq:ch5_uc_struct}
-  u_c = u_0 + u_{\mathrm{sm}} + u_{\mathrm{aw}},
-\end{equation}
-其中：
-$u_0$：名义补偿项，用于实现二阶目标结构；；$u_{\mathrm{sm}}$：滑模鲁棒项（带边界层），用于覆盖 $\Delta$；；$u_{\mathrm{aw}}$：抗饱和补偿项，专门吸收 $\Delta_u$ 对 $s$ 动力学的破坏。
-
-实际进入系统的输入为 $u=\mathrm{sat}$。代回\eqref{eq:ch5_sdot_expand}后会出现 $b\Delta_u$，这是本章必须“显式处理”的关键。
-
-\paragraph{（1）名义项}
-令
-\begin{equation}\label{eq:ch5_u0}
-  u_0 = \frac{1}{b}\Big(-\hat f + \ddot y_d - m_2 e_2 - m_1 e_1\Big).
-\end{equation}
-若忽略不确定性与饱和，则 $u=u_0$ 时由\eqref{eq:ch5_sdot_expand}得到 $\dot s=\Delta\approx 0$，即误差呈现二阶目标结构。
-
-\paragraph{（2）滑模鲁棒项（边界层实现）}
-采用饱和型边界层以抑制抖振：
-\begin{equation}\label{eq:ch5_sat_fun}
-  \mathrm{sat}\!\left(\frac{s}{\phi}\right)=
-  \begin{cases}
-    \mathrm{sgn}(s), & |s|>\phi,\\
-    \frac{s}{\phi}, & |s|\le \phi,
-  \end{cases}
-  \qquad \phi>0.
-\end{equation}
-设计
-\begin{equation}\label{eq:ch5_usm}
-  u_{\mathrm{sm}} = -\frac{1}{b}\Big(\rho+\varepsilon\Big)\,
-  \mathrm{sat}\!\left(\frac{s}{\phi}\right),
-\end{equation}
-其中 $\rho\ge \bar\Delta$ 为鲁棒增益，$\varepsilon>0$ 为裕度。
-
-\paragraph{（3）抗饱和补偿项：辅助系统法（最稳的可证写法）}
-定义饱和失配信号
-\begin{equation}\label{eq:ch5_delta_u_signal}
-  \Delta_u = u-u_c.
-\end{equation}
-引入辅助动态（一个一阶稳定滤波/吸收器）
-\begin{equation}\label{eq:ch5_xi_dyn}
-  \dot \xi = -\lambda \xi + b\,\Delta_u,\qquad \lambda>0,
-\end{equation}
-并设计抗饱和补偿
-\begin{equation}\label{eq:ch5_uaw}
-  u_{\mathrm{aw}} = -\frac{1}{b}\,k_{\mathrm{aw}}\,\xi,\qquad k_{\mathrm{aw}}>0.
-\end{equation}
-直观理解：当发生饱和时，$b\Delta_u$ 会把 $s$ 的动力学“推偏”；我们用 $\xi$ 去跟踪并吸收这部分偏差，并把它以连续方式反馈回 $u_c$，从而避免积分项/滑模项在饱和时持续累积。
-
-\paragraph{（4）最终控制律}
-综合\eqref{eq:ch5_uc_struct}--\eqref{eq:ch5_uaw}，得到
-\begin{equation}\label{eq:ch5_final}
-\boxed{
+在板球系统常见工况下，平板倾角一般不大（例如不超过 $10^\circ$），因此可近似 $\sin x_3\approx x_3,\ \sin x_7\approx x_7$，并将小量项（如 $x_1x_4^2$、$x_4x_5x_8$ 等）作为不确定非线性合并处理，从而可将系统按 $x$ 轴与 $y$ 轴两个方向近似解耦为子系统（中期报告给出的写法）：
+\begin{equation}\label{eq:ch5_xy_subsystems}
+\left\{
 \begin{aligned}
-  u_c &= \frac{1}{b}\Big(-\hat f + \ddot y_d - m_2 e_2 - m_1 e_1\Big)
-        -\frac{1}{b}\Big(\rho+\varepsilon\Big)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
-        -\frac{1}{b}k_{\mathrm{aw}}\xi,\\
-  u &= \mathrm{sat}(u_c),\\
-  \dot \xi &= -\lambda \xi + b\,\Delta_u,\\
-  s &= e_2+m_2 e_1+m_1 q,\qquad \dot q=e_1.
-\end{aligned}}
-\end{equation}
-
-\subsection{闭环滑模变量动力学的“分解形式”}
-
-将\eqref{eq:ch5_final}代入\eqref{eq:ch5_sdot_expand}，得到
-\begin{equation}\label{eq:ch5_sdot_closed}
-  \dot s
-  = -\Big(\rho+\varepsilon\Big)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
-    -k_{\mathrm{aw}}\xi + \Delta + b\,\Delta_u.
-\end{equation}
-再利用辅助系统\eqref{eq:ch5_xi_dyn}，可把 $b\Delta_u$ 与 $\xi$ 捆绑进 Lyapunov 分析，这正是“抗饱和可证”的关键所在。
-
-% ===================================================================
-\section{稳定性与性能分析：饱和存在下的一致最终有界}\label{sec:ch5_stability}
-
-本节给出两类结论：
-结论A（饱和也不炸）：即使发生饱和，闭环依然一致最终有界，并可给出误差界与参数的关系；；结论B（尽量不饱和）：给出一组可操作的不饱和条件/整定规则，使得在典型工况下 $|u_c|\le u_{\max}$，从而恢复第2章的“预设阻尼比”理想解释。
-
-\subsection{饱和下 Lyapunov 分析：$s$ 子系统}
-
-取候选 Lyapunov 函数
-\begin{equation}\label{eq:ch5_V}
-  V \triangleq \frac12 s^2 + \frac{1}{2\kappa}\xi^2,\qquad \kappa>0.
-\end{equation}
-由\eqref{eq:ch5_sdot_closed}与\eqref{eq:ch5_xi_dyn}得
-\begin{equation}\label{eq:ch5_Vdot_expand}
-\begin{aligned}
-  \dot V
-  &= s\dot s + \frac{1}{\kappa}\xi\dot\xi\\
-  &= s\Big[-\Big(\rho+\varepsilon\Big)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
-      -k_{\mathrm{aw}}\xi+\Delta+b\Delta_u\Big]
-    +\frac{1}{\kappa}\xi\Big(-\lambda\xi+b\Delta_u\Big).
+X:\quad
+\dot x_1 &= x_2 + w_x,\\
+\dot x_2 &= -kgx_3 + kx_1x_4^2 + x_4x_5x_8,\\
+\dot x_3 &= x_4,\\
+\dot x_4 &= u_x,\\
+y_1 &= x_1,
 \end{aligned}
-\end{equation}
-
-注意到 $\mathrm{sat}$ 满足 $s\,\mathrm{sat}=|s|$或 $s^2/\phi$，因此总能写成
-\begin{equation}\label{eq:ch5_sat_pos}
-  s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right)\ \ge\ \min\Big\{|s|,\frac{s^2}{\phi}\Big\}.
-\end{equation}
-
-此外，利用不确定性界 $|\Delta|\le \bar\Delta$，并选取 $\rho\ge \bar\Delta$，可得
-\begin{equation}\label{eq:ch5_sDelta_bound}
-  s\Delta \le |s|\,|\Delta|\le |s|\,\rho.
-\end{equation}
-
-把\eqref{eq:ch5_sDelta_bound}代入\eqref{eq:ch5_Vdot_expand}，得到
-\begin{equation}\label{eq:ch5_Vdot_step1}
+\right.
+\qquad
+\left\{
 \begin{aligned}
-  \dot V
-  &\le -\Big(\rho+\varepsilon\Big)s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right) + |s|\,\rho
-      -k_{\mathrm{aw}}s\xi + s\,b\Delta_u
-      -\frac{\lambda}{\kappa}\xi^2 + \frac{b}{\kappa}\xi\Delta_u\\
-  &\le -\varepsilon\,\min\Big\{|s|,\frac{s^2}{\phi}\Big\}
-      -k_{\mathrm{aw}}s\xi
-      -\frac{\lambda}{\kappa}\xi^2
-      + b\Delta_u\Big|s+\frac{1}{\kappa}\xi\Big|.
+Y:\quad
+\dot x_5 &= x_6 + w_y,\\
+\dot x_6 &= -kgx_7 + kx_5x_8^2 + x_1x_4x_8,\\
+\dot x_7 &= x_8,\\
+\dot x_8 &= u_y,\\
+y_2 &= x_5.
 \end{aligned}
+\right.
 \end{equation}
 
-关键在最后一项：它只在饱和发生时非零。这里给出一种“保守但可写、可证”的处理方式：把 $b\Delta_u$ 视为有界信号，并通过辅助系统与参数选择把其影响压到最终界里。
+\subsection{降阶控制模型（中期报告）}[Reduced-order control-oriented model]
 
-由于 $u=\mathrm{sat}$，有 $|u|\le u_{\max}$；同时 $u_c$ 由控制器计算，其瞬时值可在线获得。于是 $|\Delta_u|=|u-u_c|\le |u|+|u_c|\le u_{\max}+|u_c|$。这虽然不是固定常数，但可用于推导“最终界与饱和程度相关”的结论。工程上更关心的是：当饱和仅在短暂瞬态出现，$\Delta_u$ 的能量有限，从而误差仍能被拉回。
-
-为了把证明写得更干净，本章采用常见做法：将饱和等效项的影响“吸收进 $\xi$”，并用 Young 不等式把交叉项分解。对任意 $\eta_1,\eta_2>0$，有
-\begin{equation}\label{eq:ch5_young}
-  b|\Delta_u|\Big|s+\frac{1}{\kappa}\xi\Big|
-  \le \frac{\eta_1}{2}s^2 + \frac{1}{2\eta_1}b^2\Delta_u^2
-     +\frac{\eta_2}{2\kappa^2}\xi^2 + \frac{1}{2\eta_2}b^2\Delta_u^2.
+中期报告指出：在实际板球系统中，$X$ 与 $Y$ 方向的控制扭矩由两个舵机产生，且姿态相关的部分状态不可直接测量，因此可进一步得到面向控制的降阶模型：
+\begin{equation}\label{eq:ch5_reduced_model}
+\left\{
+\begin{aligned}
+\dot x_1 &= x_2,\\
+\dot x_2 &= b\big(gk_f u_x + h_x\big),\\
+\dot x_5 &= x_6,\\
+\dot x_6 &= b\big(gk_f u_y + h_y\big),
+\end{aligned}
+\right.
 \end{equation}
-将其代入\eqref{eq:ch5_Vdot_step1}，并选取 $k_{\mathrm{aw}}$ 使 $-k_{\mathrm{aw}}s\xi$ 可用 $s^2+\xi^2$ 上界，即可得到
-\begin{equation}\label{eq:ch5_Vdot_uub}
-  \dot V
-  \le -c_1 s^2 - c_2 \xi^2 + c_3\,\Delta_u^2,
+其中 $u_x,u_y$ 为两路多级 PWM 输入，$k_f$ 为增益系数，$h_x,h_y$ 为不确定非线性项：
+\begin{equation}\label{eq:ch5_hx_hy}
+h_x = x_1x_4^2 + x_4x_5x_8 - \frac{F_x}{m},\qquad
+h_y = x_5x_8^2 + x_1x_4x_8 - \frac{F_y}{m}.
 \end{equation}
-其中 $c_1,c_2>0$ 可通过 $\lambda,k_{\mathrm{aw}},\kappa,\eta_1,\eta_2$ 选取保证，$c_3>0$ 为常数。
+式 \eqref{eq:ch5_reduced_model}--\eqref{eq:ch5_hx_hy} 为后续控制器实现与仿真验证提供了统一的建模入口：高阶耦合项与摩擦/扰动可等效吸收至 $h_x,h_y$，并由鲁棒/自适应补偿项处理。
 
-由\eqref{eq:ch5_Vdot_uub}可得典型 UUB 结论：当 $\Delta_u$ 的幅值或能量受限，则 $s$ 有界，且 $s$ 可被压到一个与饱和程度相关的邻域内。
+\section{控制器在板球系统中的实现要点}[Implementation of the controller on BPS]
 
-\paragraph{解释：这意味着什么？}
-若控制器整定得好，使 $|u_c|\le u_{\max}$，则\eqref{eq:ch5_Vdot_uub}退化为严格负定，$s$ 快速进入边界层并保持，此时恢复第2章的“预设阻尼比”解释；；若确实会饱和，则 $s$ 的最终界与 $\Delta_u^2$ 成正相关：饱和越狠，性能退化越明显；但由于有 $\xi$ 吸收，系统不会出现典型的 windup 失稳或长时间大幅振荡。
+\subsection{控制目标与误差定义}[Objectives and error definitions]
 
-\subsection{$e_1$ 子系统有界性与预设阻尼比的“近似保持”}
-
-由 $s=e_2+m_2 e_1+m_1 q$ 与 $e_2=\dot e_1$，得到
-\begin{equation}\label{eq:ch5_e1q}
-  \dot e_1 = -m_2 e_1 - m_1 q + s,\qquad \dot q=e_1.
-\end{equation}
-写成矩阵形式
-\begin{equation}\label{eq:ch5_lin}
-\begin{bmatrix}\dot e_1\\ \dot q\end{bmatrix}
-=
-\underbrace{\begin{bmatrix}
- -m_2 & -m_1\\
-  1   &  0
-\end{bmatrix}}_{A}
-\begin{bmatrix}e_1\\ q\end{bmatrix}
-+
-\begin{bmatrix}1\\0\end{bmatrix}s.
-\end{equation}
-当 $m_1>0,m_2>0$ 时，$A$ 为 Hurwitz，因此 $s$ 有界 $\Rightarrow $ 一致最终有界。
-
-进一步，由\eqref{eq:ch5_sdot_key}与\eqref{eq:ch5_sdot_closed}可把误差动力学写成
-\begin{equation}\label{eq:ch5_e1_forced}
-  \ddot e_1 + m_2 \dot e_1 + m_1 e_1
-  = -\Big(\rho+\varepsilon\Big)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
-    -k_{\mathrm{aw}}\xi + \Delta + b\Delta_u.
-\end{equation}
-当不饱和或弱饱和时，右端可被压到较小范围，因此 $e_1$ 的主导动态仍近似呈现二阶欠阻尼响应，其阻尼比由
+设二维期望轨迹为
 \[
-\zeta=\frac{m_2}{2\sqrt{m_1}}
+\bm y_d(t)=\begin{bmatrix}x_d(t)\\y_d(t)\end{bmatrix},\qquad
+\bm y(t)=\begin{bmatrix}x(t)\\y(t)\end{bmatrix},
 \]
-解释；而强饱和时，右端增大，表现为“二阶目标动力学受到较强外力扰动”，超调与相位滞后会退化，这个退化程度可通过 $\Delta_u$ 的统计量（如峰值/均方）量化。
-
-\subsection{不饱和区间保证：一组可操作的输入不越界整定准则}\label{sec:ch5_nosat_rule}
-
-工程上常见诉求是：尽量不饱和，否则再强的鲁棒项也会被执行器“剪掉”。下面给出一组“可写进论文的”保守准则，用于在典型工况下保证 $|u_c|\le u_{\max}$。
-
-由\eqref{eq:ch5_final}，有
-\begin{equation}\label{eq:ch5_uc_bound0}
-  |u_c|
-  \le \frac{1}{|b|}\Big(
-  |\hat f| + |\ddot y_d| + m_2|e_2| + m_1|e_1|
-  +\big|\mathrm{sat}\big|
-  +k_{\mathrm{aw}}|\xi|
-  \Big).
-\end{equation}
-注意 $\big|\mathrm{sat}\big|\le 1$。因此，只要能为典型工况给出信号上界
+定义误差向量
 \[
-|\hat f|\le \bar f_0,\quad |\ddot y_d|\le \bar y_2,\quad |e_1|\le \bar e_1,\quad |e_2|\le \bar e_2,\quad |\xi|\le \bar\xi,
+\bm e(t)=\bm y(t)-\bm y_d(t)=\begin{bmatrix}e_x(t)\\e_y(t)\end{bmatrix}.
 \]
-则一个充分条件为
-\begin{equation}\label{eq:ch5_uc_suff}
-  \frac{1}{\underline b}\Big(\bar f_0+\bar y_2+m_2\bar e_2+m_1\bar e_1+k_{\mathrm{aw}}\bar\xi\Big)\ \le\ u_{\max}.
-\end{equation}
+对每个通道（$x$、$y$）均可视为二阶不确定系统形式，进而复用第3章给出的“预设阻尼比 + 滑模反步”设计结构。
 
-\paragraph{如何用这条式子？}
-它告诉你：$m_1,m_2$ 不能无限大。你想要更快就会推高 $m_1\bar e_1$，更大阻尼也会推高 $m_2\bar e_2$；；它也告诉你：滑模鲁棒增益 $\rho$ 必须考虑输入余量。$\rho$ 选太大，输入必然更容易触顶；；抗饱和项 $k_{\mathrm{aw}}\bar\xi$ 是“保险丝”：它允许你在偶发饱和时不炸，但它本身也会占用输入预算，所以要配合 $\lambda$共同整定。
+\subsection{预设阻尼比参数整定方式}[Tuning via preset damping ratio]
 
-这就是本章“可证明 + 可整定”的核心：你可以把\eqref{eq:ch5_uc_suff}当作工程整定的上层约束，把“预设阻尼比”从纯理想指标推进到“考虑执行器极限的可落地指标”。
-
-% ===================================================================
-\section{积分滑模改进：消除到达相以减小饱和风险}\label{sec:ch5_ism}
-
-你在讨论里提到“让创新点更滑模”，最典型的滑模专属强点之一就是积分滑模：通过构造积分型滑模面，使系统从 $t=0$ 起就位于滑模面上，从而：
-初始瞬态不需要很大的开关增益去“拉到滑模面”，自然更不容易触发饱和；；抗不确定性从一开始就生效（这在强扰动、强初值偏差时尤其关键）。
-
-\subsection{积分滑模面构造}
-
-考虑将第\ref{sec:ch5_design}节的 $\dot s$ 展开式\eqref{eq:ch5_sdot_expand}分解为“名义部分 + 不确定部分”。定义名义控制 $u_0$ 仍为\eqref{eq:ch5_u0}，并构造一个积分状态 $w$：
-\begin{equation}\label{eq:ch5_w_def}
-  \dot w
-  \triangleq
-  b\,u_0 + \hat f - \ddot y_d + m_2 e_2 + m_1 e_1,
-  \qquad w(0) = s(0).
-\end{equation}
-再定义积分滑模变量
-\begin{equation}\label{eq:ch5_sism}
-  s_I \triangleq s-w.
-\end{equation}
-由初值 $w(0)=s(0)$ 可得
+中期报告的仿真验证采用不同阻尼比设定（例如 $\zeta=1,\ 0.707,\ 0.6$）来观察固定点响应差异。对应第3章参数映射，可通过设定
 \[
-s_I(0)=0,
+m_1=\omega_n^2,\qquad m_2=2\zeta\omega_n
 \]
-即系统从初始时刻起就满足积分滑模条件（无到达相）。
+将阻尼比显式嵌入误差主导二阶动态中。工程上可固定 $\omega_n$ 来统一响应速度标尺，再通过改变 $\zeta$ 观察超调与振荡程度的变化规律。
 
-对\eqref{eq:ch5_sism}求导并结合\eqref{eq:ch5_sdot_expand}与\eqref{eq:ch5_w_def}，得到一个极其关键的简化：
-\begin{equation}\label{eq:ch5_sI_dyn}
-  \dot s_I
-  = b\big(u_{\mathrm{sm},I}+u_{\mathrm{aw}}+\Delta_u\big) + \Delta.
-\end{equation}
-也就是说，积分滑模变量的动态中名义部分被完全消掉，只剩下我们需要用滑模项处理的不确定性与（可能存在的）饱和失配。
+\subsection{滑模反步控制结构回顾（用于实现）}[Structure recap for implementation]
 
-\subsection{ISM 下的滑模项与抗饱和补偿}
+为便于嵌入式实现，本章采用“名义项 + 鲁棒项（边界层）”的可实现结构：每个通道构造滑模变量（示意写法，与第3章一致）
+\[
+s = \dot e + m_2 e + m_1 \int_0^t e(\tau)\,d\tau,
+\]
+并用饱和函数替代 $\mathrm{sgn}(\cdot)$ 抑制抖振：
+\[
+\mathrm{sat}\!\left(\frac{s}{\phi}\right)=
+\begin{cases}
+\mathrm{sgn}(s), & |s|>\phi,\\
+s/\phi, & |s|\le \phi.
+\end{cases}
+\]
+将不确定项（如 $h_x,h_y$）统一归入匹配扰动后，可按“名义抵消 + 鲁棒补偿”实现控制律。由于本章重点是验证与实现，控制律的详细推导与稳定性分析在第3章与第4章已给出，此处不再重复展开。
 
-令控制结构改为
-\begin{equation}\label{eq:ch5_ism_control}
-  u_c = u_0 + u_{\mathrm{sm},I} + u_{\mathrm{aw}},\qquad u=\mathrm{sat},
-\end{equation}
-其中
-\begin{equation}\label{eq:ch5_usmI}
-  u_{\mathrm{sm},I}
-  = -\frac{1}{b}\Big(\rho+\varepsilon\Big)\mathrm{sat}\!\left(\frac{s_I}{\phi}\right),
-\end{equation}
-抗饱和环节仍采用\eqref{eq:ch5_xi_dyn}--\eqref{eq:ch5_uaw}，只需将 $s$ 替换为 $s_I$ 即可。
+\subsection{自适应律与参数在线调整（预留接口）}[Adaptive law interface (to be completed)]
 
-此时由\eqref{eq:ch5_sI_dyn}可得
-\begin{equation}\label{eq:ch5_sI_closed}
-  \dot s_I
-  = -\Big(\rho+\varepsilon\Big)\mathrm{sat}\!\left(\frac{s_I}{\phi}\right)
-    -k_{\mathrm{aw}}\xi + \Delta + b\Delta_u.
-\end{equation}
-这与\eqref{eq:ch5_sdot_closed}形式一致，但重要差异在于：$s_I(0)=0$，因此不会出现传统滑模那种“先把 $s$ 拉到 0”的到达过程——这在工程上通常意味着：初始时刻所需开关能量显著降低，更抗饱和。
+\textbf{（中期报告未给出完整自适应律推导与实现细节，本节仅保留标题与接口位置。）}
 
-\subsection{ISM 改进带来的工程含义}
+本论文后续版本拟将鲁棒增益的保守常数/上界替换为自适应机制，以降低抖振并减少对不确定性上界先验信息的依赖。可考虑的实现路径包括：自适应增益调节、函数逼近（如神经网络）或扰动估计（DOB/ESO）等。具体自适应律形式、参数更新律及其稳定性证明将在论文完善阶段补充。
 
-若你把第2章/第4章的实验对比设计成“同样的 $y_d$”，通常会观察到：ISM 版本的控制输入峰值更小、触顶次数更少；；由于饱和触发更少，误差更贴近二阶目标结构，阻尼比预设的可解释性更稳；；写论文时你可以把这一节作为“滑模专属强点”：在输入受限场景下，用 ISM 消除到达相以降低输入峰值，从而把鲁棒滑模与抗饱和耦合起来。
+\subsection{离散实现注意事项（积分与限幅）}[Discrete implementation notes]
 
-% ===================================================================
-\section{参数整定与离散实现要点}\label{sec:ch5_tuning_impl}
+在 $33\,\mathrm{Hz}$ 视觉更新频率下，建议对积分项采用限幅或泄漏积分避免漂移：
+\[
+q[k]=\mathrm{sat}_{q_{\max}}\big(q[k-1]+T_s e[k]\big),
+\]
+并对 PWM 输出做幅值限幅以满足舵机物理约束。边界层宽度 $\phi$ 与采样噪声、执行器带宽相关：$\phi$ 越小稳态误差越小，但更容易抖振；$\phi$ 越大则更平滑但稳态误差界更大。
 
-本节给出“能直接拿去调参/写实验”的规则，目标是：让你在第5章做实验时不靠玄学。
+\section{仿真验证与结果分析（中期报告已完成部分）}[Simulation verification and analysis]
 
-\subsection{阻尼比指标到 $(m_1,m_2)$ 的选择}
+\subsection{Simulink 仿真环境与设置}[Simulink setup]
 
-与第3章一致：
-\begin{equation}\label{eq:ch5_m_from_zeta}
-  m_1=\omega_{n,d}^2,\qquad m_2=2\zeta_d\omega_{n,d},
-\end{equation}
-其中 $\zeta_d\in(0,1)$ 为预设阻尼比，$\omega_{n,d}$ 决定响应速度。
+中期报告基于式 \eqref{eq:ch5_reduced_model}--\eqref{eq:ch5_hx_hy} 在 Simulink 中搭建板球系统模型与控制器模块，并通过改变阻尼比设定观察固定点与闭合轨迹跟踪效果。下述结果均为中期报告阶段的仿真验证输出，用于展示阻尼比预设对瞬态响应的影响规律。
 
-抗饱和提示：执行器越弱，$\omega_{n,d}$ 的上限越低；否则 $u_0$ 项中 $m_1 e_1,m_2 e_2$ 会把 $u_c$ 推到饱和。
+\subsection{固定目标点跟踪实验}[Fixed set-point tracking]
 
-\subsection{鲁棒增益 $\rho$ 与边界层 $\phi$}
+中期报告给出了 $x$ 方向固定目标点跟踪曲线，目标位置为 $100\,\mathrm{mm}$，对比了不同阻尼比设定下的响应过程。总体规律为：阻尼比减小时上升更快但更易产生超调与振荡；阻尼比增大时响应更平稳但收敛相对更慢。该现象与二阶欠阻尼系统的经典关系一致，说明“阻尼比—超调”映射在该控制结构下具有可观察性。
 
-先给 $\rho$ 一个够用但不夸张的初值，使其覆盖你估计的 $\bar\Delta$；；然后用输入预算约束\eqref{eq:ch5_uc_suff}回推：如果必饱和，就优先减小 $\rho$ 或降低 $\omega_{n,d}$；；边界层 $\phi$ 与噪声/采样强相关：$\phi$ 太小会放大开关抖动，间接引发饱和；工程上建议从“传感噪声标准差的 3--5 倍”起步，再微调。
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：$x$ 轴方向固定目标点跟踪曲线（不同阻尼比对比）\\
+  你后续可替换为：图3 x轴方向固定目标点跟踪实验}}
+  \caption{$x$ 轴方向固定目标点跟踪结果（中期报告）}
+  \label{fig:ch5_x_step}
+\end{figure}
 
-\subsection{抗饱和环节 $\lambda,k_{\mathrm{aw}}$ 的选择}
+同理，中期报告给出了 $y$ 方向固定目标点跟踪曲线及顶视图轨迹。两轴结果呈现一致趋势：阻尼比参数能够直观调节系统的超调程度与振荡衰减速度，从而将原本依赖经验的整定过程转化为按指标选参的过程。
 
-$\lambda$ 控制 $\xi$ 的泄放速度，越大越“快忘掉饱和误差”，但太大可能把离散噪声放大成高频输入；；$k_{\mathrm{aw}}$ 控制补偿强度：太小则 windup 抑制不足，太大则 $u_{\mathrm{aw}}$ 本身占用输入预算。
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：$y$ 轴方向固定目标点跟踪曲线（不同阻尼比对比）\\
+  你后续可替换为：图4 y轴方向固定目标点跟踪实验}}
+  \caption{$y$ 轴方向固定目标点跟踪结果（中期报告）}
+  \label{fig:ch5_y_step}
+\end{figure}
 
-一个可操作的经验起点：
-\begin{equation}\label{eq:ch5_aw_rule}
-  \lambda \in [5\omega_{n,d},\,20\omega_{n,d}],\qquad
-  k_{\mathrm{aw}} \in [0.5,\,5].
-\end{equation}
-然后在实验中观察两类曲线：饱和触发次数与恢复时间。若频繁触顶且恢复慢，增大 $k_{\mathrm{aw}}$ 或 $\lambda$；若输入高频抖动明显，减小 $\lambda$ 或增大 $\phi$。
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：固定目标点跟踪顶视图轨迹对比\\
+  你后续可替换为：图5 固定目标点跟踪实验顶视图}}
+  \caption{固定目标点跟踪顶视图结果（中期报告）}
+  \label{fig:ch5_step_top}
+\end{figure}
 
-\subsection{离散实现建议}
+\subsection{圆形闭合轨迹跟踪实验}[Circular trajectory tracking]
 
-对控制器\eqref{eq:ch5_final}，离散实现可用前向欧拉：
-\begin{equation}\label{eq:ch5_discrete}
-\begin{aligned}
-  q[k+1]   &= q[k] + T_s e_1[k],\\
-  \xi[k+1] &= \xi[k] + T_s\big(-\lambda \xi[k] + b\,\Delta_u[k]\big),\\
-  s[k]     &= e_2[k] + m_2 e_1[k] + m_1 q[k],\\
-  u_c[k]   &= \frac{1}{b}\Big(-\hat f[k] + \ddot y_d[k] - m_2 e_2[k] - m_1 e_1[k]\Big)\\
-            &\quad -\frac{1}{b}\Big(\rho+\varepsilon\Big)\mathrm{sat}\!\left(\frac{s[k]}{\phi}\right)
-            -\frac{1}{b}k_{\mathrm{aw}}\xi[k],\\
-  u[k]     &= \mathrm{sat}(u_c[k]).
-\end{aligned}
-\end{equation}
+中期报告进一步给出了圆形轨迹跟踪结果，包括 $x$、$y$ 两轴随时间变化的跟踪曲线以及顶视图轨迹。闭合轨迹跟踪相较固定点任务更能体现动态目标下的相位滞后与稳态误差特征。仿真结果表明：在圆形轨迹任务中，控制器能够实现对参考轨迹的有效跟踪，并保持轨迹形状的整体一致性。
 
-两个工程小坑（强烈建议写进论文）：
-$q$ 的积分漂移：建议对 $q$ 做限幅 $|q|\le q_{\max}$ 或加入泄漏项 $\dot q=e_1-\epsilon_q q$，否则长时间微小偏差会把 $q$ 推到很大，导致 $m_1 q$ 把输入顶到饱和；；$e_2$ 的获取：若速度不可测，不要直接差分 $\dot y$，应使用第3章的观测器/微分跟踪器得到平滑估计，否则噪声会通过 $m_2 e_2$ 与滑模项放大并触发饱和。
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：圆形轨迹跟踪实验（$x$ 与 $y$ 方向）\\
+  你后续可替换为：图7 圆形轨迹跟踪实验}}
+  \caption{圆形轨迹跟踪结果（中期报告）}
+  \label{fig:ch5_circle_xy}
+\end{figure}
 
-% ===================================================================
-\section{仿真验证方案与对比指标（可直接搬到第5章实验设计）}\label{sec:ch5_sim}
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）中期报告：圆形轨迹跟踪实验顶视图\\
+  你后续可替换为：图6 圆形轨迹跟踪实验顶视图}}
+  \caption{圆形轨迹跟踪顶视图结果（中期报告）}
+  \label{fig:ch5_circle_top}
+\end{figure}
 
-为验证“抗饱和 + 预设阻尼比 + 滑模/ISM”的有效性，本节给出一套可复现对比方案。即使你把主要实验放到第5章，本节也能提供足够篇幅与逻辑闭环。
+\subsection{三角形闭合轨迹跟踪实验（预留）}[Triangular trajectory tracking (to be completed)]
 
-\subsection{对比控制器组}
+\textbf{（中期报告提及“三角轨迹跟踪”，但当前未给出对应曲线/统计结果，本节预留。）}
 
-建议至少比较四组（写论文最好看）：
-G1：第2章基准 PDR-SMB（无抗饱和），$u=\mathrm{sat}$ 直接硬饱和；；G2：本章 AS-PDR-SMB；；G3：本章 ISM-AS-PDR-SMB（积分滑模 + 抗饱和）；；G4（可选）：经典 anti-windup PI 或 DOB 方案（作为工程对照基线）。
+后续论文完善阶段将补充三角形轨迹等非光滑参考轨迹的跟踪实验，以验证控制器在参考角点处的鲁棒性与输入平滑性，并对比不同阻尼比设定下的峰值误差与恢复时间。
 
-\subsection{工况设置}
+\subsection{三类控制器对比统计（预留）}[Comparison among three controllers (to be completed)]
 
-设置两类典型工况：轻饱和工况，选择较温和的参考 $y_d$，使得理想情况下 $|u_c|$ 大部分时间低于 $u_{\max}$，用于验证“阻尼比预设是否仍准确”；强饱和工况，人为提高初始误差或给较快的轨迹，使输入多次触顶，用于验证“抗饱和是否能抑制 windup 并更快恢复”。
+\textbf{（中期报告阶段规划了三类控制器对比：基础 PDR-SMB、观测器型 PDR-SMB、扰动观测器+状态观测器型 PDR-SMB，本节预留完整对比表与统计指标。）}
 
-\subsection{评价指标（建议写进表格）}
+后续将按以下指标给出对比：
+\begin{itemize}
+  \item 峰值超调量 $M_p$、峰值时间 $t_p$、调节时间 $t_s$；
+  \item 轨迹跟踪 RMS 误差、最大瞬时误差；
+  \item 控制输入峰值与饱和比例（PWM 占空比范围）；
+  \item 抖振度量（如高频输入能量或输入变化率统计）。
+\end{itemize}
 
-建议记录以下指标，论文表达清晰：
-超调量：$M_p = \frac{\max_t |e_1|}{|e_1(0)|}$ 或针对阶跃响应定义；；调节时间：$t_s$；；饱和强度：饱和占空比 $D_{\mathrm{sat}}=\frac{1}{T}\int_0^T \mathbb{I}dt$；；输入峰值：$u_{\mathrm{pk}}=\max_t |u|$；；恢复性能：饱和解除后误差回到误差带的时间 $t_{\mathrm{rec}}$；；抖振度量：输入高频能量；；ISM 额外指标：初始阶段的 $u_c$ 峰值与 $D_{\mathrm{sat}}$，通常 ISM 会显著降低它们。
+\section{本章小结}[Summary]
 
-\subsection{结果组织建议}
+本章围绕板球平衡系统对预设阻尼比滑模反步控制思想进行了验证与实现总结。首先给出了中期报告中的板球系统动力学建模、状态空间表述与降阶控制模型，为控制器实现提供统一入口；随后总结了实验平台硬件与软件部署要点，包括 STM32F407 控制板、PD6010B 驱动板、视觉测量反馈与 $33\,\mathrm{Hz}$ 离散采样条件下的控制实现链路；最后基于中期报告给出的 Simulink 仿真结果，展示了固定目标点与圆形闭合轨迹任务中不同阻尼比设定对瞬态响应（超调/振荡/收敛速度）的影响规律，验证了“阻尼比—瞬态性能”的可解释映射。
 
-建议用“表 + 图”结构（即使你现在还没图，也可以先留空位，后续补图）：
-一张表：四组控制器的关键参数与指标；；轻饱和工况：两张图；；强饱和工况：两张图。
-
-这些内容后续完全可以“迁移”到第5章的真实实验里：把仿真里的 $u_{\max}$ 对应舵机 PWM 或电压限幅，把 $D_{\mathrm{sat}}$ 统计改成 PWM 触顶次数即可。
-
-% ===================================================================
-\section{本章小结}\label{sec:ch5_summary}
-
-本章针对工程系统普遍存在的输入饱和约束，提出了抗饱和的预设阻尼比滑模反步控制器 AS-PDR-SMB。通过在第3章 PDR-SMB 基准结构上引入饱和映射 $u=\mathrm{sat}$，并构造辅助动态 $\dot\xi=-\lambda\xi+b$ 及其反馈补偿项 $u_{\mathrm{aw}}=-\frac{1}{b}k_{\mathrm{aw}}\xi$，实现对饱和引起的输入失配的吸收与抑制，从而在饱和存在时仍可证明闭环信号一致最终有界，并使误差动力学尽可能保持二阶目标结构的可解释性。
-
-进一步地，为增强滑模方法的“专属性”并降低初始瞬态对大开关增益的依赖，本章引入积分滑模思想，通过构造积分状态 $w$ 并定义 $s_I=s-w$ 使得 $s_I(0)=0$，从而消除传统滑模的到达相，减少饱和触发风险并提升预设阻尼比规律在工程约束下的可保持性。最后，本章给出了面向工程实现的整定规则（含输入预算约束与抗饱和参数建议）、离散实现注意事项以及可复现实验/仿真对比指标，为第5章的板球平衡系统实验验证提供了直接可落地的方案。
+对于中期报告尚未完整给出的自适应律细节、三角轨迹跟踪结果以及三类控制器的系统化对比统计，本章保留了对应小节位置，便于后续论文完善时补充实物实验数据与完整对比结论。
 
 % Local Variables:
 % TeX-master: "../thesis"

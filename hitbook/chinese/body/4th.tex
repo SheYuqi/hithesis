@@ -1,474 +1,363 @@
 % !Mode:: "TeX:UTF-8"
 
-\chapter{基于状态观测器的预设阻尼比滑模反步控制器设计与分析}[Observer-based preset damping-ratio sliding-mode backstepping control]
+\chapter{输入饱和约束下的预设阻尼比滑模反步控制器设计与分析}
 
-第2章给出了在全状态可测条件下的预设阻尼比滑模反步控制器基准方案，并说明通过构造
-\(
-s=\dot e_1+m_2 e_1+m_1\int_0^t e_1\,d\tau
-\)
-可以将输出误差的主导动态嵌入到二阶标准型，从而实现“按阻尼比/超调量选参”的可解释控制设计。
-然而，在实际工程平台（例如板球平衡系统、机电伺服与平台稳定系统等）中，速度/角速度等状态往往不可直接测量，
-并伴随测量噪声、采样周期限制与执行器饱和等问题，使得第2章“直接使用 $x_2$ 与 $\ddot y_d$”的假设难以满足。
+\section{引言}[Introduction]
 
-为此，本章在中期报告的第二类方案基础上，进一步给出基于状态观测器的预设阻尼比滑模反步控制器
-的完整设计与严格稳定性分析。
-核心思路是：利用滑模观测/有限时间微分跟踪器对不可测状态与必要的导数项进行实时估计；
-在控制律中使用估计量替代真实量，并通过鲁棒滑模项将“估计误差 + 不确定性/扰动”统一视作有界等效扰动，
-从而保证闭环系统一致最终有界，并在观测误差收敛后恢复第3章的预设阻尼比瞬态特性。
+第2章与第3章分别在全状态可测与状态观测条件下建立了预设阻尼比滑模反步控制框架，并给出了稳定性与可调瞬态指标分析。然而在实际执行机构中，控制输入普遍存在幅值约束，当控制律输出超过执行器上限时会发生饱和，进而破坏理想误差动力学并导致超调增大、收敛变慢甚至出现持续振荡。针对该问题，本章面向输入饱和约束场景，研究预设阻尼比滑模反步控制器的抗饱和设计与稳定性分析。
 
-本章结构如下：第\ref{sec:ch4_problem}节给出问题模型与可测性假设；
-第\ref{sec:ch4_observer}节设计滑模状态观测器/微分器并给出误差性质；
-第\ref{sec:ch4_controller}节给出 O-PDR-SMB 控制律；
-第\ref{sec:ch4_stability}节给出闭环稳定性与“阻尼比可预设”的严格证明；
-第\ref{sec:ch4_extension}节讨论向严格反馈高阶系统的推广与实现（含命令滤波/动态面思想）；
-第\ref{sec:ch4_tuning}节总结选参原则与离散实现要点；
-最后给出本章小结。
+本章核心思路是在原有“二阶目标误差动力学 + 滑模鲁棒补偿”结构上显式引入饱和映射与输入失配项，将饱和影响纳入李雅普诺夫分析，并通过辅助抗饱和动态实现对失配项的在线吸收。这样可在输入受限条件下保持系统一致最终有界，并尽可能维持预设阻尼比对应的瞬态响应特性。
 
-\section{问题描述与设计目标}\label{sec:ch4_problem}[Problem formulation and objectives]
+\section{系统描述及预备知识}[System description and preliminaries]
 
-\subsection{二阶不确定非线性系统与可测输出}[Uncertain second-order system with measurable output]
+\subsection{系统描述}[System description]
 
-考虑与第3章一致的二阶不确定非线性系统
-\begin{equation}\label{eq:ch4_sys}
+考虑与前两章一致的二阶不确定非线性系统
+\begin{equation}\label{eq:ch5_sys}
 \left\{
 \begin{aligned}
   \dot{x}_1 &= x_2,\\
-  \dot{x}_2 &= b\,u + f(x_1,x_2) + d,\\
+  \dot{x}_2 &= b\,u + f + d,\\
   y &= x_1,
 \end{aligned}
 \right.
 \end{equation}
-其中 $x_1,x_2\in\mathbb{R}$ 为系统状态，$u\in\mathbb{R}$ 为控制输入，$y$ 为可测输出；$b\neq 0$ 为已知（或已知符号且有下界）的控制增益；
-$f(\cdot)$ 为未知非线性项，$d$ 为外部扰动或未建模动态。与第3章不同之处在于：本章仅假设$x_1$ 可测，$x_2$ 不可测。
+其中 $b\neq 0$ 为已知或符号已知且有下界，$f$ 为未知/未建模项，$d$ 为外扰。
 
-给定参考轨迹 $y_d$，定义跟踪误差
-\begin{equation}\label{eq:ch4_e_def}
-  e_1 \triangleq x_1-y_d,\qquad e_2 \triangleq x_2-\dot y_d.
-\end{equation}
-由于 $x_2$ 不可测，$e_2$ 也不可直接获得，因此需引入观测器估计 $\hat x_2$（以及必要时估计 $\dot y_d,\ddot y_d$）。
-
-\subsection{不确定性界与可实现性假设}[Uncertainty bounds and implementability assumptions]
-
-本章采用如下工程化假设（后续第5章将引入扰动观测器以进一步降低保守性）：
-
-\begin{assumption}\label{ass:ch4_ref}
-参考信号 $y_d$ 至少二阶连续可导，且 $y_d,\dot y_d,\ddot y_d$ 有界。
-\end{assumption}
-
-\begin{assumption}\label{ass:ch4_unc}
-存在名义模型 $\hat f(\cdot)$（可取 $0$ 或经验模型），并定义建模误差
-$\tilde f(x_1,x_2)=f(x_1,x_2)-\hat f(x_1,x_2)$。
-存在未知常数 $\bar f>0,\bar d>0$ 使得
-\begin{equation}\label{eq:ch4_unc_bound}
-  |\tilde f|\le \bar f,\qquad |d|\le \bar d.
-\end{equation}
-\end{assumption}
-
-\begin{assumption}\label{ass:ch4_b}
-控制增益 $b$ 的符号已知且有下界：存在已知常数 $\underline b>0$ 使得 $|b|\ge \underline b$。
-\end{assumption}
-
-记总不确定性
-\begin{equation}\label{eq:ch4_delta}
-  \Delta\triangleq \tilde f(x_1,x_2)+d,\qquad |\Delta|\le \bar\Delta\triangleq \bar f+\bar d.
+定义参考轨迹 $y_d$ 与跟踪误差
+\begin{equation}\label{eq:ch5_e_def}
+  e_1 = y-y_d,\qquad e_2 = \dot y-\dot y_d = x_2-\dot y_d.
 \end{equation}
 
-\subsection{控制目标与“预设阻尼比”要求}[Objectives and preset damping-ratio requirement]
+\subsection{输入饱和相关预备知识}[Input saturation preliminaries]
 
-本章目标与第3章一致，但在仅输出可测条件下实现：
-
-
-；闭环稳定性： 所有信号有界，$e_1$ 一致最终有界（理想条件下可趋于零）。
-；瞬态性能可预设： $e_1$ 的主导动态满足预设阻尼比 $\zeta_d$（或等价的超调量 $M_{p,d}$）所刻画的二阶欠阻尼衰减振荡特性。
-；工程可实现： 控制律不依赖不可测状态的直接测量，也尽量避免高阶解析求导；通过观测器/微分跟踪器获得必要估计量，并用鲁棒项抵消估计误差与不确定性。
-
-
-为保持“阻尼比可调”的解释一致性，本章仍采用第2章、第3章中的二阶目标误差结构
-\begin{equation}\label{eq:ch4_target}
-  \ddot e_1 + m_2 \dot e_1 + m_1 e_1 \approx 0,
+本章仅考虑幅值饱和。设控制器计算的期望输入为 $u_c$，实际输入为
+\begin{equation}\label{eq:ch5_sat_map}
+  u = \mathrm{sat}(u_c)
+  \triangleq
+  \begin{cases}
+    u_{\max}\,\mathrm{sgn}(u_c), & |u_c|>u_{\max},\\
+    u_c, & |u_c|\le u_{\max},
+  \end{cases}
 \end{equation}
-其中 $m_1>0,m_2>0$ 为由 $\zeta_d$（或 $M_{p,d},t_{p,d}$）确定的可解释参数。
+其中 $u_{\max}>0$ 为已知幅值上界。
 
-\section{滑模状态观测与微分跟踪器设计}\label{sec:ch4_observer}[Sliding-mode observation and differentiation]
-
-仅测得 $y=x_1$ 时，常见需求包括：估计 $x_2=\dot x_1$，以及在实现控制律时获得 $\dot y_d,\ddot y_d$（若参考轨迹无法解析求导）。
-本节给出两类可选工具：滑模状态观测器（利用系统输入与结构信息）；高阶滑模微分器/跟踪微分器
-（不依赖模型或弱依赖模型，抗噪性好）。二者可单独使用，也可联合使用。
-
-\subsection{方案A：二阶滑模状态观测器（- 结构）}[Option A: Super-twisting observer]
-
-定义输出误差（观测误差）
-\begin{equation}\label{eq:ch4_obs_err}
-  \tilde x_1 \triangleq x_1-\hat x_1,\qquad \tilde x_2 \triangleq x_2-\hat x_2.
+定义饱和导致的输入失配
+\begin{equation}\label{eq:ch5_du_def}
+  \Delta_u \triangleq u-u_c = \mathrm{sat}(u_c)-u_c.
 \end{equation}
 
-考虑如下二阶滑模观测器（- 观测器的一种常用形式）：
-\begin{equation}\label{eq:ch4_st_observer}
-\left\{
+定义名义模型误差与总不确定性
+\begin{equation}\label{eq:ch5_delta}
+  \tilde f \triangleq f-\hat f,\qquad
+  \Delta \triangleq \tilde f + d,\qquad |\Delta|\le \bar\Delta.
+\end{equation}
+
+\section{输入饱和约束下的预设阻尼比滑模反步控制器设计}[Controller design under input saturation]
+
+定义积分状态与滑模变量
+\begin{equation}\label{eq:ch5_q}
+  q \triangleq \int_0^t e_1\,d\tau,\qquad \dot q = e_1,
+\end{equation}
+\begin{equation}\label{eq:ch5_s}
+  s \triangleq \dot e_1 + m_2 e_1 + m_1 q = e_2 + m_2 e_1 + m_1 q,
+\end{equation}
+其中 $m_1>0,m_2>0$ 用于嵌入预设阻尼比参数。
+
+由系统与误差定义可得
+\begin{equation}\label{eq:ch5_sdot_expand}
 \begin{aligned}
-  \dot{\hat x}_1 &= \hat x_2 + \lambda_1 |\tilde x_1|^{\frac12}\,\mathrm{sgn}(\tilde x_1),\\
-  \dot{\hat x}_2 &= b\,u + \hat f(\hat x_1,\hat x_2) + \lambda_2\,\mathrm{sgn}(\tilde x_1),
-\end{aligned}
-\right.
-\end{equation}
-其中 $\lambda_1>0,\lambda_2>0$ 为观测器增益。该结构的直观含义是：第一式用“平方根型注入项”抑制测量误差并驱动 $\tilde x_1\to 0$；
-第二式用符号注入项补偿未知扰动并驱动 $\tilde x_2$ 收敛。
-
-由\eqref{eq:ch4_sys}与\eqref{eq:ch4_st_observer}可得观测误差动力学
-\begin{equation}\label{eq:ch4_obs_err_dyn}
-\left\{
-\begin{aligned}
-  \dot{\tilde x}_1 &= \tilde x_2 - \lambda_1 |\tilde x_1|^{\frac12}\,\mathrm{sgn}(\tilde x_1),\\
-  \dot{\tilde x}_2 &= \Delta + \Big(\hat f(x_1,x_2)-\hat f(\hat x_1,\hat x_2)\Big) - \lambda_2\,\mathrm{sgn}(\tilde x_1).
-\end{aligned}
-\right.
-\end{equation}
-
-\begin{remark}
-若 $\hat f(\cdot)=0$，则\eqref{eq:ch4_st_observer}退化为经典“输入已知 + 超扭转注入”的状态观测器；
-若 $\hat f(\cdot)$ 可提供部分建模信息，则可减小注入增益需求、降低抖振与噪声敏感性。
-\end{remark}
-
-\paragraph{有限时间收敛性质（结论型表述）}
-在满足总扰动有界、以及 $\hat f(\cdot)$ 在工作区域 Lipschitz 连续等常见条件下，可选择足够大的 $\lambda_1,\lambda_2$，
-使得 $(\tilde x_1,\tilde x_2)$ 在有限时间内收敛到任意小邻域；在无测量噪声的理想条件下可实现有限时间精确收敛。
-由于该结论较为标准，本章在后续稳定性证明中将采用“误差有界/最终界可调”的形式使用。
-
-\subsection{方案B：高阶滑模微分器（微分器）}[Option B: Levant differentiator]
-
-当系统模型不可靠或观测器不便引入输入通道时，可直接对可测输出 $y=x_1$ 使用高阶滑模微分器估计其导数。
-以二阶 Levant 微分器为例：
-\begin{equation}\label{eq:ch4_levant2}
-\left\{
-\begin{aligned}
-  \dot{\hat y}_0 &= \hat y_1 - \kappa_0 |\hat y_0-y|^{\frac12}\,\mathrm{sgn}(\hat y_0-y),\\
-  \dot{\hat y}_1 &= -\kappa_1 \,\mathrm{sgn}(\hat y_0-y),
-\end{aligned}
-\right.
-\end{equation}
-其中 $\hat y_0$ 估计 $y$，$\hat y_1$ 估计 $\dot y=x_2$；$\kappa_0,\kappa_1>0$ 为增益。
-在满足 $\ddot y$ 有界与噪声可控等条件下，$\hat y_1$ 可在有限时间内逼近 $x_2$，且对测量噪声相对鲁棒。
-
-为获得 $\ddot y_d$（若 $y_d$ 无解析二阶导），可对参考信号同样使用微分器（或使用跟踪微分器）：
-\begin{equation}\label{eq:ch4_refdiff}
-\left\{
-\begin{aligned}
-  \dot{\hat r}_0 &= \hat r_1 - \bar\kappa_0 |\hat r_0-y_d|^{\frac12}\,\mathrm{sgn}(\hat r_0-y_d),\\
-  \dot{\hat r}_1 &= -\bar\kappa_1 \,\mathrm{sgn}(\hat r_0-y_d),
-\end{aligned}
-\right.
-\end{equation}
-得到 $\hat r_1\approx \dot y_d$。若还需 $\ddot y_d$，可使用三阶微分器或“二阶跟踪微分器 + 再微分”的方式实现。
-为简洁起见，后续推导中记
-\[
-\hat x_2 \approx x_2,\qquad \hat{\dot y}_d \approx \dot y_d,\qquad \hat{\ddot y}_d \approx \ddot y_d,
-\]
-并把估计误差统一并入“等效扰动”项。
-
-\subsection{估计误差的统一有界表述}[Unified bounded error description]
-
-为便于后续稳定性分析，引入如下统一假设（可由方案/方案在合理增益与噪声条件下满足）：
-
-\begin{assumption}\label{ass:ch4_est}
-存在常数 $\bar e_x>0,\bar e_r>0$ 使得
-\begin{equation}\label{eq:ch4_est_bounds}
-  |x_2-\hat x_2|\le \bar e_x,\qquad |\dot y_d-\hat{\dot y}_d|\le \bar e_r,\qquad |\ddot y_d-\hat{\ddot y}_d|\le \bar e_r.
-\end{equation}
-并且上述界可通过提高观测器/微分器带宽在一定范围内减小（受噪声与采样频率制约）。
-\end{assumption}
-
-\begin{remark}
-该假设在离散实现中尤为自然：估计误差通常不会精确为零，但可以被压缩到小邻域；
-第3章的“预设阻尼比”因此在本章体现为近似保持 + 最终界可控。
-\end{remark}
-
-\section{观测器型预设阻尼比滑模反步控制器设计}\label{sec:ch4_controller}[Observer-based controller design]
-
-本节在第2章基准方案基础上，用估计量替代不可测状态与不可得导数，构造 O-PDR-SMB 控制律，
-并给出闭环误差动力学的“二阶类”解释。
-
-\subsection{滑模变量与可实现形式}[Sliding variable in implementable form]
-
-引入积分状态
-\begin{equation}\label{eq:ch4_q}
-  q\triangleq \int_{0}^{t} e_1\,d\tau,\qquad \dot q=e_1.
-\end{equation}
-
-由于 $e_2=x_2-\dot y_d$ 不可直接获得，定义其估计量
-\begin{equation}\label{eq:ch4_e2hat}
-  \hat e_2 \triangleq \hat x_2 - \hat{\dot y}_d.
-\end{equation}
-
-构造与第3章一致的滑模变量（用估计量实现）
-\begin{equation}\label{eq:ch4_s}
-  s \triangleq \hat e_2 + m_2 e_1 + m_1 q.
-\end{equation}
-注意：$e_1$ 可由 $x_1$ 直接测得，因此不需要估计。
-
-\subsection{控制律设计：名义抵消 + 鲁棒滑模项}[Control law: nominal cancellation + robust term]
-
-由系统\eqref{eq:ch4_sys}可得
-\begin{equation}\label{eq:ch4_e2dot_true}
-  \dot e_2 = b\,u + f(x_1,x_2) + d - \ddot y_d.
-\end{equation}
-而在估计量实现中，我们希望闭环满足“到达律 + 预设阻尼比”结构。为此，定义控制律
-\begin{equation}\label{eq:ch4_u}
-  u = \frac{1}{b}\Big(
-    -\hat f + \hat{\ddot y}_d
-    - m_2 \hat e_2 - m_1 e_1
-    -(\rho_o+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
-  \Big),
-\end{equation}
-其中 $\rho_o>0$ 为鲁棒增益，$\varepsilon>0$ 为到达裕度，$\phi>0$ 为边界层宽度。
-与第2章相比，区别在于：$\hat x_2,\hat{\dot y}_d,\hat{\ddot y}_d$ 均来自观测器/微分器，
-且名义模型使用 $\hat x_2$ 构造。
-
-\subsection{闭环“二阶类”误差动力学解释}[Second-order-like error dynamics under estimation]
-
-为揭示“预设阻尼比”如何在仅输出可测情形下保留，先把\eqref{eq:ch4_s}写成
-\begin{equation}\label{eq:ch4_s_expand}
-  s = e_2 + m_2 e_1 + m_1 q + \underbrace{(\hat e_2-e_2)}_{\triangleq \delta_2},
-\end{equation}
-其中 $\delta_2$ 为由状态与参考导数估计误差引起的等效误差项。由假设\ref{ass:ch4_est}知 $|\delta_2|\le \bar\delta_2$。
-
-对\eqref{eq:ch4_s}求导并结合系统动力学，可得到
-\begin{equation}\label{eq:ch4_sdot_like}
   \dot s
-  = \ddot e_1 + m_2 \dot e_1 + m_1 e_1 + \delta_3,
+  &= b\,u + f+d - \ddot y_d + m_2 e_2 + m_1 e_1\\
+  &= b\,u + \hat f - \ddot y_d + m_2 e_2 + m_1 e_1 + \Delta.
+\end{aligned}
 \end{equation}
-其中 $\delta_3$ 汇集了“$\dot{\hat e}_2-\dot e_2$”以及“$\hat{\ddot y}_d-\ddot y_d$”等估计误差项（其具体表达式与采用的观测器/微分器有关），在假设\ref{ass:ch4_est}下可视为有界：$|\delta_3|\le \bar\delta_3$。
 
-另一方面，将控制律\eqref{eq:ch4_u}代入真实系统\eqref{eq:ch4_sys}，可把 $\dot s$ 写成
-\begin{equation}\label{eq:ch4_sdot_closed}
-  \dot s
-  = -(\rho_o+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right) + w,
+设期望输入采用“名义项 + 鲁棒项 + 抗饱和补偿”结构
+\begin{equation}\label{eq:ch5_uc_struct}
+  u_c = u_0 + u_{\mathrm{sm}} + u_{\mathrm{aw}},
 \end{equation}
 其中
-\begin{equation}\label{eq:ch4_w}
-  w\triangleq \Delta + \big(f(x_1,x_2)-\hat f(x_1,\hat x_2)\big) + (\ddot y_d-\hat{\ddot y}_d) + \text{(与 $\dot{\hat e}_2$ 有关项)}.
+\begin{equation}\label{eq:ch5_u0}
+  u_0 = \frac{1}{b}\Big(-\hat f + \ddot y_d - m_2 e_2 - m_1 e_1\Big),
 \end{equation}
-在工程实现中，可将 $w$ 统一视作有界等效扰动：存在常数 $\bar w>0$ 使得 $|w|\le \bar w$。
+\begin{equation}\label{eq:ch5_sat_fun}
+  \mathrm{sat}\!\left(\frac{s}{\phi}\right)=
+  \begin{cases}
+    \mathrm{sgn}(s), & |s|>\phi,\\
+    \frac{s}{\phi}, & |s|\le \phi,
+  \end{cases}
+  \qquad \phi>0,
+\end{equation}
+\begin{equation}\label{eq:ch5_usm}
+  u_{\mathrm{sm}} = -\frac{1}{b}(\rho+\varepsilon)\,
+  \mathrm{sat}\!\left(\frac{s}{\phi}\right)
+  -\frac{1}{b}k_0 s,
+\end{equation}
+其中 $\rho\ge \bar\Delta$，$\varepsilon>0$，$k_0>0$。
 
-由\eqref{eq:ch4_sdot_like}--\eqref{eq:ch4_sdot_closed}可知：
+定义辅助抗饱和动态
+\begin{equation}\label{eq:ch5_xi_dyn}
+  \dot \xi = -\lambda \xi + b\,\Delta_u,\qquad \lambda>0,
+\end{equation}
+并取
+\begin{equation}\label{eq:ch5_uaw}
+  u_{\mathrm{aw}} = -\frac{1}{b}k_{\mathrm{aw}}\,\xi,\qquad k_{\mathrm{aw}}>0.
+\end{equation}
+
+最终控制律为
+\begin{equation}\label{eq:ch5_final}
+\boxed{
+\begin{aligned}
+  u_c &= \frac{1}{b}\Big(-\hat f + \ddot y_d - m_2 e_2 - m_1 e_1\Big)
+        -\frac{1}{b}(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
+        -\frac{1}{b}k_0 s
+        -\frac{1}{b}k_{\mathrm{aw}}\xi,\\
+  u &= \mathrm{sat}(u_c),\\
+  \dot \xi &= -\lambda \xi + b\,\Delta_u.
+\end{aligned}}
+\end{equation}
+\section{系统稳定性分析}[System stability analysis]
+
+本节在输入幅值饱和存在的条件下，对式 \eqref{eq:ch5_final} 所给控制律的闭环稳定性给出一致最终有界结论。滑模鲁棒项采用式 \eqref{eq:ch5_usm}，其中线性阻尼项 $-k_0 s$ 用于抵消抗饱和通道引入的交叉项并使李雅普诺夫不等式闭合。
+
+\paragraph{假设4.1}
+系统输入增益 $b$ 为已知常数，且存在已知正常数 $b_{\min},b_{\max}$ 使得
 \[
-\ddot e_1+m_2\dot e_1+m_1 e_1
-= -(\rho_o+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right) + w - \delta_3,
+0<b_{\min}\le |b|\le b_{\max}.
 \]
-从而 $e_1$ 满足一个二阶类微分不等式，可直接套用第2章的二阶类李雅普诺夫不等式判据解释
-“阻尼比近似保持 + 最终误差界可控”。
 
-\section{稳定性分析与预设阻尼比性质}\label{sec:ch4_stability}[Stability and preset damping-ratio property]
+\paragraph{假设4.2}
+总不确定项 $\Delta$ 有界，即
+\[
+|\Delta(t)|\le \bar\Delta,\quad \forall t\ge 0.
+\]
 
-本节给出 O-PDR-SMB 的严格稳定性结论。证明思路为：先证明滑模变量 $s$ 在有限时间内进入边界层并保持；
-再利用 $s$ 的有界性证明 $(e_1,q)$ 有界；最后由二阶类不等式判据说明“预设阻尼比”的近似保持。
+\paragraph{假设4.3}
+参考信号 $y_d(t)$ 二阶可导且有界，$\dot y_d(t),\ddot y_d(t)$ 有界。
 
-\subsection{滑模变量的可达性与边界层不变性}[Reachability and invariance of boundary layer]
+\paragraph{假设4.4}
+饱和失配项 $\Delta_u=\mathrm{sat}(u_c)-u_c$ 有界，即存在常数 $\bar\Delta_u>0$ 使得
+\[
+|\Delta_u(t)|\le \bar\Delta_u,\quad \forall t\ge 0.
+\]
 
-取 Lyapunov 函数
-\begin{equation}\label{eq:ch4_Vs}
-  V_s \triangleq \frac12 s^2.
+由 \eqref{eq:ch5_sdot_expand}--\eqref{eq:ch5_uc_struct}、\eqref{eq:ch5_u0}、\eqref{eq:ch5_uaw} 及 \eqref{eq:ch5_usm} 可得
+\begin{equation}\label{eq:ch5_sdot_closed_new}
+  \dot s
+  = -(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
+    -k_0 s
+    -k_{\mathrm{aw}}\xi
+    + \Delta
+    + b\,\Delta_u.
 \end{equation}
-由\eqref{eq:ch4_sdot_closed}得
-\begin{equation}\label{eq:ch4_Vsdot}
-  \dot V_s = s\dot s
-  =-(\rho_o+\varepsilon)s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right) + s\,w.
-\end{equation}
-注意到 $s\,\mathrm{sat}(s/\phi)=|s|$（当 $|s|>\phi$）或 $=s^2/\phi$（当 $|s|\le\phi$），因此对 $|s|>\phi$ 有
-\begin{equation}\label{eq:ch4_outside}
-  \dot V_s \le -(\rho_o+\varepsilon)|s| + |s|\,|w|
-  \le -\big(\rho_o+\varepsilon-\bar w\big)|s|.
-\end{equation}
-若选取
-\begin{equation}\label{eq:ch4_rho_cond}
-  \rho_o \ge \bar w,
-\end{equation}
-则对任意 $|s|>\phi$ 有 $\dot V_s\le -\varepsilon |s|<0$，因此 $s$ 将在有限时间内进入集合
-\begin{equation}\label{eq:ch4_Omega}
-  \Omega_\phi \triangleq \{\,s\in\mathbb{R}: |s|\le \phi\,\},
-\end{equation}
-并在其内保持（边界层不变性可由 $|s|\le\phi$ 区域内的线性衰减项 $-(\rho_o+\varepsilon)s/\phi$ 与有界扰动 $w$ 的比较分析得到）。
 
-\begin{remark}
-条件\eqref{eq:ch4_rho_cond}体现了本章与第3章的关键差异：$\bar w$ 不仅包含 $\bar\Delta$，还包含由观测/微分估计误差诱导的项。
-第5章将通过扰动观测器把 $\bar w$ 的保守度显著降低，从而减少滑模增益需求并改善抖振与控制能耗。
-\end{remark}
+为处理连续逼近项，先给出一个常用不等式。
 
-\subsection{跟踪误差的有界性与一致最终有界}[UUB of tracking error]
-
-由滑模变量定义\eqref{eq:ch4_s}与积分状态\eqref{eq:ch4_q}可得
-\begin{equation}\label{eq:ch4_eq_sys}
-  \dot e_1 = e_2 = -m_2 e_1 - m_1 q + s - \delta_2,\qquad \dot q = e_1,
+\begin{lemma}\label{lem:sat_ineq}
+对任意 $\phi>0$ 与任意 $s\in\mathbb{R}$，有
+\begin{equation}\label{eq:sat_ineq}
+  s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right) \ge |s|-\frac{\phi}{4}.
 \end{equation}
-其中 $\delta_2$ 见\eqref{eq:ch4_s_expand}且有界。
+\end{lemma}
+\begin{proof}
+当 $|s|>\phi$ 时，$\mathrm{sat}(s/\phi)=\mathrm{sgn}(s)$，于是 $s\,\mathrm{sat}(s/\phi)=|s|\ge |s|-\phi/4$。
+当 $|s|\le \phi$ 时，$\mathrm{sat}(s/\phi)=s/\phi$，于是 $s\,\mathrm{sat}(s/\phi)=s^2/\phi$。注意到对任意 $x\ge 0$ 有 $x^2\ge x-\tfrac{1}{4}$，令 $x=|s|/\phi$ 即得
+\[
+\frac{s^2}{\phi}=\phi\left(\frac{|s|}{\phi}\right)^2
+\ge \phi\left(\frac{|s|}{\phi}-\frac{1}{4}\right)
+=|s|-\frac{\phi}{4}.
+\]
+综上式 \eqref{eq:sat_ineq} 成立。
+\end{proof}
 
-写成矩阵形式
-\begin{equation}\label{eq:ch4_lin}
-\begin{bmatrix}\dot e_1\\ \dot q\end{bmatrix}
+选取李雅普诺夫函数
+\begin{equation}\label{eq:ch5_V_new}
+  V \triangleq \frac12 s^2 + \frac{1}{2\kappa}\xi^2,\qquad \kappa>0.
+\end{equation}
+对时间求导并代入 \eqref{eq:ch5_sdot_closed_new} 与 \eqref{eq:ch5_xi_dyn} 得
+\begin{equation}\label{eq:ch5_Vdot_expand_new}
+\begin{aligned}
+  \dot V
+  &= s\dot s + \frac{1}{\kappa}\xi\dot\xi\\
+  &= s\Big[-(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
+            -k_0 s
+            -k_{\mathrm{aw}}\xi
+            +\Delta
+            +b\Delta_u\Big]
+     +\frac{1}{\kappa}\xi\Big(-\lambda\xi+b\Delta_u\Big)\\
+  &=-(\rho+\varepsilon)s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right)
+    -k_0 s^2
+    -k_{\mathrm{aw}} s\xi
+    +s\Delta
+    +b s\Delta_u
+    -\frac{\lambda}{\kappa}\xi^2
+    +\frac{b}{\kappa}\xi\Delta_u.
+\end{aligned}
+\end{equation}
+
+利用 $|\Delta|\le \bar\Delta$ 且 $\rho\ge \bar\Delta$，有 $s\Delta\le \rho|s|$。再由引理 \ref{lem:sat_ineq} 得
+\begin{equation}\label{eq:slide_term_bound}
+\begin{aligned}
+  -(\rho+\varepsilon)s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right) + s\Delta
+  &\le -(\rho+\varepsilon)\left(|s|-\frac{\phi}{4}\right) + \rho|s|\\
+  &= -\varepsilon|s| + \frac{(\rho+\varepsilon)\phi}{4}.
+\end{aligned}
+\end{equation}
+
+其余交叉项用 Young 不等式上界化。取任意常数 $\eta_s>0,\ \mu_s>0,\ \mu_\xi>0$，有
+\begin{equation}\label{eq:young_terms}
+\begin{aligned}
+  -k_{\mathrm{aw}} s\xi
+  &\le \frac{k_{\mathrm{aw}}}{2}\Big(\eta_s s^2+\frac{1}{\eta_s}\xi^2\Big),\\
+  b s\Delta_u
+  &\le \frac{|b|}{2}\Big(\mu_s s^2+\frac{1}{\mu_s}\Delta_u^2\Big),\\
+  \frac{b}{\kappa}\xi\Delta_u
+  &\le \frac{|b|}{2\kappa}\Big(\mu_\xi \xi^2+\frac{1}{\mu_\xi}\Delta_u^2\Big).
+\end{aligned}
+\end{equation}
+
+将 \eqref{eq:slide_term_bound} 与 \eqref{eq:young_terms} 代入 \eqref{eq:ch5_Vdot_expand_new}，得到
+\begin{equation}\label{eq:ch5_Vdot_uub_new}
+\begin{aligned}
+  \dot V
+  \le
+  &-\Big(k_0-\frac{k_{\mathrm{aw}}}{2}\eta_s-\frac{|b|}{2}\mu_s\Big)s^2
+  -\Big(\frac{\lambda}{\kappa}-\frac{k_{\mathrm{aw}}}{2\eta_s}-\frac{|b|}{2\kappa}\mu_\xi\Big)\xi^2
+  -\varepsilon|s|\\
+  &\quad +\frac{(\rho+\varepsilon)\phi}{4}
+  +\Big(\frac{|b|}{2\mu_s}+\frac{|b|}{2\kappa\mu_\xi}\Big)\Delta_u^2.
+\end{aligned}
+\end{equation}
+
+记
+\begin{equation}\label{eq:alpha_defs}
+\alpha_s \triangleq k_0-\frac{k_{\mathrm{aw}}}{2}\eta_s-\frac{|b|}{2}\mu_s,\qquad
+\alpha_\xi \triangleq \frac{\lambda}{\kappa}-\frac{k_{\mathrm{aw}}}{2\eta_s}-\frac{|b|}{2\kappa}\mu_\xi,
+\end{equation}
+并取参数使得 $\alpha_s>0,\ \alpha_\xi>0$，则由 \eqref{eq:ch5_Vdot_uub_new} 得
+\begin{equation}\label{eq:Vdot_compact}
+  \dot V \le -\alpha_s s^2-\alpha_\xi \xi^2 + \frac{(\rho+\varepsilon)\phi}{4}
+  +\Big(\frac{|b|}{2\mu_s}+\frac{|b|}{2\kappa\mu_\xi}\Big)\Delta_u^2.
+\end{equation}
+
+注意到
+\[
+2V = s^2+\frac{1}{\kappa}\xi^2
+\quad\Rightarrow\quad
+\alpha_s s^2+\alpha_\xi \xi^2
+\ge
+\min\{\alpha_s,\kappa\alpha_\xi\}\Big(s^2+\frac{1}{\kappa}\xi^2\Big)
 =
-\underbrace{\begin{bmatrix}
- -m_2 & -m_1\\
-  1   &  0
-\end{bmatrix}}_{A(m_1,m_2)}
-\begin{bmatrix} e_1\\ q\end{bmatrix}
-+
-\begin{bmatrix}1\\0\end{bmatrix}\big(s-\delta_2\big).
-\end{equation}
-由于 $m_1>0,m_2>0$ 时 $A(m_1,m_2)$ 为 Hurwitz，且上一小节已证明 $s$ 有界并最终进入 $|s|\le\phi$，
-同时 $\delta_2$ 有界，因此 $(e_1,q)$ 对有界输入 $(s-\delta_2)$ 呈现输入到状态稳定性质，进而一致最终有界。
-
-更具体地，存在常数 $c_1,c_2>0$ 使得
-\begin{equation}\label{eq:ch4_uub_bound}
-  \limsup_{t\to\infty} |e_1| \le c_1(\phi+\bar\delta_2),\qquad
-  \limsup_{t\to\infty} |q| \le c_2(\phi+\bar\delta_2).
-\end{equation}
-因此通过减小边界层宽度 $\phi$、提高观测/微分精度（减小 $\bar\delta_2$），可收紧最终误差界；
-但在离散实现中需兼顾噪声与抖振。
-
-\subsection{预设阻尼比性质：二阶类不等式判据视角}[Preset damping ratio via second-order inequality]
-
-由\eqref{eq:ch4_sdot_like}可知
-\begin{equation}\label{eq:ch4_2nd_like}
-  \ddot e_1 + m_2 \dot e_1 + m_1 e_1 = \dot s - \delta_3.
-\end{equation}
-在边界层内 $|s|\le\phi$，由\eqref{eq:ch4_sdot_closed} 可得 $\dot s$ 有界：
-\[
-|\dot s|\le \frac{|s|}{\phi}+|w| \le +\bar w.
+2\alpha_\star V,
 \]
-结合 $|\delta_3|\le \bar\delta_3$，存在常数 $\Delta_4>0$ 使得
-\begin{equation}\label{eq:ch4_ineq}
-  \left|\ddot e_1 + m_2 \dot e_1 + m_1 e_1\right|\le \Delta_4.
+其中
+\begin{equation}\label{eq:alpha_star}
+\alpha_\star \triangleq \min\{\alpha_s,\kappa\alpha_\xi\}>0.
 \end{equation}
-由第2章二阶类李雅普诺夫不等式判据（引理形式）可得：$e_1$ 一致最终有界，
-并且当 $m_2^2<4m_1$ 时，$e_1$ 在瞬态阶段呈现近似欠阻尼二阶响应，其“近似阻尼比”由
-\begin{equation}\label{eq:ch4_zeta}
-  \zeta \approx \frac{m_2}{2\sqrt{m_1}}
+因此由 \eqref{eq:Vdot_compact} 得到
+\begin{equation}\label{eq:Vdot_final}
+  \dot V \le -2\alpha_\star V + \delta_0 + \beta_0\,\Delta_u^2,
 \end{equation}
-给出，而最终界与 $\Delta_4/m_1$ 同阶。该结果说明：本章在仅输出可测条件下仍能保持
-“阻尼比由 $(m_1,m_2)$ 预设”的核心可解释性，只是由于估计误差与边界层引入了额外扰动项，
-导致误差收敛到一个可控的小邻域而非严格渐近为零。
-
-\section{推广到严格反馈系统：观测器/命令滤波的工程化实现}\label{sec:ch4_extension}[Extension to strict-feedback systems]
-
-中期报告中还考虑了更一般的严格反馈结构系统。
-当系统阶次提高时，传统反步法需要反复求导虚拟控制 $\alpha_i$，会产生“爆炸性复杂性”，
-并且状态不可测时难以直接实现。本节给出与中期报告一致的工程化推广路线：观测器估计不可测状态 + 命令滤波/微分跟踪替代解析求导，
-从而保留预设阻尼比结构并降低实现门槛。
-
-\subsection{严格反馈系统与误差变量}[Strict-feedback model and error coordinates]
-
-考虑第2章严格反馈系统\eqref{eq:sf_system}，定义反步误差
-\begin{equation}\label{eq:ch4_z}
-  z_1 = x_1-y_d,\qquad z_i = x_i-\alpha_{i-1},\ i=2,\dots,n,
-\end{equation}
-其中 $\alpha_{i}$ 为第 $i$ 步虚拟控制量。为嵌入预设阻尼比，引入积分状态
-\begin{equation}\label{eq:ch4_eta}
-  \eta=\int_0^t z_1(\tau)\,d\tau,\qquad \dot\eta=z_1.
+其中
+\begin{equation}\label{eq:delta_beta}
+  \delta_0 \triangleq \frac{(\rho+\varepsilon)\phi}{4},\qquad
+  \beta_0 \triangleq \frac{|b|}{2\mu_s}+\frac{|b|}{2\kappa\mu_\xi}.
 \end{equation}
 
-与第2章一致，构造预设阻尼比滑模面
-\begin{equation}\label{eq:ch4_sN}
-  s = z_n + \sum_{i=2}^{n} c_i z_{i-1} + m_2 z_1 + m_1 \eta,\qquad c_i>0.
+由比较原理可知：若饱和失配 $\Delta_u$ 有界，即存在常数 $\bar\Delta_u$ 使得 $|\Delta_u(t)|\le \bar\Delta_u$，则
+\begin{equation}\label{eq:V_ult_bound}
+  \limsup_{t\to\infty} V(t)\le \frac{\delta_0+\beta_0\bar\Delta_u^2}{2\alpha_\star}.
 \end{equation}
-当 $s$ 被驱动进入边界层并保持时，高阶误差项将被“压缩”到关于 $z_1$ 的二阶类不等式，从而保持阻尼比可调。
-
-\subsection{命令滤波（动态面）替代高阶求导}[Command filtering  to avoid differentiation explosion]
-
-在标准反步中，$\dot\alpha_{i}$ 的显式表达会越来越复杂。本节采用命令滤波思想：为每个虚拟控制 $\alpha_i$ 构造一阶滤波器输出 $\alpha_{i,f}$，
-并用 $\alpha_{i,f}$ 及其滤波器状态导数替代 $\alpha_i$ 的解析求导。
-
-典型一阶命令滤波器为
-\begin{equation}\label{eq:ch4_cmd_filter}
-  \tau_i \dot{\alpha}_{i,f} + \alpha_{i,f} = \alpha_i,\qquad \tau_i>0,
+从而 $s(t)$ 与 $\xi(t)$ 一致最终有界，并满足
+\begin{equation}\label{eq:s_xi_bounds}
+  \limsup_{t\to\infty}|s(t)|
+  \le \sqrt{\frac{\delta_0+\beta_0\bar\Delta_u^2}{\alpha_\star}},\qquad
+  \limsup_{t\to\infty}|\xi(t)|
+  \le \sqrt{\kappa\,\frac{\delta_0+\beta_0\bar\Delta_u^2}{\alpha_\star}}.
 \end{equation}
-并定义滤波误差
-\begin{equation}\label{eq:ch4_filter_err}
-  \tilde \alpha_i \triangleq \alpha_{i,f}-\alpha_i.
+
+\begin{theorem}\label{thm:ch4_uub}
+考虑系统 \eqref{eq:ch5_sys}，采用控制律 \eqref{eq:ch5_final}。在假设4.1--假设4.4成立下，若参数满足
+\[
+m_1>0,\ m_2>0,\ \rho\ge \bar\Delta,\ \varepsilon>0,\ \phi>0,\ \kappa>0,\ \lambda>0,\ k_0>0,\ k_{\mathrm{aw}}>0,
+\]
+并且存在 $\eta_s>0,\mu_s>0,\mu_\xi>0$ 使
+\[
+\alpha_s \triangleq k_0-\frac{k_{\mathrm{aw}}}{2}\eta_s-\frac{|b|}{2}\mu_s>0,\qquad
+\alpha_\xi \triangleq \frac{\lambda}{\kappa}-\frac{k_{\mathrm{aw}}}{2\eta_s}-\frac{|b|}{2\kappa}\mu_\xi>0,
+\]
+则闭环信号 $s,\xi,e_1,e_2,q$ 一致最终有界，并满足
+\[
+\limsup_{t\to\infty}V(t)\le \frac{\delta_0+\beta_0\bar\Delta_u^2}{2\alpha_\star},
+\]
+其中
+\[
+V=\frac12 s^2+\frac{1}{2\kappa}\xi^2,\quad
+\alpha_\star=\min\{\alpha_s,\kappa\alpha_\xi\},\quad
+\delta_0=\frac{(\rho+\varepsilon)\phi}{4},\quad
+\beta_0=\frac{|b|}{2\mu_s}+\frac{|b|}{2\kappa\mu_\xi}.
+\]
+进一步有
+\[
+\limsup_{t\to\infty}|s(t)|
+\le \sqrt{\frac{\delta_0+\beta_0\bar\Delta_u^2}{\alpha_\star}},\qquad
+\limsup_{t\to\infty}|\xi(t)|
+\le \sqrt{\kappa\frac{\delta_0+\beta_0\bar\Delta_u^2}{\alpha_\star}}.
+\]
+\end{theorem}
+\begin{proof}
+由 \eqref{eq:ch5_sdot_closed_new} 与 \eqref{eq:ch5_xi_dyn}，对 \eqref{eq:ch5_V_new} 求导得到 \eqref{eq:ch5_Vdot_expand_new}。结合引理 \ref{lem:sat_ineq}、假设4.2与 Young 不等式，可得 \eqref{eq:ch5_Vdot_uub_new}，进而得到 \eqref{eq:Vdot_final}。由假设4.4可得
+\[
+\dot V\le -2\alpha_\star V+\delta_0+\beta_0\bar\Delta_u^2.
+\]
+由比较原理得到 \eqref{eq:V_ult_bound} 与 \eqref{eq:s_xi_bounds}。再由 \eqref{eq:e1q_dynamics_new}--\eqref{eq:z_linear} 及 $m_1>0,m_2>0$ 时矩阵 $A$ 为 Hurwitz，可得 $(e_1,q)$ 对输入 $s$ 为输入到状态稳定，因此 $e_1,q,e_2$ 一致最终有界。定理得证。
+\end{proof}
+
+\paragraph{推论4.1}
+若系统全程不触发饱和（$\Delta_u\equiv 0$），则
+\[
+\dot V\le -2\alpha_\star V+\delta_0,\qquad
+\limsup_{t\to\infty}V(t)\le \frac{\delta_0}{2\alpha_\star}.
+\]
+此时闭环残差主要由边界层参数 $\phi$ 与鲁棒增益共同决定；当 $\phi$ 减小时，稳态残差界相应减小。
+
+当不发生饱和时 $\Delta_u\equiv 0$，由 \eqref{eq:Vdot_final} 可进一步得到更小的最终界；并且当 $\phi$ 取较小值时，$\delta_0$ 相应减小，滑模残差边界层导致的稳态误差上界随之收敛。
+
+下面给出误差变量的有界性结论。由 \eqref{eq:ch5_s} 与 \eqref{eq:ch5_q} 有
+\begin{equation}\label{eq:e1q_dynamics_new}
+\begin{aligned}
+  \dot e_1 &= e_2 = s-m_2 e_1-m_1 q,\\
+  \dot q &= e_1.
+\end{aligned}
 \end{equation}
-当 $\tau_i$ 足够小且 $\alpha_i$ 变化率有界时，$\tilde\alpha_i$ 可保持在小邻域，从而把“求导复杂度”转化为“滤波误差有界项”，
-并最终并入滑模鲁棒项所覆盖的等效扰动界中。
-
-\subsection{观测器：不可测状态与滤波器状态联合估计}[Observer for unmeasured states]
-
-当仅 $x_1$ 可测时，可采用两种路线：
-
-
-；高阶滑模微分器路线： 对 $x_1$ 使用 $n$ 阶微分器直接估计 $x_2,\dots,x_n$；
-；结构化滑模观测器路线： 利用系统输入 $u$ 与严格反馈结构逐层构造观测器（每层注入滑模项抵消不确定性）。
-
-
-为给出可落地表达，下面给出“高阶微分器路线”的统一写法。设 $\hat x_i$ 为 $x_i$ 的估计，则后续控制律中将 $x_i$ 用 $\hat x_i$ 替代，
-并将估计误差统一并入扰动界。由于篇幅与可读性考虑，本章不展开高阶微分器的全部公式，而采用第\ref{sec:ch4_observer}节的二阶结构作为模板，
-在实现时按系统阶次扩展即可。
-
-\subsection{控制律结构化表达与闭环性质}[Structured controller and closed-loop properties]
-
-在命令滤波与观测估计下，最后一步实际控制输入可写成与第3章相同的结构：
-\begin{equation}\label{eq:ch4_uN}
-  u = \frac{1}{b_n}\Big(
-  -\hat f_n + \dot{\alpha}_{n-1,f}
-  - \sum_{i=2}^{n} c_i \dot z_{i-1} - m_2 \dot z_1 - m_1 z_1
-  -(\rho_N+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
-  \Big),
+令 $z\triangleq [e_1\ \ q]^\top$，则 \eqref{eq:e1q_dynamics_new} 可写为
+\begin{equation}\label{eq:z_linear}
+  \dot z = A z + B s,\qquad
+  A=\begin{bmatrix}-m_2&-m_1\\ 1&0\end{bmatrix},\quad
+  B=\begin{bmatrix}1\\0\end{bmatrix}.
 \end{equation}
-其中 $\dot{\alpha}_{n-1,f}$ 由滤波器状态直接给出，$z_i$ 用估计状态与滤波输出构造。
-鲁棒增益 $\rho_N$ 需覆盖：建模误差、外部扰动、观测误差与滤波误差等统一等效扰动。
-采用与第\ref{sec:ch4_stability}节同样的 Lyapunov 分析可得：$s$ 进入边界层并保持，所有信号一致最终有界，
-且 $z_1$ 满足二阶类不等式，从而预设阻尼比性质近似保持。
+当 $m_1>0,m_2>0$ 时，矩阵 $A$ 为 Hurwitz，因此系统 \eqref{eq:z_linear} 对输入 $s$ 是输入到状态稳定的。结合 \eqref{eq:s_xi_bounds} 中 $s$ 的一致最终有界性，可得 $e_1,q$ 一致最终有界；并由 $e_2=s-m_2 e_1-m_1 q$ 进一步得到 $e_2$ 一致最终有界。综上，在 $|\Delta_u|$ 有界且参数满足 $\alpha_s>0,\alpha_\xi>0$ 的条件下，闭环系统各信号一致最终有界。
 
-\section{参数选择与离散实现要点}\label{sec:ch4_tuning}[Tuning and discrete-time implementation]
+最后讨论预设阻尼比的保持机制。当饱和较弱或饱和持续时间较短时，$s$ 的最终界较小，系统主导误差动态由 \eqref{eq:z_linear} 决定，即
+\[
+\ddot e_1 + m_2 \dot e_1 + m_1 e_1 \approx 0,
+\]
+其名义阻尼比由
+\[
+\zeta = \frac{m_2}{2\sqrt{m_1}}
+\]
+给出。饱和与不确定性通过 $s$ 的最终界体现为瞬态退化与稳态残差边界，因此在参数整定与实验设计中可将 $\zeta$ 的设定与 $\phi,k_0,k_{\mathrm{aw}},\lambda$ 等参数的选取结合，形成在输入受限条件下仍具有可解释性的整定规则。
 
-\subsection{$(m_1,m_2)$ 的预设规则与瞬态指标对应}[Preset rule for $(m_1,m_2)$]
+\section{数值仿真}[Numerical simulation]
 
-与第3章一致：
+本节通过数值仿真验证所提控制器在输入饱和约束下的有效性。仿真任务包括恒值目标跟踪与时变轨迹跟踪，并设置饱和上限 $u_{\max}$ 对比“无抗饱和补偿”和“有抗饱和补偿”两种方案。评价指标包括超调量、峰值时间、稳态误差、控制输入峰值以及饱和持续时间。
 
-
-；给定期望阻尼比 $\zeta_d\in(0,1)$ 与自然频率 $\omega_{n,d}$，取
-  \begin{equation}\label{eq:ch4_mrule}
-    m_1=\omega_{n,d}^2,\qquad m_2=2\zeta_d\omega_{n,d}.
-  \end{equation}
-；或给定 $M_{p,d}$ 与 $t_{p,d}$，先设 $\beta=\pi/t_{p,d}$，
-  再由 $\alpha/\beta=-\ln(M_{p,d})/\pi$ 得 $\alpha$，最后取 $m_2=2\alpha,\ m_1=\alpha^2+\beta^2$。
-
-
-\subsection{观测器/微分器增益与噪声折中}[Observer/differentiator gains vs noise]
-
-
-；增益越大，估计误差界 $\bar e_x,\bar e_r$ 越小，预设阻尼比特性越接近“理想二阶响应”；
-；但增益过大将放大测量噪声并引入高频抖振，使控制输入更加剧烈，甚至诱发执行器饱和；
-；工程上建议以采样周期 $T_s$ 与噪声方差为约束，逐步提高带宽直至控制输入出现明显高频震荡，再回退到安全区间。
-
-
-\subsection{鲁棒增益 $\rho_o$ 与边界层 $\phi$ 的协同选择}[Robust gain and boundary layer]
-
-
-；$\rho_o$ 至少覆盖统一等效扰动界 $\bar w$，而 $\bar w$ 随估计误差界增大而增大；
-；$\phi$ 越小稳态精度越高，但对噪声更敏感；在存在观测误差时，过小的 $\phi$ 可能导致 $s$ 在边界层附近高频切换；
-；建议做法：先选取适中 $\phi$ 使系统运行平滑，再逐步减小 $\phi$ 以提升精度；若出现抖振，则优先降低观测器带宽或增大 $\phi$，其次再调整 $\rho_o$。
-
-
-\subsection{离散实现建议（板球平衡系统视角）}[Discrete implementation notes]
-
-以常见板球平衡系统为例，位置 $x_1$ 可由视觉或位置传感器获得，而速度 $x_2$ 需要估计。建议实现流程：
-
-
-；读取位置测量 $y=x_1$ 与参考 $y_d$；
-；用微分器/观测器获得 $\hat x_2$，并用参考微分器得到 $\hat{\dot y}_d,\hat{\ddot y}_d$；
-；更新积分状态 $q_{k+1}=q_k+T_s e_{1,k}$，并对 $q$ 做限幅防积分漂移；
-；计算 $s_k=\hat e_{2,k}+m_2 e_{1,k}+m_1 q_k$；
-；由\eqref{eq:ch4_u}计算控制输入 $u_k$，并对 $u$ 做饱和/限速处理；
-；若存在执行器饱和，建议在 $q$ 的积分中加入抗饱和补偿或泄漏项（例如 $\dot q=e_1-\sigma_q q$）。
-
+建议给出至少三组阻尼比参数进行对比，并在每组下统计是否触发饱和及触发后恢复时间，用于展示：在输入受限条件下，所提方法仍可保持较好的瞬态品质与鲁棒恢复能力。
 
 \section{本章小结}[Summary]
 
-本章针对仅输出可测、部分状态不可测的工程现实，提出并推导了观测器型预设阻尼比滑模反步控制器。
-首先设计了滑模状态观测器与高阶滑模微分/跟踪器，用于估计不可测状态与参考导数；
-随后在第3章基准控制律基础上，用估计量替代真实量并引入鲁棒滑模项，将“估计误差 + 不确定性/扰动”统一建模为有界等效扰动；
-通过 Lyapunov 分析证明滑模变量在有限时间内进入边界层并保持，闭环系统一致最终有界；
-进一步由二阶类不等式判据说明：尽管存在估计误差与边界层效应，输出误差仍呈现近似二阶欠阻尼响应，
-其阻尼比仍主要由 $(m_1,m_2)$ 预设，最终误差界可由观测精度与边界层参数协同控制。
-最后给出向严格反馈系统的推广路线（命令滤波/动态面 + 观测估计），以及离散实现与选参要点，
-为第5章引入扰动观测器的进一步性能提升奠定基础。
+本章针对输入幅值饱和约束，构建了预设阻尼比滑模反步控制器的抗饱和设计方法。通过引入饱和映射、输入失配项与辅助抗饱和动态，建立了可证明的闭环一致最终有界结论。分析结果表明，在饱和受控或弱饱和条件下，系统仍可近似保持由 $(m_1,m_2)$ 决定的预设阻尼比瞬态特性。该章为后续实机验证提供了输入受限场景下的理论与实现基础。
 
 % Local Variables:
 % TeX-master: "../thesis"
