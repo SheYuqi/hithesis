@@ -4,13 +4,7 @@
 
 \section{引言}[Introduction]
 
-针对具有严格反馈结构的确定性非线性系统，标准反步控制法通过递归构造虚拟控制量与李雅普诺夫函数，能够实现稳定控制。面向含未知不确定项与外部扰动的实际对象，鲁棒反步方法进一步提升了系统抗干扰能力，但传统设计仍主要关注“稳定或收敛”，对阻尼比等动态性能指标的显式预设能力相对不足。基于这一问题，本章在研究系统稳定性的同时，将阻尼比作为核心动态指标纳入控制器设计，面向一类严格反馈形式的不确定非线性系统构建预设阻尼比滑模反步控制方法。首先，将阻尼比的讨论从阶跃响应扩展到时变参考跟踪场景，并给出相应定义与计算表达；随后利用经典二阶系统超调机理，建立二阶类李雅普诺夫稳定性判据。该判据表明，当相应二阶不等式成立时，系统输出能够以近似预设的阻尼比稳定跟踪目标信号，并可据此形成参数设置规则。在此基础上，本章进一步给出预设阻尼比鲁棒反步控制器设计流程。通过有限差分近似虚拟控制导数，构造满足二阶类李雅普诺夫条件的闭环误差系统，并在理论上证明跟踪误差最终有界且具备预设超调特性，最后完成闭环稳定性分析。为验证方法有效性，本章设计数值仿真对常值与时变参考信号进行跟踪测试，比较不同参数设置下的超调与收敛表现，从而验证所提方法在动态性能调节与稳定控制方面的可行性。
-
-从章节组织上看，本章先给出系统模型、阻尼比定义与二阶类判据，再给出控制器设计与稳定性分析，最后通过数值仿真形成“理论推导—参数整定—结果验证”的闭环论证路径。该写法的目的在于保证每一类结论都可追溯到明确的数学条件与可复现实验设置，避免仅凭仿真现象给出经验性判断。
-
-进一步地，本章在写作上强调“指标先行”的设计思想：不是先给控制器再解释性能，而是先给目标阻尼比与允许超调，再反推控制参数与稳定性条件。这样可以将工程语言中的“快、稳、抑振”转化为可计算、可比对的参数对象，降低整定过程对经验的依赖。该思路对后续章节同样有效，即便引入观测器、输入饱和等附加约束，核心仍是围绕同一指标链条展开。
-
-与仅讨论误差收敛速度的传统章节写法相比，本章更强调“可解释参数—可观测指标”的一一对应关系。也就是说，理论部分给出的每个关键参数都应在仿真和实验中对应到具体现象，例如超调、峰值时间、振荡衰减速度、控制输入峰值等。该对应关系有助于后续章节进行横向对比，避免不同方法在不同口径下“看似都有效但难以比较”的问题。
+针对具有严格反馈结构的确定性非线性系统，标准反步控制法通过递归构造虚拟控制量与李雅普诺夫函数，能够实现稳定控制。面向含未知不确定项与外部扰动的实际对象，滑模反步方法进一步提升了系统抗干扰能力，但传统设计仍主要关注“稳定或收敛”，对阻尼比等动态性能指标的显式预设能力相对不足。基于这一问题，本章在研究系统稳定性的同时，将阻尼比作为核心动态指标纳入控制器设计，面向一类严格反馈形式的不确定非线性系统构建预设阻尼比滑模反步控制方法。首先，将阻尼比的讨论从阶跃响应扩展到时变参考跟踪场景，并给出相应定义与计算表达；随后利用经典二阶系统阻尼比的特征，建立二阶类李雅普诺夫稳定性判据。该判据表明，当相应二阶不等式成立时，系统输出能够以近似预设的阻尼比稳定跟踪目标信号，并可据此形成参数设置规则。在此基础上，本章进一步给出预设阻尼比滑模反步控制器设计流程。通过有限差分近似虚拟控制导数，构造满足二阶类李雅普诺夫条件的闭环误差系统，并在理论上证明跟踪误差最终有界且具备预设超调特性，最后完成闭环稳定性分析。为验证所提方法的有效性，针对板球系统开展两组仿真实验，分别展示了小球对跟踪定点信号和时变信号的跟踪效果，给出了符合参数规则的三种阻尼比的实现，实验结果验证了该控制方法的有效性。
 
 \section{系统描述及预备知识}[System description and preliminaries]
 
@@ -38,16 +32,16 @@ $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
 然而，当 $f_i(\cdot)$ 与 $d_i$ 不可精确获知时，必须引入鲁棒项（例如滑模项、自适应项或观测/补偿项）以抵消不确定性影响。
 
 
-尽管式\eqref{eq:sf_system}覆盖高阶系统，本文的“预设阻尼比”指标主要面向二阶主导动态。
-因此在核心推导中，常将系统在误差坐标下化为如下二阶形式：
-\begin{equation}\label{eq:2nd_general}
-  \ddot{y} = \varphi + b\,u + \Delta,
-\end{equation}
-其中 $b\neq 0$ 为已知或已知符号的控制增益；$\varphi$ 表示可建模/可近似的已知部分（或经坐标变换后得到的名义项）；
-$\Delta$ 汇总了未知非线性、外部扰动、未建模动态以及后续引入观测误差、估计误差等因素。
+% 尽管式\eqref{eq:sf_system}覆盖高阶系统，本文的“预设阻尼比”指标主要面向二阶主导动态。
+% 因此在核心推导中，常将系统在误差坐标下化为如下二阶形式：
+% \begin{equation}\label{eq:2nd_general}
+%   \ddot{y} = \varphi + b\,u + \Delta,
+% \end{equation}
+% 其中 $b\neq 0$ 为已知或已知符号的控制增益；$\varphi$ 表示可建模/可近似的已知部分（或经坐标变换后得到的名义项）；
+% $\Delta$ 汇总了未知非线性、外部扰动、未建模动态以及后续引入观测误差、估计误差等因素。
 
 \begin{assumption}\label{assump:yd}
- $y_d$、$\dot{y}_d$、$\ddot{y}_d$ 是有界且局部 Lipschitz 连续的
+ $y_d$、$\dot{y}_d$、$\ddot{y}_d$ 是有界且局部 Lipschitz 连续的，$\dot{y}_d(0)=0$。
 \end{assumption}
 
 \begin{assumption}\label{assump:fi}
@@ -94,13 +88,22 @@ $\zeta$ 是阻尼比，$\omega_n$ 是系统的固有频率。
 若通过实验先测得跟踪超调量 $M_p$，则可由式\eqref{eq:ch2_zeta_from_mp}反求对应阻尼比。
 \end{definition}
 
-\begin{remark}[注释]\label{rem:ch2_zeta}
-注释 2.1 分别给出了两个示例来说明如何测量系统超调量并换算阻尼比。图 2-1 展示了 $y_d(t_p)$、$y(t_p)$ 和 $e(t_p)$ 跟踪恒定目标的情况，超调量为 $\sigma=0.10/1.00=10.00\%$，对应阻尼比约为 $\zeta\approx0.591$。跟踪时变目标的情况如图 2-2 所示，其超调量为 $\sigma=0.10/1.13=8.85\%$，对应阻尼比约为 $\zeta\approx0.611$。
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth]{ch2_zeta_step_response.pdf}
+  \caption{自然频率 $\omega_n=4\,\mathrm{rad/s}$ 时不同阻尼比下标准二阶系统阶跃响应}
+  \label{fig:ch2_zeta_step_response}
+\end{figure}
+
+\begin{remark}\label{rem:ch2_zeta}
+图~\ref{fig:ch2_zeta_step_response} 展示了当自然频率 $\omega_n=4\,\mathrm{rad/s}$ 时，二阶系统\eqref{eq:ch2_std_2nd} 在不同阻尼比 $\zeta$ 条件下的输出 $y$ 的阶跃响应曲线。需要特别指出的是：1）当 $0<\zeta<1$ 时，系统呈现欠阻尼响应特性；2）当 $\zeta=1$ 时，系统呈现临界阻尼响应特性；3）当 $\zeta>1$ 时，系统呈现过阻尼响应特性。从图中可以明显看出，阻尼比 $\zeta$ 对系统响应的超调量和上升时间具有显著影响。
 \end{remark}
 
 需要强调的是，阻尼比在这里承担的是“响应形状参数”的角色，而不是单独的最优性指标。较大的阻尼比通常对应较小超调与较弱振荡，但可能牺牲响应速度；较小阻尼比通常能提升初始响应速度，但可能带来更明显峰值。论文中的预设阻尼比方法，本质是在可证明稳定前提下给出这种折中关系的可控化表达。
 
 从指标设计角度看，阻尼比定义的优势在于它天然连接时域直观与参数空间。工程上常见的“波形太冲”“收敛太慢”等描述，都可以映射为对 $\zeta_d$ 与 $\omega_{n,d}$ 的联合约束。该映射一旦建立，控制器整定就可以从“试出来”转变为“算出来再验证”，显著提升参数迁移与复现实验效率。
+
+
 
 \subsection{二阶类李雅普诺夫稳定性判据}[Second-order Lyapunov-like stability criterion]
 
@@ -120,84 +123,189 @@ y&=x_1,
 
 二阶类李雅普诺夫稳定性判据由以下定理给出。
 
-\begin{lemma}[引理 1]\label{lem:ch2_lemma1}
-若存在常数 $m_1>0,m_2>0$，以及一个函数 $V(t)$，使得以下微分方程成立：
+\begin{lemma}\label{lem:ch2_lemma1}
+若存在常数 $m_1,m_2>0$，以及一个函数 $V(x_1)=x_1$，使得以下微分方程成立：
 \begin{equation}\label{eq:ch2_lyap_eq}
-\ddot{V}+m_2\dot{V}+m_1V=0,
+\ddot{V}(x_1)+m_1V(x_1)+m_2\dot{V}(x_1)=0,
 \end{equation}
-则系统的解是渐近稳定的，并且系统输出具有期望的阻尼比。具体地：
+则系统\eqref{eq:ch2_2nd_sys}的解是渐近稳定的，并且系统输出具有期望的阻尼比 $\zeta$。具体地：
+
 1）若 $m_2^2=4m_1$，则 $\zeta=1$；
-2）若 $m_2^2<4m_1$，则
-\begin{equation}\label{eq:ch2_zeta_formula}
-\zeta=\frac{m_2}{2\sqrt{m_1}}.
-\end{equation}
+
+2）若 $m_1=\alpha^2+\beta^2,m_2=2\alpha,\ \alpha,\beta>0$，则$\zeta=\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}$。
+
 \end{lemma}
 
 证明：方程\eqref{eq:ch2_lyap_eq}的特征方程为
 \begin{equation}\label{eq:ch2_char}
-s^2+m_2s+m_1=0.
+r^2+m_2r+m_1=0.
 \end{equation}
 
-情况 1：存在正实数 $p$，使得
+情况 1：若 $m_2^2=4m_1$，则
 \begin{equation}\label{eq:ch2_case1}
-m_2=2p,\quad m_1=p^2,
+r^2+m_2r+m_1=\left(r+\frac{m_2}{2}\right)^2.
 \end{equation}
-即 $m_2^2=4m_1$，则方程\eqref{eq:ch2_lyap_eq}的解为
+此时方程\eqref{eq:ch2_lyap_eq}的解为
 \begin{equation}\label{eq:ch2_case1_sol}
-V(t)=(C_1+C_2t)e^{-pt},
+x_1(t)=\left(a_1+a_2t\right)e^{-\frac{m_2}{2}t},
 \end{equation}
-其中 $C_1,C_2$ 是与初始条件相关的常数。由此可知当 $p>0$ 时，系统解渐近稳定，并且因为特征方程有重根 $-p$，所以阻尼比满足 $\zeta=1$。
+其中 $a_1,a_2$ 是与初始条件相关的常数。由此可知当 $m_2>0$ 时，系统解是渐近稳定的，并且因为特征方程有重根 $-\frac{m_2}{2}$，所以阻尼比满足 $\zeta=1$。
 
 情况 2：存在正实数 $\alpha,\beta$，使得
 \begin{equation}\label{eq:ch2_case2}
-m_2=2\alpha,\quad m_1=\alpha^2+\beta^2,
+r^2+m_2r+m_1=\left[r+(\alpha+\beta i)\right]\left[r+(\alpha-\beta i)\right].
 \end{equation}
-此时 $m_2^2<4m_1$，特征方程有复共轭根 $-\alpha\pm j\beta$，则方程的解为
+此时 $m_1=\alpha^2+\beta^2,m_2=2\alpha$，特征方程的根为复共轭根 $-\alpha\pm\beta i$，则方程的解为
 \begin{equation}\label{eq:ch2_case2_sol}
-V(t)=e^{-\alpha t}\left(C_1\cos\beta t+C_2\sin\beta t\right),
+x_1(t)=\left(a_3\cos\beta t+a_4\sin\beta t\right)e^{-\alpha t},
 \end{equation}
-其中 $C_1,C_2$ 是与初始条件相关的常数。由此可知当 $\alpha>0$ 时系统解渐近稳定，并且阻尼比满足式\eqref{eq:ch2_zeta_formula}。
+其中 $a_3,a_4$ 是与初始条件相关的常数。由此可知当 $m_1=\alpha^2+\beta^2,m_2=2\alpha$ 时，系统解是渐近稳定的，并且阻尼比满足
+\begin{equation}
+0<\zeta=\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}<1.
+\end{equation}
 
 至此，引理 1 得证。
 
-\begin{lemma}[引理 2]\label{lem:ch2_lemma2}
+\begin{lemma}\label{lem:ch2_lemma2}
 由于系统中存在未知的非线性项和外部扰动，实际上很难严格满足引理 1 中的等式\eqref{eq:ch2_lyap_eq}，因此将其推广为如下形式：
-若存在常数 $m_1>0,m_2>0,\delta>0$，以及一个函数 $V(t)$，使得
+若存在常数 $m_1,m_2>0$，$0\le\delta<+\infty$，以及一个函数 $V(x_1)=x_1$，使得
 \begin{equation}\label{eq:ch2_lyap_ineq}
-\left|\ddot{V}+m_2\dot{V}+m_1V\right|\le\delta,
+\left|\ddot{V}(x_1)+m_1V(x_1)+m_2\dot{V}(x_1)\right|\le\delta,
 \end{equation}
-则系统的解是实际稳定的，并且系统输出具有期望的阻尼比。具体地：
-1）若 $m_2^2=4m_1$，则 $\zeta=1$；
-2）若 $m_2^2<4m_1$，则 $\zeta=\frac{m_2}{2\sqrt{m_1}}$。
+则系统\eqref{eq:ch2_2nd_sys}的解是实际稳定的，并且系统输出具有期望的阻尼比 $\zeta$。具体地：
+
+1）若 $m_2^2=4m_1$，则 $\zeta\approx1$；
+
+2）若 $m_1=\alpha^2+\beta^2,m_2=2\alpha,\ \alpha,\beta>0$，则$\zeta\approx\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}$。
+
 \end{lemma}
 
-证明：不等式\eqref{eq:ch2_lyap_ineq}是一个二阶非齐次微分不等式，去掉绝对值后得到如下两个不等式
+证明：不等式\eqref{eq:ch2_lyap_ineq}是一个二阶非齐次微分不等式，去掉绝对值后得到如下两个不等式：
 \begin{equation}\label{eq:ch2_split}
--\delta\le \ddot{V}+m_2\dot{V}+m_1V\le \delta.
+\begin{aligned}
+\ddot{V}(x_1)+m_1V(x_1)+m_2\dot{V}(x_1) &\le \delta,\\
+\ddot{V}(x_1)+m_1V(x_1)+m_2\dot{V}(x_1) &\ge -\delta.
+\end{aligned}
 \end{equation}
-这意味着不等式\eqref{eq:ch2_lyap_ineq}可以拆分成两个微分不等式。由于函数连续且满足 Lipschitz 条件，可使用比较原理分析其解的上下界。
+这意味着不等式\eqref{eq:ch2_lyap_ineq}可以拆分成两个微分不等式。由于函数满足 Lipschitz 条件，可使用比较原理分析其解的上下界。
 
-考虑边界情形：
+考虑不等式\eqref{eq:ch2_split}的边界情形：
 \begin{equation}\label{eq:ch2_bound_upper}
-\ddot{V}+m_2\dot{V}+m_1V=\delta,
+\ddot{V}(x^*)+m_1V(x^*)+m_2\dot{V}(x^*)=\delta,
 \end{equation}
 \begin{equation}\label{eq:ch2_bound_lower}
-\ddot{V}+m_2\dot{V}+m_1V=-\delta.
+\ddot{V}(x_*)+m_1V(x_*)+m_2\dot{V}(x_*)=-\delta.
 \end{equation}
+
 根据比较原理，不等式\eqref{eq:ch2_lyap_ineq}的解满足
 \begin{equation}\label{eq:ch2_compare}
-V_-(t)\le V(t)\le V_+(t),
-\end{equation}
-其中 $V_-(t),V_+(t)$ 分别是方程\eqref{eq:ch2_bound_lower}与\eqref{eq:ch2_bound_upper}的解。
-
-由此可得，误差函数是实用稳定的（即误差有界并收敛）。因此可以得到如下结论：方程\eqref{eq:ch2_lyap_eq}与不等式\eqref{eq:ch2_lyap_ineq}的解在稳定性与阻尼比上是近似的。由此，引理 2 的结论得证\cite{ref7}。
-
-由上述判据可得参数选取关系：
-\begin{equation}\label{eq:ch2_m_rule}
-m_1=\omega_{n,d}^2,\qquad m_2=2\zeta_d\omega_{n,d}.
+x_*(t)\le x_1(t)\le x^*(t).
 \end{equation}
 
-该参数关系同时给出了一个实用结论：在阻尼比固定时，提高 $\omega_{n,d}$ 会整体加快响应，但也会提高对采样与执行器带宽的要求；在自然频率固定时，提高 $\zeta_d$ 会减小超调，但可能使响应初期更“钝”。因此参数选择不应脱离硬件能力，建议将执行器峰值能力和采样周期约束作为整定前置条件。
+方程\eqref{eq:ch2_bound_upper}和\eqref{eq:ch2_bound_lower}的特征方程为
+\begin{equation}\label{eq:ch2_bound_char}
+r^2+m_2r+m_1=0.
+\end{equation}
+
+情况 1：若 $m_2^2=4m_1$，则
+\begin{equation}\label{eq:ch2_bound_case1_char}
+r^2+m_2r+m_1=\left(r+\frac{m_2}{2}\right)^2.
+\end{equation}
+
+则方程\eqref{eq:ch2_bound_upper}和\eqref{eq:ch2_bound_lower}的解为
+\begin{equation}\label{eq:ch2_bound_case1_sol}
+\begin{aligned}
+x^*(t)&=(c_1+c_2t)e^{-\frac{m_2}{2}t}+c_3,\\
+x_*(t)&=(c_4+c_5t)e^{-\frac{m_2}{2}t}+c_6.
+\end{aligned}
+\end{equation}
+
+令名义解 $x_p(t)=(a_1+a_2t)e^{-\frac{m_2}{2}t}$，误差 $x_e(t)=x_1(t)-x_p(t)$，则有
+\begin{equation}\label{eq:ch2_bound_case1_err}
+\begin{aligned}
+x_e(t)&\ge (e_1+e_2t)e^{-\frac{m_2}{2}t}+c_6,\\
+x_e(t)&\le (e_3+e_4t)e^{-\frac{m_2}{2}t}+c_3,
+\end{aligned}
+\end{equation}
+
+其中 $e_1=c_4-a_1,e_2=c_5-a_2,e_3=c_1-a_1,e_4=c_2-a_2$。
+
+情况 2：存在正实数 $\alpha,\beta$，使得
+\begin{equation}\label{eq:ch2_bound_case2_char}
+r^2+m_2r+m_1=\left[r+(\alpha+\beta\mathrm{i})\right]\left[r+(\alpha-\beta\mathrm{i})\right].
+\end{equation}
+
+即 $m_1=\alpha^2+\beta^2,m_2=2\alpha$，则方程\eqref{eq:ch2_bound_upper}和\eqref{eq:ch2_bound_lower}的解为
+\begin{equation}\label{eq:ch2_bound_case2_sol}
+\begin{aligned}
+x^*(t)&=(c_7\cos\beta t+c_8\sin\beta t)e^{-\alpha t}+c_9,\\
+x_*(t)&=(c_{10}\cos\beta t+c_{11}\sin\beta t)e^{-\alpha t}+c_{12}.
+\end{aligned}
+\end{equation}
+
+令名义解 $x_q(t)=(a_3\cos\beta t+a_4\sin\beta t)e^{-\alpha t}$，则
+\begin{equation}\label{eq:ch2_bound_case2_err}
+\begin{aligned}
+x_e(t)&\ge (e_5\cos\beta t+e_6\sin\beta t)e^{-\alpha t}+c_{12},\\
+x_e(t)&\le (e_7\cos\beta t+e_8\sin\beta t)e^{-\alpha t}+c_9,
+\end{aligned}
+\end{equation}
+
+其中 $e_5=c_{10}-a_3,e_6=c_{11}-a_4,e_7=c_7-a_3,e_8=c_8-a_4$。上述不等式表明误差函数 $x_e(t)$ 是实用稳定的（即误差有界并收敛）。
+
+因此可得
+\begin{equation}\label{eq:ch2_xq_xp}
+x_q(t)\approx x_p(t).
+\end{equation}
+
+也就是说，方程\eqref{eq:ch2_lyap_eq}与不等式\eqref{eq:ch2_lyap_ineq}的解在稳定性与阻尼比上是近似的。由此，引理 2 的结论得证\cite{ref7}。
+
+
+\begin{remark}\label{rem:ch2_example_zeta}
+为了展示引理~\ref{lem:ch2_lemma1}、引理~\ref{lem:ch2_lemma2}及参数规则\eqref{eq:ch2_m_rule}的使用，考虑以下三个系统：
+\begin{equation}\label{eq:ch2_ex_sys_hat}
+\ddot{\hat e}_1+m_2\dot{\hat e}_1+m_1\hat e_1=0.2,
+\end{equation}
+\begin{equation}\label{eq:ch2_ex_sys_check}
+\ddot{\check e}_1+m_2\dot{\check e}_1+m_1\check e_1=-0.2,
+\end{equation}
+\begin{equation}\label{eq:ch2_ex_sys_main}
+\ddot e_1+m_2\dot e_1+m_1 e_1=0.2\sin 5t.
+\end{equation}
+初始条件取 $x_1(0)=x_2(0)=0$、$y_d=1$，即
+$\hat e_1(0)=\check e_1(0)=e_1(0)=x_1(0)-y_d=-1$，
+$\dot{\hat e}_1(0)=\dot{\check e}_1(0)=\dot e_1(0)=x_2(0)-\dot y_d=0$。
+
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{ch2_remark22_caseA.pdf}
+    \caption{参数组 A（$m_2=3,m_1=2.25,\zeta_d=1,\zeta_{\mathrm{meas}}\approx1$）下 $\hat e_1,e_1,\check e_1$ 的响应}
+    \label{fig:ch2_remark22_caseA}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{ch2_remark22_caseB.pdf}
+    \caption{参数组 B（$m_2=2,m_1=2,\zeta_d\approx0.707,\zeta_{\mathrm{meas}}\approx0.707$）下 $\hat e_1,e_1,\check e_1$ 的响应}
+    \label{fig:ch2_remark22_caseB}
+  \end{minipage}
+\end{figure}
+\end{remark}
+
+
+情形 A 取 $p=1.5$，先按参数规则设计
+$m_2=2p,\ m_1=p^2$，得到 $m_2=3,\ m_1=2.25$，由
+$\zeta_d=\frac{m_2}{2\sqrt{m_1}}$ 得 $\zeta_d=1$（临界阻尼），对应引理~\ref{lem:ch2_lemma1}；
+情形 B 取 $\alpha=\beta=1$，先按参数规则设计
+$m_2=2\alpha,\ m_1=\alpha^2+\beta^2$，得到 $m_2=2,\ m_1=2$，由
+$\zeta_d=\frac{m_2}{2\sqrt{m_1}}=\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}\approx0.707$（欠阻尼），对应引理~\ref{lem:ch2_lemma2}。
+图~\ref{fig:ch2_remark22_caseA}与图~\ref{fig:ch2_remark22_caseB}
+显示在两种参数下均满足 $\check e_1\le e_1\le\hat e_1$，且响应形态与阻尼比设定一致。若按式\eqref{eq:ch2_zeta_from_mp}并基于方程\eqref{eq:ch2_ex_sys_main}的正弦受迫响应 $e_1$ 峰值反算，图~\ref{fig:ch2_remark22_caseA} 对应 $\zeta_{\mathrm{meas},A}=0.844\approx1$，图~\ref{fig:ch2_remark22_caseB} 对应 $\zeta_{\mathrm{meas},B}=0.692\approx0.707$。
+
+
 
 \section{预设阻尼比滑模反步控制器设计}[Preset damping-ratio sliding-mode backstepping controller design]\label{sec:ch3_prob}
 
@@ -269,39 +377,32 @@ u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+f_n-\dot\alpha_{n-1}+\va
 \right.
 \end{equation}
 
-选择 $V=\frac{1}{2}s^2$ 为李雅普诺夫函数，同时 $\dot V$ 的导数可以计算得到：
-\begin{equation}\label{eq:ch3_vdot_stab}
-\dot V=s\dot s\le -\varepsilon|s|.
-\end{equation}
+\begin{remark}\label{rem:ch3_remark23}
+本节中，所提出的预设阻尼比滑模反步控制方法与传统滑模反步法的主要区别在于虚拟控制函数 $\alpha_1$ 和 $\alpha_2$ 的设计。在传统滑模反步法中，常取
+\[
+\alpha_1=\frac{-k_1z_1+\dot y_d}{c_1},\qquad
+\alpha_2=-\frac{k_2z_2-\dot\alpha_1+c_1z_1}{c_2},\quad k_1,k_2>0,
+\]
+该设计能够保证包括系统输出在内的所有状态指数稳定，但无法实现对阻尼比的显式预设。相比之下，本文改进方法在保持系统稳定性的同时，通过将 $m_1,m_2$ 注入误差主导二阶结构，实现了阻尼比可设计、可调节，从而更好地满足对动态性能的精确要求，体现了本章方法的优越性。
+\end{remark}
 
-可以断定 $s$ 是指数稳定的，因此有：
-\begin{equation}\label{eq:ch3_s_bound_stab}
-|s(t)|\le \chi(t),
-\end{equation}
-其中 $\chi(t)$ 是与初值相关的函数。
-
-令 $s=0$ 并将上式带入前两个误差方程可得二阶误差主导动态。由引理 2 可知，系统稳定且阻尼比可调\cite{ref9}。
-
-\begin{equation}\label{eq:ch3_s_closed}
-  \dot s=-k_ss-\varepsilon\,\mathrm{sgn}(s)+\Delta.
-\end{equation}
-\begin{equation}\label{eq:ch3_e1_forced}
-  \ddot z_1+m_2\dot z_1+m_1z_1=\dot s.
-\end{equation}
-\begin{equation}\label{eq:ch3_mp_tp}
-  M_p\approx \exp\!\left(-\frac{\pi m_2}{\sqrt{4m_1-m_2^2}}\right),\qquad
-  t_p\approx \frac{2\pi}{\sqrt{4m_1-m_2^2}}.
-\end{equation}
-
-式\eqref{eq:ch3_mp_tp}为参数整定提供了直接参考：在满足稳定性的前提下，增大 $m_2$ 可降低超调，增大 $m_1$ 可加快响应。实际整定时通常先根据允许超调设定 $m_2$，再依据响应时间要求微调 $m_1$，并通过仿真验证输入幅值是否满足执行器约束。
-
-为提高整定效率，可采用“粗调—细调”两阶段策略。粗调阶段固定鲁棒参数，只调整 $(m_1,m_2)$ 使主要瞬态指标落入目标区间；细调阶段在保持 $(m_1,m_2)$ 不大幅变化的情况下，微调鲁棒项与边界层参数，抑制高频抖动并改善稳态波动。该策略可显著降低参数耦合导致的反复试错成本。
-
-在论文结果呈现上，建议把每次整定步骤对应到清晰的参数表：给出初值、调整方向、调整后指标变化。即使不展开全部试验过程，也应至少呈现“关键拐点参数组”，用于证明最终参数不是偶然获得，而是遵循了可复现的整定逻辑。
 
 \section{系统稳定性分析}[System stability analysis]\label{sec:ch3_stab2}
 
-通过虚拟控制器可求得误差对时间的导数形式如下：
+闭环系统的阻尼比预设和稳定性分析由定理 2.2 给出。
+\setcounter{theorem}{1}
+\begin{theorem}\label{thm:ch3_theorem22}
+非线性系统\eqref{eq:ch3_sys_mid}在控制器\eqref{eq:ch3_alpha_mid}作用下，系统跟踪误差最终有界，并具有近似期望阻尼比 $\zeta$。此外：
+
+1）若 $m_2=2k,\ m_1=k^2,\ k>0$，则 $\zeta\approx1$；
+
+2）若 $m_2=2\alpha,\ m_1=\alpha^2+\beta^2,\ \alpha,\beta>0$，则
+\[
+\zeta\approx\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}.
+\]
+\end{theorem}
+\begin{proof}
+首先证明整体闭环误差系统的稳定性。通过虚拟控制器可求得误差系统
 \begin{equation}\label{eq:ch3_zdot_mid}
 \left\{
 \begin{aligned}
@@ -315,95 +416,105 @@ u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+f_n-\dot\alpha_{n-1}+\va
 \right.
 \end{equation}
 
-选择 $V=\frac{1}{2}s^2$ 为 Lyapunov 函数，同时 $\dot V$ 的导数可以计算得到：
+选择李雅普诺夫函数
+\begin{equation}\label{eq:ch3_vn_mid}
+V_n=\frac{1}{2}\sum_{i=3}^{n}z_i^2,
+\end{equation}
+其导数满足
 \begin{equation}\label{eq:ch3_vdot_mid}
-\dot V=s\dot s\le -\varepsilon|s|.
+\dot V_n=-\sum_{i=3}^{n}k_i z_i^2\le -a_0V_n,\qquad
+a_0=\min\{2k_3,\ldots,2k_n\}>0.
 \end{equation}
-
-其中 $\varepsilon>0$，可以断定 $s$ 是指数稳定的，因此有：
+由比较引理可得
+\begin{equation}\label{eq:ch3_vn_bound_mid}
+V_n(t)\le V_n(0)e^{-a_0t},\quad t\ge0.
+\end{equation}
+进一步得到
 \begin{equation}\label{eq:ch3_s_bound_mid}
-|s(t)|\le \chi(t),
+|z_3(t)|\le \sqrt{2V_n(t)}\le \sqrt{2V_n(0)}e^{-\frac{a_0}{2}t}
+\triangleq \sqrt{2c_0}e^{-at},
 \end{equation}
-$\chi(t)$ 是与初值相关的函数。
+其中 $c_0=V_n(0)$，$a=a_0/2$。
 
-令 $s=0$ 并将式\eqref{eq:ch3_s_bound_stab}带入式\eqref{eq:ch3_zdot_stab}中的前两个方程可得误差主导动态。由引理 2 可知，系统稳定且阻尼比可调\cite{ref9}。
+令 $V_2=V(z_1)=z_1$，由\eqref{eq:ch3_zdot_mid}前两式可得
+\begin{equation}\label{eq:ch3_v2_eq_mid}
+\ddot V_2+m_2\dot V_2+m_1V_2=b_2z_3.
+\end{equation}
+结合\eqref{eq:ch3_s_bound_mid}有
+\begin{equation}\label{eq:ch3_lyap_ineq_mid}
+\left|\ddot V_2+m_2\dot V_2+m_1V_2\right|
+=|b_2z_3|
+\le |b_2|\sqrt{2c_0}e^{-at}
+\le \delta,
+\end{equation}
+其中可取 $\delta=|b_2|\sqrt{2c_0}$。因此\eqref{eq:ch3_lyap_ineq_mid}与引理~\ref{lem:ch2_lemma2}中的二阶类李雅普诺夫不等式同构，可得系统跟踪误差最终有界。
 
-上述分析表明，本章闭环系统满足“先保证滑模变量收敛，再保证误差主导动态满足预设阻尼比结构”的设计逻辑。该逻辑的优点是层次清晰：鲁棒性与性能指标分别由不同参数主导，便于后续章节在观测器和输入约束条件下继续扩展。
-
-进一步地，该逻辑还便于解释不同工况下的性能波动来源：若主要波动体现在峰值阶段，通常优先检查阻尼比映射参数；若主要波动体现在稳态尾部，通常优先检查鲁棒项、边界层和离散实现误差。这种“先分层再定位”的分析方式可以提高调试效率，并减少无效参数搜索。
-
-从误差传播角度看，滑模变量收敛速度会直接影响阻尼比映射在短时段内的可见度。若 $s$ 收敛较慢，则误差系统在较长时间内处于“过渡叠加状态”，表现为超调统计值偏离理论值。因而在结果分析时，应同时报告 $s$ 的收敛过程，而不只给出输出误差曲线，以避免把鲁棒层未收敛造成的偏差误判为阻尼比映射失效。
+最后，由引理~\ref{lem:ch2_lemma2}的参数结论直接得到阻尼比设计关系：当 $m_2=2k,m_1=k^2$ 时 $\zeta\approx1$；当 $m_2=2\alpha,m_1=\alpha^2+\beta^2$ 时 $\zeta\approx\alpha/\sqrt{\alpha^2+\beta^2}$。定理得证。
+\end{proof}
 
 \section{数值仿真}[Numerical simulation]\label{sec:ch3_sim}
 
-本节给出将本章基准控制器应用于板球平衡系统时，仿真建模、任务设置、对比方式与结果呈现的推荐写法（与中期报告一致）。具体动力学模型、参数表与降阶/解耦过程可放在第6章实验章节或本节附录中；此处强调“如何把预设阻尼比指标落到可观测曲线与统计量”。
+% 本节给出将本章基准控制器应用于板球平衡系统时，仿真建模、任务设置、对比方式与结果呈现的推荐写法（与中期报告一致）。具体动力学模型、参数表与降阶/解耦过程可放在第6章实验章节或本节附录中；此处强调“如何把预设阻尼比指标落到可观测曲线与统计量”。
 
-仿真评价建议同时覆盖性能指标与代价指标两类结果。性能指标包括超调量、峰值时间、调节时间、稳态误差；代价指标包括控制输入峰值与输入均方值。两类指标联合呈现可以避免仅优化跟踪误差而忽略控制代价的片面结论。
+% 仿真评价建议同时覆盖性能指标与代价指标两类结果。性能指标包括超调量、峰值时间、调节时间、稳态误差；代价指标包括控制输入峰值与输入均方值。两类指标联合呈现可以避免仅优化跟踪误差而忽略控制代价的片面结论。
 
-此外，建议统一统计窗口与采样频率，避免不同工况下指标计算口径不一致。对于时变轨迹任务，可在一个完整周期内计算平均绝对误差与最大瞬时误差，并与控制输入峰值同步报告。这样可以更清晰地说明“性能提升是否以更高控制代价为代偿”，保证结果解释客观可信。
+% 此外，建议统一统计窗口与采样频率，避免不同工况下指标计算口径不一致。对于时变轨迹任务，可在一个完整周期内计算平均绝对误差与最大瞬时误差，并与控制输入峰值同步报告。这样可以更清晰地说明“性能提升是否以更高控制代价为代偿”，保证结果解释客观可信。
 
-仿真中可采用“含未建模动态与扰动”的高阶板球模型，并通过小角度近似与解耦得到 $x$/$y$ 两个方向的子系统，再在每个子系统上应用本章控制器。为避免论文初稿阶段因图片/模型文件不齐导致编译失败，可先用占位框展示图与表（后续替换为真实图片）。
+% 仿真中可采用“含未建模动态与扰动”的高阶板球模型，并通过小角度近似与解耦得到 $x$/$y$ 两个方向的子系统，再在每个子系统上应用本章控制器。
+% 为避免论文初稿阶段因图片/模型文件不齐导致编译失败，可先用占位框展示图与表（后续替换为真实图片）。
 
-\begin{figure}[htbp]
-  \centering
-  \fbox{\parbox{0.85\textwidth}{\centering
-  （占位）此处放置 Simulink/BPS 模型结构图：包含执行器、板角、球位置、扰动注入与控制器模块。}}
-  \caption{板球平衡系统仿真模型结构示意（占位）}
-  \label{fig:ch3_bps_model}
-\end{figure}
+% \begin{figure}[htbp]
+%   \centering
+%   \fbox{\parbox{0.85\textwidth}{\centering
+%   （占位）此处放置 Simulink/BPS 模型结构图：包含执行器、板角、球位置、扰动注入与控制器模块。}}
+%   \caption{板球平衡系统仿真模型结构示意（占位）}
+%   \label{fig:ch3_bps_model}
+% \end{figure}
 
+% \begin{figure}[htbp]
+%   \centering
+%   \fbox{\parbox{0.85\textwidth}{\centering（占位）固定目标点：$x$方向跟踪曲线与误差曲线}}
+%   \caption{$x$方向固定目标点跟踪结果（占位）}
+%   \label{fig:ch3_step_x}
+% \end{figure}
 
-建议至少包含两类任务（与中期报告一致）：
+% \begin{figure}[htbp]
+%   \centering
+%   \fbox{\parbox{0.85\textwidth}{\centering（占位）固定目标点：$y$方向跟踪曲线与误差曲线}}
+%   \caption{$y$方向固定目标点跟踪结果（占位）}
+%   \label{fig:ch3_step_y}
+% \end{figure}
 
+% \begin{figure}[htbp]
+%   \centering
+%   \fbox{\parbox{0.85\textwidth}{\centering（占位）圆形轨迹：俯视图（实际轨迹 期望轨迹）}}
+%   \caption{圆形轨迹跟踪俯视图（占位）}
+%   \label{fig:ch3_circle_top}
+% \end{figure}
 
-；固定目标点跟踪： 给定 $x_d,y_d$ 常值目标，统计两方向的最大超调量、峰值时间、稳态误差与整定时间，并对比不同 $\zeta_d$ 的效果。
-；封闭轨迹跟踪： 例如圆形轨迹（也可加入三角形/方形等非光滑轨迹），比较不同 $\zeta_d$ 下轨迹误差与控制输入平滑性。
+% \begin{table}[htbp]
+%   \centering
+%   \caption{预设阻尼比下超调量与峰值时间的理论/仿真对比（模板）}
+%   \label{tab:ch3_mp_compare}
+%   \begin{tabular}{cccccc}
+%     \hline
+%     $\zeta_d$ & $(m_1,m_2)$ & $M_p$（理论） & $M_p$（仿真） & $t_p$（理论） & $t_p$（仿真） \\
+%     \hline
+%     0.3 & -- & -- & -- & -- & -- \\
+%     0.6 & -- & -- & -- & -- & -- \\
+%     0.9 & -- & -- & -- & -- & -- \\
+%     \hline
+%   \end{tabular}
+% \end{table}
 
+% 同时建议给出“理论预估超调量 vs 实际统计超调量”的对比表，用于验证预设阻尼比映射的有效性：
 
+% 除标称工况外，还可附加一组扰动工况仿真（例如外加脉冲扰动或参数偏差），用于验证鲁棒项在非理想条件下对恢复速度与峰值偏差的抑制效果。该组结果可与标称工况并排展示，突出控制器在复杂条件下的一致性表现。
 
-\begin{figure}[htbp]
-  \centering
-  \fbox{\parbox{0.85\textwidth}{\centering（占位）固定目标点：$x$方向跟踪曲线与误差曲线}}
-  \caption{$x$方向固定目标点跟踪结果（占位）}
-  \label{fig:ch3_step_x}
-\end{figure}
+% 若条件允许，还可增加一次“参数偏离测试”，即在不重新整定的前提下改变部分模型参数，观察控制器维持阻尼比特性的能力。这类测试可直接反映方法的参数鲁棒性，对比价值通常高于单一标称工况下的误差下降幅度。
 
-\begin{figure}[htbp]
-  \centering
-  \fbox{\parbox{0.85\textwidth}{\centering（占位）固定目标点：$y$方向跟踪曲线与误差曲线}}
-  \caption{$y$方向固定目标点跟踪结果（占位）}
-  \label{fig:ch3_step_y}
-\end{figure}
+% 为了增强对比结果的说服力，建议在图表中统一采用同一纵轴尺度，并给出每组试验的初始条件和扰动注入时刻。这样可避免图形视觉比例差异带来的误判，也便于读者直接比较不同参数组在同一条件下的动态差异。
 
-\begin{figure}[htbp]
-  \centering
-  \fbox{\parbox{0.85\textwidth}{\centering（占位）圆形轨迹：俯视图（实际轨迹 期望轨迹）}}
-  \caption{圆形轨迹跟踪俯视图（占位）}
-  \label{fig:ch3_circle_top}
-\end{figure}
-
-同时建议给出“理论预估超调量 vs 实际统计超调量”的对比表，用于验证预设阻尼比映射的有效性：
-
-除标称工况外，还可附加一组扰动工况仿真（例如外加脉冲扰动或参数偏差），用于验证鲁棒项在非理想条件下对恢复速度与峰值偏差的抑制效果。该组结果可与标称工况并排展示，突出控制器在复杂条件下的一致性表现。
-
-若条件允许，还可增加一次“参数偏离测试”，即在不重新整定的前提下改变部分模型参数，观察控制器维持阻尼比特性的能力。这类测试可直接反映方法的参数鲁棒性，对比价值通常高于单一标称工况下的误差下降幅度。
-
-为了增强对比结果的说服力，建议在图表中统一采用同一纵轴尺度，并给出每组试验的初始条件和扰动注入时刻。这样可避免图形视觉比例差异带来的误判，也便于读者直接比较不同参数组在同一条件下的动态差异。
-
-\begin{table}[htbp]
-  \centering
-  \caption{预设阻尼比下超调量与峰值时间的理论/仿真对比（模板）}
-  \label{tab:ch3_mp_compare}
-  \begin{tabular}{cccccc}
-    \hline
-    $\zeta_d$ & $(m_1,m_2)$ & $M_p$（理论） & $M_p$（仿真） & $t_p$（理论） & $t_p$（仿真） \\
-    \hline
-    0.3 & -- & -- & -- & -- & -- \\
-    0.6 & -- & -- & -- & -- & -- \\
-    0.9 & -- & -- & -- & -- & -- \\
-    \hline
-  \end{tabular}
-\end{table}
 
 \section{本章小结}[Summary]\label{sec:ch3_summary}
 

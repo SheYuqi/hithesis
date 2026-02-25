@@ -1,0 +1,44 @@
+{
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "latex-workshop.latex.autoBuild.run": "onFileChange",
+  "latex-workshop.latex.env": {
+    "TEXMFVAR": "/home/ubuntu/Sheyuqi/hithesis/.texmf-var",
+    "TEXMFCONFIG": "/home/ubuntu/Sheyuqi/hithesis/.texmf-config"
+  },
+  "latex-workshop.latex.watch.files": [
+    "hitbook/chinese/**/*.tex",
+    "hitbook/chinese/**/*.bib",
+    "hitbook/chinese/**/*.sty",
+    "hitbook/chinese/**/*.cls",
+    "hitbook/chinese/**/*.bst",
+    "hitbook/chinese/**/*.cfg"
+  ],
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk-chinese",
+      "command": "latexmk",
+      "args": [
+        "-cd",
+        "-r",
+        "%DIR%/latexmkrc",
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "%DOC%"
+      ],
+      "env": {
+        "TEXMFVAR": "/home/ubuntu/Sheyuqi/hithesis/.texmf-var",
+        "TEXMFCONFIG": "/home/ubuntu/Sheyuqi/hithesis/.texmf-config"
+      }
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk-chinese",
+      "tools": ["latexmk-chinese"]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "latexmk-chinese",
+  "latex-workshop.latex.autoBuild.cleanAndRetry.enabled": true
+}
