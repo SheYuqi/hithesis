@@ -90,7 +90,7 @@ $\zeta$ 是阻尼比，$\omega_n$ 是系统的固有频率。
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.85\textwidth]{ch2_zeta_step_response.pdf}
+  \includegraphics[width=0.85\textwidth]{ch2_zeta_step_response.png}
   \caption{自然频率 $\omega_n=4\,\mathrm{rad/s}$ 时不同阻尼比下标准二阶系统阶跃响应}
   \label{fig:ch2_zeta_step_response}
 \end{figure}
@@ -262,7 +262,7 @@ x_q(t)\approx x_p(t).
 
 
 \begin{remark}\label{rem:ch2_example_zeta}
-为了展示引理~\ref{lem:ch2_lemma1}、引理~\ref{lem:ch2_lemma2}及参数规则\eqref{eq:ch2_m_rule}的使用，考虑以下三个系统：
+为了展示引理~\ref{lem:ch2_lemma1}、引理~\ref{lem:ch2_lemma2}及参数规则\eqref{eq:ch2_zeta_def}的使用，考虑以下三个系统：
 \begin{equation}\label{eq:ch2_ex_sys_hat}
 \ddot{\hat e}_1+m_2\dot{\hat e}_1+m_1\hat e_1=0.2,
 \end{equation}
@@ -281,14 +281,14 @@ $\dot{\hat e}_1(0)=\dot{\check e}_1(0)=\dot e_1(0)=x_2(0)-\dot y_d=0$。
   \centering
   \begin{minipage}[t]{0.49\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{ch2_remark22_caseA.pdf}
+    \includegraphics[width=\textwidth]{ch2_remark22_caseA.png}
     \caption{参数组 A（$m_2=3,m_1=2.25,\zeta_d=1,\zeta_{\mathrm{meas}}\approx1$）下 $\hat e_1,e_1,\check e_1$ 的响应}
     \label{fig:ch2_remark22_caseA}
   \end{minipage}
   \hfill
   \begin{minipage}[t]{0.49\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{ch2_remark22_caseB.pdf}
+    \includegraphics[width=\textwidth]{ch2_remark22_caseB.png}
     \caption{参数组 B（$m_2=2,m_1=2,\zeta_d\approx0.707,\zeta_{\mathrm{meas}}\approx0.707$）下 $\hat e_1,e_1,\check e_1$ 的响应}
     \label{fig:ch2_remark22_caseB}
   \end{minipage}

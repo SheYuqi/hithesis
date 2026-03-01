@@ -6,28 +6,29 @@
 
 第2章与第3章分别在全状态可测与状态观测条件下建立了预设阻尼比滑模反步控制框架，并给出了稳定性与可调瞬态指标分析。然而在实际执行机构中，控制输入普遍存在幅值约束，当控制律输出超过执行器上限时会发生饱和，进而破坏理想误差动力学并导致超调增大、收敛变慢甚至出现持续振荡。针对该问题，本章面向输入饱和约束场景，研究预设阻尼比滑模反步控制器的抗饱和设计与稳定性分析。
 
-本章核心思路是在原有“二阶目标误差动力学 + 滑模鲁棒补偿”结构上显式引入饱和映射与输入失配项，将饱和影响纳入李雅普诺夫分析，并通过辅助抗饱和动态实现对失配项的在线吸收。这样可在输入受限条件下保持系统一致最终有界，并尽可能维持预设阻尼比对应的瞬态响应特性。
+为保持与前两章一致的技术路线，本章不再单独抽取二阶特例重新设计控制器，而是继续以 $n$ 阶严格反馈系统为研究对象，沿用“误差变量定义、积分型滑模面构造、递推虚拟控制器设计、末端实际输入实现”的统一设计顺序。与第2章和第3章相比，本章新增的关键因素仅在于：末端执行器实际输入由期望控制输入经过饱和映射得到，因此在控制器最后一层需要显式处理输入失配，并加入抗饱和补偿动态。
+
+因此，第四章与前两章的关系可以概括为：第2章给出无观测器、无输入约束条件下的基准预设阻尼比滑模反步控制器，第3章在此基础上加入扰动观测补偿，而本章则在保持 $n$ 阶递推设计主线不变的前提下，进一步聚焦于实际输入端的饱和非线性影响，讨论在输入受限条件下如何尽量保持由参数 $(m_1,m_2)$ 所决定的预设阻尼比瞬态形态，并证明闭环系统仍然一致最终有界。
 
 \section{系统描述及预备知识}[System description and preliminaries]
 
 \subsection{系统描述}[System description]
 
-考虑与前两章一致的二阶不确定非线性系统
+考虑与前两章一致的 $n$ 阶严格反馈形式不确定非线性系统
 \begin{equation}\label{eq:ch5_sys}
 \left\{
 \begin{aligned}
-  \dot{x}_1 &= x_2,\\
-  \dot{x}_2 &= b\,u + f + d,\\
+  \dot{x}_i &= b_i x_{i+1}+f_i(x_i)+d_i,\quad i=1,\ldots,n-1,\\
+  \dot{x}_n &= b_nu+f_n(x_n)+d_n,\\
   y &= x_1,
 \end{aligned}
 \right.
 \end{equation}
-其中 $b\neq 0$ 为已知或符号已知且有下界，$f$ 为未知/未建模项，$d$ 为外扰。
-
-定义参考轨迹 $y_d$ 与跟踪误差
-\begin{equation}\label{eq:ch5_e_def}
-  e_1 = y-y_d,\qquad e_2 = \dot y-\dot y_d = x_2-\dot y_d.
-\end{equation}
+其中 $x_i\in\mathbb{R}$ 为系统状态，$u\in\mathbb{R}$ 为控制输入，$y$ 为可测输出，$b_i\neq 0$ 为已知控制增益，$f_i(\cdot)$ 为未知非线性项，$d_i$ 为外部扰动。定义参考信号 $\alpha_0=y_d$，并令
+\[
+z_i=x_i-\alpha_{i-1},\qquad i=1,2,\ldots,n,
+\]
+其中 $\alpha_i$（$i=1,2,\ldots,n-1$）为虚拟控制函数，$z_i$ 为状态量与前一级虚拟控制器之间的误差。
 
 \subsection{输入饱和相关预备知识}[Input saturation preliminaries]
 
@@ -47,94 +48,139 @@
   \Delta_u \triangleq u-u_c = \mathrm{sat}(u_c)-u_c.
 \end{equation}
 
-定义名义模型误差与总不确定性
+在递推设计过程中，将各通道中的未知非线性、外部扰动以及虚拟控制器导数近似误差统一并入等效不确定项 $\Delta_i$，并假设存在正常数 $\bar\Delta_i$ 使得
 \begin{equation}\label{eq:ch5_delta}
-  \tilde f \triangleq f-\hat f,\qquad
-  \Delta \triangleq \tilde f + d,\qquad |\Delta|\le \bar\Delta.
+  |\Delta_i(t)|\le \bar\Delta_i,\qquad i=1,2,\ldots,n.
 \end{equation}
 
 \section{输入饱和约束下的预设阻尼比滑模反步控制器设计}[Controller design under input saturation]
 
-定义积分状态与滑模变量
+本节沿用第2章的预设阻尼比滑模反步设计主线，在 $n$ 阶严格反馈系统上构造输入饱和约束下的控制器。也就是说，前 $n-1$ 级仍按反步递推方式逐层设计虚拟控制器，滑模面仍采用与前两章完全一致的积分型结构；与前文唯一不同的是，末端实际输入不再直接等于控制器输出，而是由期望输入经过饱和环节后得到，因此需要在最后一级额外引入抗饱和补偿动态。
+
+首先定义积分变量
 \begin{equation}\label{eq:ch5_q}
-  q \triangleq \int_0^t e_1\,d\tau,\qquad \dot q = e_1,
+  q \triangleq \int_0^t z_1\,d\tau,\qquad \dot q = z_1,
 \end{equation}
+并采用与前两章一致的积分型滑模面
 \begin{equation}\label{eq:ch5_s}
-  s \triangleq \dot e_1 + m_2 e_1 + m_1 q = e_2 + m_2 e_1 + m_1 q,
+  s \triangleq z_n+\sum_{i=3}^{n-1}c_i z_i+c_2\left(z_2+m_2z_1+m_1q\right),
 \end{equation}
-其中 $m_1>0,m_2>0$ 用于嵌入预设阻尼比参数。
+其中 $m_1>0,m_2>0$ 为与前两章一致的阻尼比调节参数，对应的名义阻尼比仍为
+\[
+  \zeta_d=\frac{m_2}{2\sqrt{m_1}}.
+\]
+因此，本章在滑模面定义上与前两章保持一致，阻尼比参数仍然仅通过 $(m_1,m_2)$ 注入误差主导动力学。
 
-由系统与误差定义可得
-\begin{equation}\label{eq:ch5_sdot_expand}
-\begin{aligned}
-  \dot s
-  &= b\,u + f+d - \ddot y_d + m_2 e_2 + m_1 e_1\\
-  &= b\,u + \hat f - \ddot y_d + m_2 e_2 + m_1 e_1 + \Delta.
-\end{aligned}
+下面按与第2章相同的顺序设计虚拟控制器。取
+\begin{equation}\label{eq:ch5_alpha12}
+\alpha_1=-\frac{1}{b_1}\left(\hat f_1-\dot y_d\right),
 \end{equation}
+\begin{equation}\label{eq:ch5_alpha2}
+\alpha_2=-\frac{1}{b_2}\left(m_2z_2+m_1z_1+\hat f_2-\dot\alpha_1\right),
+\end{equation}
+其中 $\hat f_i$ 表示对相应名义模型项的可用补偿量。为了保持与第2章一致的递推结构，进一步取
+\begin{equation}\label{eq:ch5_alpha3}
+\alpha_3=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+\hat f_3-\dot\alpha_2\right),
+\end{equation}
+\begin{equation}\label{eq:ch5_alphai}
+  \alpha_i=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+\hat f_i-\dot\alpha_{i-1}\right),\quad i=4,\ldots,n-2,
+\end{equation}
+\begin{equation}\label{eq:ch5_alpha_nm1}
+  \alpha_{n-1}=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+\hat f_{n-1}-\dot\alpha_{n-2}\right).
+\end{equation}
+上述虚拟控制器的作用与前两章完全一致：前两级显式注入 $(m_1,m_2)$ 以塑造二阶主导误差动力学，后续各级则通过递推消除中间误差耦合项，使高阶误差逐层向滑模面汇聚。
 
-设期望输入采用“名义项 + 鲁棒项 + 抗饱和补偿”结构
-\begin{equation}\label{eq:ch5_uc_struct}
-  u_c = u_0 + u_{\mathrm{sm}} + u_{\mathrm{aw}},
+在此基础上，若暂不考虑输入饱和，则第2章中的末端控制器可写为
+\begin{equation}\label{eq:ch5_uc_nominal}
+u_c^\star=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+\hat f_n-\dot\alpha_{n-1}
++(\rho+\varepsilon)\,\mathrm{sat}\!\left(\frac{s}{\phi}\right)+k_0s\right),
 \end{equation}
-其中
-\begin{equation}\label{eq:ch5_u0}
-  u_0 = \frac{1}{b}\Big(-\hat f + \ddot y_d - m_2 e_2 - m_1 e_1\Big),
-\end{equation}
+其中边界层函数定义为
 \begin{equation}\label{eq:ch5_sat_fun}
   \mathrm{sat}\!\left(\frac{s}{\phi}\right)=
   \begin{cases}
     \mathrm{sgn}(s), & |s|>\phi,\\
     \frac{s}{\phi}, & |s|\le \phi,
   \end{cases}
-  \qquad \phi>0,
+  \qquad \phi>0.
 \end{equation}
-\begin{equation}\label{eq:ch5_usm}
-  u_{\mathrm{sm}} = -\frac{1}{b}(\rho+\varepsilon)\,
-  \mathrm{sat}\!\left(\frac{s}{\phi}\right)
-  -\frac{1}{b}k_0 s,
-\end{equation}
-其中 $\rho\ge \bar\Delta$，$\varepsilon>0$，$k_0>0$。
-
-定义辅助抗饱和动态
+并取 $\rho\ge \bar\Delta$，用于覆盖滑模面通道总不确定项的已知上界。
+相较于第2章，本章新增的关键问题在于：实际执行器只能输出饱和后的输入
+\[
+u=\mathrm{sat}(u_c),
+\]
+因而若仍直接采用 $u_c^\star$，则会出现输入失配 $\Delta_u=u-u_c^\star$，从而破坏原有理想滑模到达动态。为此，定义辅助抗饱和动态
 \begin{equation}\label{eq:ch5_xi_dyn}
-  \dot \xi = -\lambda \xi + b\,\Delta_u,\qquad \lambda>0,
+  \dot \xi = -\lambda \xi + b_n\Delta_u,\qquad \lambda>0,
 \end{equation}
-并取
+并在名义末端控制器基础上加入抗饱和补偿项
 \begin{equation}\label{eq:ch5_uaw}
-  u_{\mathrm{aw}} = -\frac{1}{b}k_{\mathrm{aw}}\,\xi,\qquad k_{\mathrm{aw}}>0.
+  u_{\mathrm{aw}}=-\frac{1}{b_n}k_{\mathrm{aw}}\xi,\qquad k_{\mathrm{aw}}>0.
 \end{equation}
-
-最终控制律为
+于是最终期望控制输入取为
+\begin{equation}\label{eq:ch5_uc_struct}
+  u_c = u_c^\star + u_{\mathrm{aw}}.
+\end{equation}
+将 \eqref{eq:ch5_uc_nominal} 与 \eqref{eq:ch5_uaw} 合并，可得
 \begin{equation}\label{eq:ch5_final}
 \boxed{
 \begin{aligned}
-  u_c &= \frac{1}{b}\Big(-\hat f + \ddot y_d - m_2 e_2 - m_1 e_1\Big)
-        -\frac{1}{b}(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
-        -\frac{1}{b}k_0 s
-        -\frac{1}{b}k_{\mathrm{aw}}\xi,\\
-  u &= \mathrm{sat}(u_c),\\
-  \dot \xi &= -\lambda \xi + b\,\Delta_u.
+\alpha_1&=-\frac{1}{b_1}\left(\hat f_1-\dot y_d\right),\\
+\alpha_2&=-\frac{1}{b_2}\left(m_2z_2+m_1z_1+\hat f_2-\dot\alpha_1\right),\\
+\alpha_3&=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+\hat f_3-\dot\alpha_2\right),\\
+\alpha_i&=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+\hat f_i-\dot\alpha_{i-1}\right),\quad i=4,\ldots,n-2,\\
+\alpha_{n-1}&=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+\hat f_{n-1}-\dot\alpha_{n-2}\right),\\
+u_c&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+\hat f_n-\dot\alpha_{n-1}
++(\rho+\varepsilon)\,\mathrm{sat}\!\left(\frac{s}{\phi}\right)+k_0s+k_{\mathrm{aw}}\xi\right),\\
+u&=\mathrm{sat}(u_c),\\
+\dot\xi&=-\lambda\xi+b_n\Delta_u.
 \end{aligned}}
 \end{equation}
+
+根据上述控制器，闭环误差系统可写为
+\begin{equation}\label{eq:ch5_z_dyn}
+\left\{
+\begin{aligned}
+  \dot z_1 &= b_1z_2+\tilde\Delta_1,\\
+  \dot z_2 &= -m_2z_2-m_1z_1+b_2z_3+\tilde\Delta_2,\\
+  \dot z_3 &= -\frac{c_2b_2-c_4b_3}{c_3}z_3+b_3z_4+\tilde\Delta_3,\\
+  \dot z_i &= -\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_iz_{i+1}-b_{i-1}z_{i-1}+\tilde\Delta_i,\quad i=4,\ldots,n-2,\\
+  \dot z_{n-1} &= -\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2}+\tilde\Delta_{n-1},\\
+  \dot z_n &= -c_{n-1}b_{n-1}z_n-b_{n-1}z_{n-1}
+             -(\rho+\varepsilon)\,\mathrm{sat}\!\left(\frac{s}{\phi}\right)
+             -k_0s-k_{\mathrm{aw}}\xi+b_n\Delta_u+\tilde\Delta_n,
+\end{aligned}
+\right.
+\end{equation}
+其中 $\tilde\Delta_i$ 表示各通道名义补偿误差与外部扰动的合成剩余项。于是由 \eqref{eq:ch5_s} 与 \eqref{eq:ch5_z_dyn} 可知，滑模变量满足
+\begin{equation}\label{eq:ch5_sdot_expand}
+  \dot s
+  =-(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)-k_0s-k_{\mathrm{aw}}\xi+\Delta_s+b_n\Delta_u,
+\end{equation}
+其中 $\Delta_s$ 为经递推补偿后投影到滑模面通道上的总剩余不确定项，且存在常数 $\bar\Delta$ 使得
+\[
+|\Delta_s(t)|\le \bar\Delta.
+\]
+\noindent
+由此可见，第四章与前两章在结构上的一致性体现在：滑模面定义完全相同，虚拟控制器设计顺序完全相同，前两级仍负责构造预设阻尼比对应的主导二阶动态，高阶通道仍通过递推消除耦合项；新增部分仅是将第2章末端控制输入中的滑模项扩展为“边界层滑模项 + 线性阻尼项 + 抗饱和补偿项”，从而在输入受限时仍能保持统一的分析路径。
 \section{系统稳定性分析}[System stability analysis]
 
-本节在输入幅值饱和存在的条件下，对式 \eqref{eq:ch5_final} 所给控制律的闭环稳定性给出一致最终有界结论。滑模鲁棒项采用式 \eqref{eq:ch5_usm}，其中线性阻尼项 $-k_0 s$ 用于抵消抗饱和通道引入的交叉项并使李雅普诺夫不等式闭合。
+本节在输入幅值饱和存在的条件下，对式 \eqref{eq:ch5_final} 所给控制律的闭环稳定性给出一致最终有界结论。其中，边界层滑模项 $-(\rho+\varepsilon)\mathrm{sat}(s/\phi)$ 用于抑制滑模通道总不确定性，线性阻尼项 $-k_0 s$ 用于抵消抗饱和通道引入的交叉项并使李雅普诺夫不等式闭合。
 
 \paragraph{假设4.1}
-系统输入增益 $b$ 为已知常数，且存在已知正常数 $b_{\min},b_{\max}$ 使得
+系统末端输入增益 $b_n$ 为已知常数，且存在已知正常数 $b_{\min},b_{\max}$ 使得
 \[
-0<b_{\min}\le |b|\le b_{\max}.
+0<b_{\min}\le |b_n|\le b_{\max}.
 \]
 
 \paragraph{假设4.2}
-总不确定项 $\Delta$ 有界，即
+滑模通道总不确定项 $\Delta_s$ 有界，即
 \[
-|\Delta(t)|\le \bar\Delta,\quad \forall t\ge 0.
+|\Delta_s(t)|\le \bar\Delta,\quad \forall t\ge 0.
 \]
 
 \paragraph{假设4.3}
-参考信号 $y_d(t)$ 二阶可导且有界，$\dot y_d(t),\ddot y_d(t)$ 有界。
+参考信号 $y_d(t)$ 及递推设计所需各阶导数有界，从而虚拟控制函数 $\alpha_i$ 及其所需导数有界。
 
 \paragraph{假设4.4}
 饱和失配项 $\Delta_u=\mathrm{sat}(u_c)-u_c$ 有界，即存在常数 $\bar\Delta_u>0$ 使得
@@ -142,14 +188,14 @@
 |\Delta_u(t)|\le \bar\Delta_u,\quad \forall t\ge 0.
 \]
 
-由 \eqref{eq:ch5_sdot_expand}--\eqref{eq:ch5_uc_struct}、\eqref{eq:ch5_u0}、\eqref{eq:ch5_uaw} 及 \eqref{eq:ch5_usm} 可得
+由控制律 \eqref{eq:ch5_final} 与滑模变量动态 \eqref{eq:ch5_sdot_expand} 可得
 \begin{equation}\label{eq:ch5_sdot_closed_new}
   \dot s
   = -(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
     -k_0 s
     -k_{\mathrm{aw}}\xi
-    + \Delta
-    + b\,\Delta_u.
+    + \Delta_s
+    + b_n\,\Delta_u.
 \end{equation}
 
 为处理连续逼近项，先给出一个常用不等式。
@@ -183,23 +229,23 @@
   &= s\Big[-(\rho+\varepsilon)\mathrm{sat}\!\left(\frac{s}{\phi}\right)
             -k_0 s
             -k_{\mathrm{aw}}\xi
-            +\Delta
-            +b\Delta_u\Big]
-     +\frac{1}{\kappa}\xi\Big(-\lambda\xi+b\Delta_u\Big)\\
+            +\Delta_s
+            +b_n\Delta_u\Big]
+     +\frac{1}{\kappa}\xi\Big(-\lambda\xi+b_n\Delta_u\Big)\\
   &=-(\rho+\varepsilon)s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right)
     -k_0 s^2
     -k_{\mathrm{aw}} s\xi
-    +s\Delta
-    +b s\Delta_u
+    +s\Delta_s
+    +b_n s\Delta_u
     -\frac{\lambda}{\kappa}\xi^2
-    +\frac{b}{\kappa}\xi\Delta_u.
+    +\frac{b_n}{\kappa}\xi\Delta_u.
 \end{aligned}
 \end{equation}
 
-利用 $|\Delta|\le \bar\Delta$ 且 $\rho\ge \bar\Delta$，有 $s\Delta\le \rho|s|$。再由引理 \ref{lem:sat_ineq} 得
+利用 $|\Delta_s|\le \bar\Delta$ 且 $\rho\ge \bar\Delta$，有 $s\Delta_s\le \rho|s|$。再由引理 \ref{lem:sat_ineq} 得
 \begin{equation}\label{eq:slide_term_bound}
 \begin{aligned}
-  -(\rho+\varepsilon)s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right) + s\Delta
+  -(\rho+\varepsilon)s\,\mathrm{sat}\!\left(\frac{s}{\phi}\right) + s\Delta_s
   &\le -(\rho+\varepsilon)\left(|s|-\frac{\phi}{4}\right) + \rho|s|\\
   &= -\varepsilon|s| + \frac{(\rho+\varepsilon)\phi}{4}.
 \end{aligned}
@@ -210,10 +256,10 @@
 \begin{aligned}
   -k_{\mathrm{aw}} s\xi
   &\le \frac{k_{\mathrm{aw}}}{2}\Big(\eta_s s^2+\frac{1}{\eta_s}\xi^2\Big),\\
-  b s\Delta_u
-  &\le \frac{|b|}{2}\Big(\mu_s s^2+\frac{1}{\mu_s}\Delta_u^2\Big),\\
-  \frac{b}{\kappa}\xi\Delta_u
-  &\le \frac{|b|}{2\kappa}\Big(\mu_\xi \xi^2+\frac{1}{\mu_\xi}\Delta_u^2\Big).
+  b_n s\Delta_u
+  &\le \frac{|b_n|}{2}\Big(\mu_s s^2+\frac{1}{\mu_s}\Delta_u^2\Big),\\
+  \frac{b_n}{\kappa}\xi\Delta_u
+  &\le \frac{|b_n|}{2\kappa}\Big(\mu_\xi \xi^2+\frac{1}{\mu_\xi}\Delta_u^2\Big).
 \end{aligned}
 \end{equation}
 
@@ -222,23 +268,23 @@
 \begin{aligned}
   \dot V
   \le
-  &-\Big(k_0-\frac{k_{\mathrm{aw}}}{2}\eta_s-\frac{|b|}{2}\mu_s\Big)s^2
-  -\Big(\frac{\lambda}{\kappa}-\frac{k_{\mathrm{aw}}}{2\eta_s}-\frac{|b|}{2\kappa}\mu_\xi\Big)\xi^2
+  &-\Big(k_0-\frac{k_{\mathrm{aw}}}{2}\eta_s-\frac{|b_n|}{2}\mu_s\Big)s^2
+  -\Big(\frac{\lambda}{\kappa}-\frac{k_{\mathrm{aw}}}{2\eta_s}-\frac{|b_n|}{2\kappa}\mu_\xi\Big)\xi^2
   -\varepsilon|s|\\
   &\quad +\frac{(\rho+\varepsilon)\phi}{4}
-  +\Big(\frac{|b|}{2\mu_s}+\frac{|b|}{2\kappa\mu_\xi}\Big)\Delta_u^2.
+  +\Big(\frac{|b_n|}{2\mu_s}+\frac{|b_n|}{2\kappa\mu_\xi}\Big)\Delta_u^2.
 \end{aligned}
 \end{equation}
 
 记
 \begin{equation}\label{eq:alpha_defs}
-\alpha_s \triangleq k_0-\frac{k_{\mathrm{aw}}}{2}\eta_s-\frac{|b|}{2}\mu_s,\qquad
-\alpha_\xi \triangleq \frac{\lambda}{\kappa}-\frac{k_{\mathrm{aw}}}{2\eta_s}-\frac{|b|}{2\kappa}\mu_\xi,
+\alpha_s \triangleq k_0-\frac{k_{\mathrm{aw}}}{2}\eta_s-\frac{|b_n|}{2}\mu_s,\qquad
+\alpha_\xi \triangleq \frac{\lambda}{\kappa}-\frac{k_{\mathrm{aw}}}{2\eta_s}-\frac{|b_n|}{2\kappa}\mu_\xi,
 \end{equation}
 并取参数使得 $\alpha_s>0,\ \alpha_\xi>0$，则由 \eqref{eq:ch5_Vdot_uub_new} 得
 \begin{equation}\label{eq:Vdot_compact}
   \dot V \le -\alpha_s s^2-\alpha_\xi \xi^2 + \frac{(\rho+\varepsilon)\phi}{4}
-  +\Big(\frac{|b|}{2\mu_s}+\frac{|b|}{2\kappa\mu_\xi}\Big)\Delta_u^2.
+  +\Big(\frac{|b_n|}{2\mu_s}+\frac{|b_n|}{2\kappa\mu_\xi}\Big)\Delta_u^2.
 \end{equation}
 
 注意到
@@ -262,7 +308,7 @@
 其中
 \begin{equation}\label{eq:delta_beta}
   \delta_0 \triangleq \frac{(\rho+\varepsilon)\phi}{4},\qquad
-  \beta_0 \triangleq \frac{|b|}{2\mu_s}+\frac{|b|}{2\kappa\mu_\xi}.
+  \beta_0 \triangleq \frac{|b_n|}{2\mu_s}+\frac{|b_n|}{2\kappa\mu_\xi}.
 \end{equation}
 
 由比较原理可知：若饱和失配 $\Delta_u$ 有界，即存在常数 $\bar\Delta_u$ 使得 $|\Delta_u(t)|\le \bar\Delta_u$，则
@@ -282,12 +328,17 @@
 \[
 m_1>0,\ m_2>0,\ \rho\ge \bar\Delta,\ \varepsilon>0,\ \phi>0,\ \kappa>0,\ \lambda>0,\ k_0>0,\ k_{\mathrm{aw}}>0,
 \]
+\[
+\frac{c_2b_2-c_4b_3}{c_3}>0,\quad
+\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}>0,\ i=4,\ldots,n-2,\quad
+\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}>0,
+\]
 并且存在 $\eta_s>0,\mu_s>0,\mu_\xi>0$ 使
 \[
-\alpha_s \triangleq k_0-\frac{k_{\mathrm{aw}}}{2}\eta_s-\frac{|b|}{2}\mu_s>0,\qquad
-\alpha_\xi \triangleq \frac{\lambda}{\kappa}-\frac{k_{\mathrm{aw}}}{2\eta_s}-\frac{|b|}{2\kappa}\mu_\xi>0,
+\alpha_s \triangleq k_0-\frac{k_{\mathrm{aw}}}{2}\eta_s-\frac{|b_n|}{2}\mu_s>0,\qquad
+\alpha_\xi \triangleq \frac{\lambda}{\kappa}-\frac{k_{\mathrm{aw}}}{2\eta_s}-\frac{|b_n|}{2\kappa}\mu_\xi>0,
 \]
-则闭环信号 $s,\xi,e_1,e_2,q$ 一致最终有界，并满足
+则闭环信号 $s,\xi,z_1,\ldots,z_n,q$ 一致最终有界，并满足
 \[
 \limsup_{t\to\infty}V(t)\le \frac{\delta_0+\beta_0\bar\Delta_u^2}{2\alpha_\star},
 \]
@@ -296,7 +347,7 @@ m_1>0,\ m_2>0,\ \rho\ge \bar\Delta,\ \varepsilon>0,\ \phi>0,\ \kappa>0,\ \lambda
 V=\frac12 s^2+\frac{1}{2\kappa}\xi^2,\quad
 \alpha_\star=\min\{\alpha_s,\kappa\alpha_\xi\},\quad
 \delta_0=\frac{(\rho+\varepsilon)\phi}{4},\quad
-\beta_0=\frac{|b|}{2\mu_s}+\frac{|b|}{2\kappa\mu_\xi}.
+\beta_0=\frac{|b_n|}{2\mu_s}+\frac{|b_n|}{2\kappa\mu_\xi}.
 \]
 进一步有
 \[
@@ -311,7 +362,7 @@ V=\frac12 s^2+\frac{1}{2\kappa}\xi^2,\quad
 \[
 \dot V\le -2\alpha_\star V+\delta_0+\beta_0\bar\Delta_u^2.
 \]
-由比较原理得到 \eqref{eq:V_ult_bound} 与 \eqref{eq:s_xi_bounds}。再由 \eqref{eq:e1q_dynamics_new}--\eqref{eq:z_linear} 及 $m_1>0,m_2>0$ 时矩阵 $A$ 为 Hurwitz，可得 $(e_1,q)$ 对输入 $s$ 为输入到状态稳定，因此 $e_1,q,e_2$ 一致最终有界。定理得证。
+由比较原理得到 \eqref{eq:V_ult_bound} 与 \eqref{eq:s_xi_bounds}，从而 $s,\xi$ 一致最终有界。进一步，由递推误差系统 \eqref{eq:ch5_z_dyn} 可知，当定理中的各个系数条件成立时，高阶通道 $z_3,\ldots,z_n$ 对输入 $s,\xi,\tilde\Delta_i,\Delta_u$ 构成级联稳定子系统；而前两级误差通道则由 $(m_1,m_2)$ 主导并受有界输入 $z_3,\tilde\Delta_1,\tilde\Delta_2$ 驱动。结合 $q$ 的动态 $\dot q=z_1$ 以及所有外部输入均有界，可由比较原理和级联系统有界性结论得到 $z_1,\ldots,z_n,q$ 一致最终有界。定理得证。
 \end{proof}
 
 \paragraph{推论4.1}
@@ -324,30 +375,20 @@ V=\frac12 s^2+\frac{1}{2\kappa}\xi^2,\quad
 
 当不发生饱和时 $\Delta_u\equiv 0$，由 \eqref{eq:Vdot_final} 可进一步得到更小的最终界；并且当 $\phi$ 取较小值时，$\delta_0$ 相应减小，滑模残差边界层导致的稳态误差上界随之收敛。
 
-下面给出误差变量的有界性结论。由 \eqref{eq:ch5_s} 与 \eqref{eq:ch5_q} 有
-\begin{equation}\label{eq:e1q_dynamics_new}
-\begin{aligned}
-  \dot e_1 &= e_2 = s-m_2 e_1-m_1 q,\\
-  \dot q &= e_1.
-\end{aligned}
-\end{equation}
-令 $z\triangleq [e_1\ \ q]^\top$，则 \eqref{eq:e1q_dynamics_new} 可写为
-\begin{equation}\label{eq:z_linear}
-  \dot z = A z + B s,\qquad
-  A=\begin{bmatrix}-m_2&-m_1\\ 1&0\end{bmatrix},\quad
-  B=\begin{bmatrix}1\\0\end{bmatrix}.
-\end{equation}
-当 $m_1>0,m_2>0$ 时，矩阵 $A$ 为 Hurwitz，因此系统 \eqref{eq:z_linear} 对输入 $s$ 是输入到状态稳定的。结合 \eqref{eq:s_xi_bounds} 中 $s$ 的一致最终有界性，可得 $e_1,q$ 一致最终有界；并由 $e_2=s-m_2 e_1-m_1 q$ 进一步得到 $e_2$ 一致最终有界。综上，在 $|\Delta_u|$ 有界且参数满足 $\alpha_s>0,\alpha_\xi>0$ 的条件下，闭环系统各信号一致最终有界。
-
-最后讨论预设阻尼比的保持机制。当饱和较弱或饱和持续时间较短时，$s$ 的最终界较小，系统主导误差动态由 \eqref{eq:z_linear} 决定，即
+下面进一步讨论误差变量的有界性与预设阻尼比的保持机制。由于滑模面定义为
 \[
-\ddot e_1 + m_2 \dot e_1 + m_1 e_1 \approx 0,
+s=z_n+\sum_{i=3}^{n-1}c_i z_i+c_2\left(z_2+m_2z_1+m_1q\right),
 \]
-其名义阻尼比由
+当饱和较弱或饱和持续时间较短时，$s$ 的最终界较小，且高阶误差 $z_3,\ldots,z_n$ 在递推控制作用下保持较小范围内有界，此时前两级主导误差通道近似满足
+\[
+\dot z_1\approx b_1 z_2,\qquad
+\dot z_2\approx -m_1z_1-m_2z_2,
+\]
+因而对应的名义阻尼比仍由
 \[
 \zeta = \frac{m_2}{2\sqrt{m_1}}
 \]
-给出。饱和与不确定性通过 $s$ 的最终界体现为瞬态退化与稳态残差边界，因此在参数整定与实验设计中可将 $\zeta$ 的设定与 $\phi,k_0,k_{\mathrm{aw}},\lambda$ 等参数的选取结合，形成在输入受限条件下仍具有可解释性的整定规则。
+给出。换言之，饱和与不确定性主要通过 $s$ 的最终界以及高阶通道残差体现为瞬态退化与稳态误差边界，而 $(m_1,m_2)$ 仍决定系统主导二阶形态。因此在参数整定与实验设计中，可将 $\zeta$ 的设定与 $\phi,k_0,k_{\mathrm{aw}},\lambda$ 以及各级 $k_i$ 的选取结合，形成在输入受限条件下仍具有可解释性的整定规则。
 
 \section{数值仿真}[Numerical simulation]
 
