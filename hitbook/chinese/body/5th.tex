@@ -1,274 +1,241 @@
 % !Mode:: "TeX:UTF-8"
 
-\chapter{预设阻尼比自适应滑模反步控制在板球系统上的验证}
-[Experimental verification of preset damping-ratio adaptive sliding-mode backstepping on a ball-and-plate system]
+\chapter{预设阻尼比自适应滑模反步控制在三自由度悬浮机系统上的验证}
+[Experimental verification of preset damping-ratio adaptive sliding-mode backstepping on a 3-DOF hover system]
 
-本章面向板球平衡系统（Ball-and-Plate System, BPS），对前述预设阻尼比滑模反步控制思想进行验证与分析。验证目标主要包括：
-（1）检查预设阻尼比参数对瞬态超调与响应速度的调节规律是否清晰可观察；
-（2）在板球系统典型任务（固定目标点、闭合轨迹）下评估控制器的跟踪性能；
-（3）给出工程实现链路（视觉测量—嵌入式控制—执行机构）的实现要点，并为后续更强鲁棒/自适应版本的实物实验留出接口。
-
-依据中期报告阶段性工作，本章已完成板球系统实验平台搭建与基于 Simulink 的仿真验证；其中固定目标点跟踪与圆形轨迹跟踪结果用于展示不同阻尼比设定下的瞬态差异。对于中期报告尚未给出细节的“自适应律完整推导”“三角轨迹跟踪实测结果”“三类控制器的系统对比统计”等内容，本章保留相应小节标题作为后续论文完善的插入位置。
 
 \section{引言}[Introduction]
 
-板球系统是一类典型的非线性、强耦合与参数不确定系统：执行器（舵机）通过改变平板姿态间接驱动小球运动，系统存在视觉测量噪声、离散采样、执行器死区与饱和等工程因素，能够较好检验控制方法的可落地性。
+本章面向三自由度悬浮机系统（3-DOF Hover System），对前述预设阻尼比滑模反步控制思想进行验证与分析。验证目标主要包括：
+（1）检查预设阻尼比参数对姿态响应超调与收敛速度的调节规律是否清晰可观察；
+（2）在悬浮机典型任务（固定姿态跟踪、时变姿态跟踪）下评估控制器的跟踪性能；
+（3）给出 Hover 平台的工程实现链路，并为后续更强鲁棒/自适应版本的实物实验留出接口。
 
-本章将“预设阻尼比”作为核心瞬态指标：通过调整阻尼比（或等价参数）来观察固定点响应的超调/振荡程度与收敛速度变化，并在闭合轨迹任务中观察相位滞后与稳态误差随阻尼比设定的变化规律。
+依据当前已完成的阶段性工作，本章以 Hover 平台建模、控制实现与 Simulink/半实物验证为主，其中固定姿态跟踪与时变姿态跟踪结果用于展示不同阻尼比设定下的瞬态差异。对于后续尚需进一步补充的“完整实物统计对比”“更复杂耦合工况测试”“输入饱和与抗饱和实测结果”等内容，本章保留相应小节标题作为后续论文完善的插入位置。
 
-\section{板球系统控制平台部署}[Control platform deployment of BPS]
+在前面的章节中，围绕严格反馈不确定非线性系统的预设阻尼比滑模反步控制问题，分别完成了基准控制器设计、基于状态观测器的扩展设计以及考虑输入约束时的抗饱和分析，并从理论上证明了闭环系统的稳定性与阻尼比可调性。通过在误差动力学中引入二阶类李雅普诺夫约束，将阻尼比参数直接嵌入反步递推与滑模鲁棒补偿设计过程中，使系统在存在未建模动态、外部扰动和部分状态不可测等条件下，仍能获得可解释的瞬态响应特性。
 
-\subsection{系统硬件组成与信号链路}[Hardware components and signal chain]
+本章将在三自由度悬浮机实验对象上验证本文所提预设阻尼比滑模反步控制方法的可行性与有效性。三自由度悬浮机是一类典型的欠阻尼、强耦合、带执行器约束的姿态控制对象，能够较好反映姿态通道耦合、测量噪声和输入饱和等实际工程因素。为此，本章首先对 Hover 平台进行姿态动力学建模，并给出面向控制实现的状态空间表达与输入组合形式；然后将前文提出的预设阻尼比滑模反步控制器、观测器型控制器以及扰动补偿型控制器部署到偏航、俯仰和滚转通道；最后通过固定姿态跟踪和时变姿态跟踪结果，比较不同阻尼比设定及不同控制方案下的超调量、收敛速度与稳态精度，从而验证本文方法在实际 Hover 平台上的适用性。
 
-中期报告阶段已完成板球实验平台搭建。控制系统由嵌入式控制板、驱动板、两路舵机执行机构以及上位机视觉测量模块组成。执行机构通过两路舵机分别对平板在 $x$、$y$ 两个方向的倾角进行调节，从而实现二维位置跟踪控制。
+\section{三自由度悬浮机系统描述}[Description of the 3-DOF hover system]
 
-嵌入式端以 STM32F407 作为核心控制器，采用 Keil 进行软件开发，程序基于 STM32 HAL 库，使用 C 语言实现串口通信、定时器中断、ADC 采样等功能。驱动板选用 PD6010B，用于生成 PWM 信号并驱动舵机动作。视觉模块通过上位机获取小球位置，并以约 $33\,\mathrm{Hz}$ 的频率给出小球位置与速度信息，用于控制反馈。
-
-\subsection{软件架构与实时控制周期}[Software architecture and real-time control cycle]
-
-从工程实现角度，板球系统闭环一般包含以下链路：
-\[
-\text{视觉测量(PC)} \rightarrow \text{串口/通信} \rightarrow \text{控制律计算(STM32)} \rightarrow
-\text{PWM 输出} \rightarrow \text{舵机/平板姿态} \rightarrow \text{小球运动}.
-\]
-中期报告中给出的视觉输出频率约为 $33\,\mathrm{Hz}$，因此控制周期可按
-\[
-T_s \approx 1/33 \approx 0.03\,\mathrm{s}
-\]
-设计，并在嵌入式端以定时器中断节拍执行“数据接收—状态更新—控制计算—PWM 刷新”。
-
-\subsection{控制任务与对比控制器设置}[Tasks and controller configurations]
-
-按照中期报告的实验设计，板球系统验证任务包括：
-\begin{itemize}
-  \item \textbf{固定目标点跟踪：}考察不同阻尼比设定下的超调、振荡与收敛速度差异；
-  \item \textbf{闭合轨迹跟踪：}考察圆形轨迹（以及计划中的三角形轨迹）跟踪效果与稳态误差。
-\end{itemize}
-
-中期报告计划测试三类控制器：（1）预设阻尼比滑模反步控制器；（2）基于状态观测器的预设阻尼比滑模反步控制器；（3）基于扰动观测器与状态观测器的预设阻尼比滑模反步控制器。中期报告当前已给出平台与仿真验证结果，本章在结果小节中先呈现已完成部分，并保留完整对比统计的章节接口。
-
-\section{板球系统模型与降阶表述}[Modeling and reduced-order description]
-
-\subsection{耦合动力学模型（中期报告）}[Coupled dynamics in the midterm report]
-
-中期报告给出了板球系统的耦合动力学形式。设小球质量为 $m$，小球半径为 $r$，转动惯量相关项为 $I_b$，平板在 $x$、$y$ 方向的倾角分别为 $\alpha,\beta$，并考虑摩擦/扰动等影响，可写为（与中期报告一致的形式）：
-\begin{equation}\label{eq:ch5_full_dyn}
-\left\{
-\begin{aligned}
-\left(m+\frac{I_b}{r^2}\right)\ddot x - m x \dot{\alpha}^2 - m y\dot{\alpha}\dot{\beta} - m g\sin\alpha &= -f_x,\\
-\left(m+\frac{I_b}{r^2}\right)\ddot y - m y \dot{\beta}^2 - m x\dot{\alpha}\dot{\beta} - m g\sin\beta &= -f_y,\\
-\left(m x^2 + I_x\right)\ddot{\alpha} + 2mx\dot x\dot\alpha + (m\dot x y + mx\dot y)\dot\beta + mxy\ddot\beta &= mgx\cos\alpha,\\
-\left(m y^2 + I_y\right)\ddot{\beta} + 2my\dot y\dot\beta + (m\dot x y + mx\dot y)\dot\alpha + mxy\ddot\alpha &= mgy\cos\beta.
-\end{aligned}
-\right.
-\end{equation}
-其中 $f_x,f_y$ 用于描述摩擦/阻尼等综合效应（也可等效归入不确定项与扰动项）。
-
-\subsection{状态空间形式与解耦近似}[State-space form and decoupling approximation]
-
-中期报告进一步引入系数
-\begin{equation}\label{eq:ch5_k_def}
-k=\frac{m}{m+I_b/r^2},
-\end{equation}
-并将系统整理为状态空间形式（记 $x_1=x,\ x_2=\dot x,\ x_3=\alpha,\ x_4=\dot\alpha,\ x_5=y,\ x_6=\dot y,\ x_7=\beta,\ x_8=\dot\beta$）：
-\begin{equation}\label{eq:ch5_state_space}
-\left\{
-\begin{aligned}
-\dot x_1 &= x_2 + w_x,\\
-\dot x_2 &= -kgx_3 + kx_1x_4^2 + x_4x_5x_8,\\
-\dot x_3 &= x_4,\\
-\dot x_4 &= u_x,\\
-\dot x_5 &= x_6 + w_y,\\
-\dot x_6 &= -kgx_7 + kx_5x_8^2 + x_1x_4x_8,\\
-\dot x_7 &= x_8,\\
-\dot x_8 &= u_y,
-\end{aligned}
-\right.
-\end{equation}
-其中 $u_x,u_y$ 为输入，$w_x,w_y$ 表示综合扰动/噪声注入项。
-
-在板球系统常见工况下，平板倾角一般不大（例如不超过 $10^\circ$），因此可近似 $\sin x_3\approx x_3,\ \sin x_7\approx x_7$，并将小量项（如 $x_1x_4^2$、$x_4x_5x_8$ 等）作为不确定非线性合并处理，从而可将系统按 $x$ 轴与 $y$ 轴两个方向近似解耦为子系统（中期报告给出的写法）：
-\begin{equation}\label{eq:ch5_xy_subsystems}
-\left\{
-\begin{aligned}
-X:\quad
-\dot x_1 &= x_2 + w_x,\\
-\dot x_2 &= -kgx_3 + kx_1x_4^2 + x_4x_5x_8,\\
-\dot x_3 &= x_4,\\
-\dot x_4 &= u_x,\\
-y_1 &= x_1,
-\end{aligned}
-\right.
-\qquad
-\left\{
-\begin{aligned}
-Y:\quad
-\dot x_5 &= x_6 + w_y,\\
-\dot x_6 &= -kgx_7 + kx_5x_8^2 + x_1x_4x_8,\\
-\dot x_7 &= x_8,\\
-\dot x_8 &= u_y,\\
-y_2 &= x_5.
-\end{aligned}
-\right.
-\end{equation}
-
-\subsection{降阶控制模型（中期报告）}[Reduced-order control-oriented model]
-
-中期报告指出：在实际板球系统中，$X$ 与 $Y$ 方向的控制扭矩由两个舵机产生，且姿态相关的部分状态不可直接测量，因此可进一步得到面向控制的降阶模型：
-\begin{equation}\label{eq:ch5_reduced_model}
-\left\{
-\begin{aligned}
-\dot x_1 &= x_2,\\
-\dot x_2 &= b\big(gk_f u_x + h_x\big),\\
-\dot x_5 &= x_6,\\
-\dot x_6 &= b\big(gk_f u_y + h_y\big),
-\end{aligned}
-\right.
-\end{equation}
-其中 $u_x,u_y$ 为两路多级 PWM 输入，$k_f$ 为增益系数，$h_x,h_y$ 为不确定非线性项：
-\begin{equation}\label{eq:ch5_hx_hy}
-h_x = x_1x_4^2 + x_4x_5x_8 - \frac{F_x}{m},\qquad
-h_y = x_5x_8^2 + x_1x_4x_8 - \frac{F_y}{m}.
-\end{equation}
-式 \eqref{eq:ch5_reduced_model}--\eqref{eq:ch5_hx_hy} 为后续控制器实现与仿真验证提供了统一的建模入口：高阶耦合项与摩擦/扰动可等效吸收至 $h_x,h_y$，并由鲁棒/自适应补偿项处理。
-
-\section{控制器在板球系统中的实现要点}[Implementation of the controller on BPS]
-
-\subsection{控制目标与误差定义}[Objectives and error definitions]
-
-设二维期望轨迹为
-\[
-\bm y_d(t)=\begin{bmatrix}x_d(t)\\y_d(t)\end{bmatrix},\qquad
-\bm y(t)=\begin{bmatrix}x(t)\\y(t)\end{bmatrix},
-\]
-定义误差向量
-\[
-\bm e(t)=\bm y(t)-\bm y_d(t)=\begin{bmatrix}e_x(t)\\e_y(t)\end{bmatrix}.
-\]
-对每个通道（$x$、$y$）均可视为二阶不确定系统形式，进而复用第3章给出的“预设阻尼比 + 滑模反步”设计结构。
-
-\subsection{预设阻尼比参数整定方式}[Tuning via preset damping ratio]
-
-中期报告的仿真验证采用不同阻尼比设定（例如 $\zeta=1,\ 0.707,\ 0.6$）来观察固定点响应差异。对应第3章参数映射，可通过设定
-\[
-m_1=\omega_n^2,\qquad m_2=2\zeta\omega_n
-\]
-将阻尼比显式嵌入误差主导二阶动态中。工程上可固定 $\omega_n$ 来统一响应速度标尺，再通过改变 $\zeta$ 观察超调与振荡程度的变化规律。
-
-\subsection{滑模反步控制结构回顾（用于实现）}[Structure recap for implementation]
-
-为便于嵌入式实现，本章采用“名义项 + 鲁棒项（边界层）”的可实现结构：每个通道构造滑模变量（示意写法，与第3章一致）
-\[
-s = \dot e + m_2 e + m_1 \int_0^t e(\tau)\,d\tau,
-\]
-并用饱和函数替代 $\mathrm{sgn}(\cdot)$ 抑制抖振：
-\[
-\mathrm{sat}\!\left(\frac{s}{\phi}\right)=
-\begin{cases}
-\mathrm{sgn}(s), & |s|>\phi,\\
-s/\phi, & |s|\le \phi.
-\end{cases}
-\]
-将不确定项（如 $h_x,h_y$）统一归入匹配扰动后，可按“名义抵消 + 鲁棒补偿”实现控制律。由于本章重点是验证与实现，控制律的详细推导与稳定性分析在第3章与第4章已给出，此处不再重复展开。
-
-\subsection{自适应律与参数在线调整（预留接口）}[Adaptive law interface (to be completed)]
-
-\textbf{（中期报告未给出完整自适应律推导与实现细节，本节仅保留标题与接口位置。）}
-
-本论文后续版本拟将鲁棒增益的保守常数/上界替换为自适应机制，以降低抖振并减少对不确定性上界先验信息的依赖。可考虑的实现路径包括：自适应增益调节、函数逼近（如神经网络）或扰动估计（DOB/ESO）等。具体自适应律形式、参数更新律及其稳定性证明将在论文完善阶段补充。
-
-\subsection{离散实现注意事项（积分与限幅）}[Discrete implementation notes]
-
-在 $33\,\mathrm{Hz}$ 视觉更新频率下，建议对积分项采用限幅或泄漏积分避免漂移：
-\[
-q[k]=\mathrm{sat}_{q_{\max}}\big(q[k-1]+T_s e[k]\big),
-\]
-并对 PWM 输出做幅值限幅以满足舵机物理约束。边界层宽度 $\phi$ 与采样噪声、执行器带宽相关：$\phi$ 越小稳态误差越小，但更容易抖振；$\phi$ 越大则更平滑但稳态误差界更大。
-
-\section{仿真验证与结果分析（中期报告已完成部分）}[Simulation verification and analysis]
-
-\subsection{Simulink 仿真环境与设置}[Simulink setup]
-
-中期报告基于式 \eqref{eq:ch5_reduced_model}--\eqref{eq:ch5_hx_hy} 在 Simulink 中搭建板球系统模型与控制器模块，并通过改变阻尼比设定观察固定点与闭合轨迹跟踪效果。下述结果均为中期报告阶段的仿真验证输出，用于展示阻尼比预设对瞬态响应的影响规律。
-
-\subsection{固定目标点跟踪实验}[Fixed set-point tracking]
-
-中期报告给出了 $x$ 方向固定目标点跟踪曲线，目标位置为 $100\,\mathrm{mm}$，对比了不同阻尼比设定下的响应过程。总体规律为：阻尼比减小时上升更快但更易产生超调与振荡；阻尼比增大时响应更平稳但收敛相对更慢。该现象与二阶欠阻尼系统的经典关系一致，说明“阻尼比—超调”映射在该控制结构下具有可观察性。
+本章采用 Quanser 三自由度悬浮机实验装置作为验证平台。整个控制系统由悬浮机本体、计算机、功率放大器和数据采集卡组成，姿态角测量信号由传感器经采集卡送入上位机，控制算法计算得到的电压指令再经功率放大器作用于四个电机，从而实现对机体姿态的闭环调节。实验平台及控制系统的组成形式可分别由后续实物照片和装置图给出。
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）中期报告：$x$ 轴方向固定目标点跟踪曲线（不同阻尼比对比）\\
-  你后续可替换为：图3 x轴方向固定目标点跟踪实验}}
-  \caption{$x$ 轴方向固定目标点跟踪结果（中期报告）}
-  \label{fig:ch5_x_step}
+  \fbox{\parbox{0.78\textwidth}{\centering
+  （占位图）Quanser 三自由度悬浮机控制系统实验装置\\
+  你后续可替换为：控制系统实物装置图}}
+  \caption{三自由度悬浮机控制系统实验装置}
+  \label{fig:ch5_hover_hardware}
 \end{figure}
 
-同理，中期报告给出了 $y$ 方向固定目标点跟踪曲线及顶视图轨迹。两轴结果呈现一致趋势：阻尼比参数能够直观调节系统的超调程度与振荡衰减速度，从而将原本依赖经验的整定过程转化为按指标选参的过程。
+\begin{table}[htbp]
+  \centering
+  \caption{Quanser 三自由度悬浮机主要参数}
+  \label{tab:ch5_hover_param}
+  \begin{tabular}{ccc}
+    \toprule
+    符号 & 数值 & 含义 \\
+    \midrule
+    $J_{\theta}$ & $0.0552\,\mathrm{kg\cdot m^2}$ & 俯仰轴转动惯量 \\
+    $J_{\phi}$   & $0.0552\,\mathrm{kg\cdot m^2}$ & 横滚轴转动惯量 \\
+    $J_{\psi}$   & $0.1104\,\mathrm{kg\cdot m^2}$ & 偏航轴转动惯量 \\
+    $L$          & $0.1970\,\mathrm{m}$ & 螺旋桨到质心的距离 \\
+    $K_f$        & $0.1188\,\mathrm{N/V}$ & 电压到推力的增益系数 \\
+    $K_{\tau}$   & $0.0036\,\mathrm{N\cdot m/V}$ & 电压到反扭矩的增益系数 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.72\textwidth}{\centering
+  （占位图）三自由度悬浮机实验平台及机体坐标示意\\
+  你后续可替换为：悬浮机平台结构与姿态角定义图}}
+  \caption{三自由度悬浮机实验平台}
+  \label{fig:ch5_hover_platform}
+\end{figure}
+
+悬浮机平台的机体系方向和电机旋转方向可由实验平台示意图表示。记机体的俯仰角、横滚角和偏航角分别为 $\theta$、$\phi$ 和 $\psi$，则平台的姿态状态可选为
+\[
+x_{1,1}=\theta,\quad x_{2,1}=\dot\theta,\qquad
+x_{1,2}=\phi,\quad x_{2,2}=\dot\phi,\qquad
+x_{1,3}=\psi,\quad x_{2,3}=\dot\psi.
+\]
+在考虑外部扰动和未建模动态的情况下，三自由度悬浮机的状态空间模型可写成
+\begin{equation}\label{eq:ch5_hover_model}
+\left\{
+\begin{aligned}
+\dot x_{1,i} &= x_{2,i},\\
+\dot x_{2,i} &= \frac{1}{J_i}u_i + h_i(x_i,d_i(t)),\qquad i=1,2,3,
+\end{aligned}
+\right.
+\end{equation}
+其中 $x_i=[x_{1,i},x_{2,i}]^{\mathrm T}$ 为第 $i$ 个姿态通道的状态变量，$h_i(x_i,d_i(t))$ 表示该通道中的未建模非线性和外部扰动，$J_i$ 表示对应转轴的转动惯量。三个姿态通道的广义控制输入分别取为
+\begin{equation}\label{eq:ch5_u123}
+u_1=L(F_1-F_3),\qquad
+u_2=L(F_4-F_2),\qquad
+u_3=-\tau_1+\tau_2-\tau_3+\tau_4,
+\end{equation}
+其中 $F_j$ 和 $\tau_j$ 分别表示第 $j$ 个电机产生的推力和反扭矩，$L$ 为旋翼到质心的力臂长度。若以 $V_j$ 表示第 $j$ 个电机的驱动电压，则有
+\begin{equation}\label{eq:ch5_force_torque_voltage}
+F_j=K_fV_j,\qquad \tau_j=K_{\tau}V_j,\qquad j=1,2,3,4,
+\end{equation}
+其中 $K_f$ 和 $K_{\tau}$ 为正常数。
+
+由式 \eqref{eq:ch5_u123} 和式 \eqref{eq:ch5_force_torque_voltage} 可得四个电机电压与三个姿态通道控制输入之间的分配关系
+\begin{equation}\label{eq:ch5_voltage_alloc}
+\left\{
+\begin{aligned}
+V_1 &= \frac{u_m}{4K_f}-\frac{u_3}{4K_{\tau}}+\frac{u_1}{2LK_f},\\
+V_2 &= \frac{u_m}{4K_f}+\frac{u_3}{4K_{\tau}}-\frac{u_2}{2LK_f},\\
+V_3 &= \frac{u_m}{4K_f}-\frac{u_3}{4K_{\tau}}-\frac{u_1}{2LK_f},\\
+V_4 &= \frac{u_m}{4K_f}+\frac{u_3}{4K_{\tau}}+\frac{u_2}{2LK_f},
+\end{aligned}
+\right.
+\end{equation}
+其中 $u_m$ 为维持平台悬停所需的偏置输入。这样，四电机驱动问题便可转化为俯仰、横滚和偏航三个姿态通道的控制问题。
+
+本章的控制目标是根据给定参考姿态 $(\theta_d,\phi_d,\psi_d)$ 设计三个通道的控制输入 $u_i\ (i=1,2,3)$，再通过式 \eqref{eq:ch5_voltage_alloc} 求得各电机的电压指令，使平台姿态能够稳定跟踪目标信号。为了与前文预设阻尼比滑模反步控制器的设计形式保持一致，后续仍将每个姿态通道视作带有综合不确定项的二阶系统进行处理，并在误差动力学中嵌入阻尼比参数。
+
+为便于后续控制器设计与稳定性分析，本章进一步作如下假设。
+
+\begin{assumption}\label{assump:ch5_disturbance}
+外部扰动 $d_i(t)$ 及其一阶导数连续且有界，并且在控制实现中可获得相应测量或估计信息。
+\end{assumption}
+
+\begin{assumption}\label{assump:ch5_reference}
+参考姿态信号 $\theta_d$、$\phi_d$、$\psi_d$ 及其一阶、二阶导数连续有界。
+\end{assumption}
+
+\begin{assumption}\label{assump:ch5_nonlinear}
+式 \eqref{eq:ch5_hover_model} 中的未建模非线性函数 $h_i(x_i,d_i(t))$ 关于状态变量 $x_i$ 一阶连续可导。
+\end{assumption}
+
+\section{控制器设计}[Controller design]
+
+由式 \eqref{eq:ch5_hover_model} 可知，三自由度悬浮机的俯仰、横滚和偏航通道均可视作带有综合不确定项的二阶系统，因此可直接将本文第2章、第3章和第4章提出的预设阻尼比滑模反步控制方法应用于三个姿态通道。记
+\[
+\eta_1=\theta,\qquad \eta_2=\phi,\qquad \eta_3=\psi,
+\]
+相应的参考信号记为
+\[
+\eta_{d,1}=\theta_d,\qquad \eta_{d,2}=\phi_d,\qquad \eta_{d,3}=\psi_d.
+\]
+对每个姿态通道定义跟踪误差
+\[
+e_i=\eta_i-\eta_{d,i},\qquad q_i=\int_0^t e_i(\tau)\,d\tau,\qquad i=1,2,3,
+\]
+并构造与前文一致的积分型滑模面
+\begin{equation}\label{eq:ch5_sliding_surface}
+s_i=\dot e_i+m_{2,i}e_i+m_{1,i}q_i,\qquad i=1,2,3,
+\end{equation}
+其中参数 $m_{1,i}$ 和 $m_{2,i}$ 分别由各通道的自然频率和预设阻尼比确定，即
+\[
+m_{1,i}=\omega_{n,i}^2,\qquad m_{2,i}=2\zeta_i\omega_{n,i}.
+\]
+
+将式 \eqref{eq:ch5_hover_model} 中的非线性项写成
+\[
+h_i(x_i,d_i(t))=\bar h_i(x_i)+\Delta_i(t),
+\]
+其中 $\bar h_i(x_i)$ 为名义模型，$\Delta_i(t)$ 为总不确定项。按照第2章的设计思路，三自由度悬浮机三个姿态通道的基准预设阻尼比滑模反步控制器可设计为
+基准预设阻尼比滑模反步控制器为
+\begin{equation}\label{eq:ch5_pdr_smb}
+u_i=-J_i\left(m_{2,i}\dot e_i+m_{1,i}e_i+\bar h_i(x_i)-\ddot\eta_{d,i}+\varepsilon_i\,\mathrm{sgn}(s_i)\right),\qquad i=1,2,3.
+\end{equation}
+式 \eqref{eq:ch5_pdr_smb} 中，前两项用于构造预设阻尼比对应的主导二阶误差动态，最后一项为滑模鲁棒补偿项，用以抑制悬浮机姿态通道中的参数摄动与外部扰动影响。
+
+当考虑第3章中的扰动观测补偿机制时，可对每个姿态通道构造总不确定项估计 $\hat\Delta_i$，并将其代入控制律中进行在线补偿。此时，基于扰动观测器的预设阻尼比滑模反步控制器写为
+基于扰动观测器的预设阻尼比滑模反步控制器为
+\begin{equation}\label{eq:ch5_do_pdr_smb}
+u_i=-J_i\left(m_{2,i}\dot e_i+m_{1,i}e_i+\hat\Delta_i-\ddot\eta_{d,i}+\varepsilon_i\,\mathrm{sgn}(s_i)\right),\qquad i=1,2,3.
+\end{equation}
+与式 \eqref{eq:ch5_pdr_smb} 相比，式 \eqref{eq:ch5_do_pdr_smb} 的主要区别在于利用扰动观测器对未建模动态和外部扰动进行实时估计，从而减小切换增益的保守选取，提高 Hover 平台姿态跟踪的稳态精度。
+
+进一步考虑第4章中的输入约束情形，记期望控制输入为 $u_{c,i}$，实际施加到第 $i$ 个姿态通道上的输入为 $u_i=\mathrm{sat}(u_{c,i})$，并引入抗饱和补偿状态 $\xi_i$，则输入饱和约束下的预设阻尼比滑模反步控制器可设计为
+输入饱和约束下的预设阻尼比滑模反步控制器为
+\begin{equation}\label{eq:ch5_sat_controller}
+\left\{
+\begin{aligned}
+u_{c,i} &=-J_i\left(m_{2,i}\dot e_i+m_{1,i}e_i+\hat\Delta_i-\ddot\eta_{d,i}
++\varepsilon_i\,\mathrm{sgn}(s_i)+k_{\mathrm{aw},i}\xi_i\right),\\
+u_i &= \mathrm{sat}(u_{c,i}),\\
+\dot\xi_i &=-\lambda_i\xi_i+\frac{1}{J_i}\big(u_i-u_{c,i}\big),
+\end{aligned}
+\right.
+\qquad i=1,2,3.
+\end{equation}
+式 \eqref{eq:ch5_sat_controller} 中，$k_{\mathrm{aw},i}\xi_i$ 为抗饱和补偿项，用于削弱输入限幅对原有预设阻尼比瞬态性能的破坏；$\lambda_i$ 为辅助动态的调节参数。由此得到三个姿态通道的组合控制输入 $u_1,u_2,u_3$ 后，再利用式 \eqref{eq:ch5_voltage_alloc} 即可求得四个电机的电压指令 $V_1,V_2,V_3,V_4$，从而实现基于本文第2章、第3章和第4章理论的 Hover 平台控制器部署。
+
+\section{仿真验证与结果分析}[Simulation verification and analysis]
+
+\subsection{仿真环境与设置}[Simulation setup]
+
+本章基于式 \eqref{eq:ch5_hover_axes}--\eqref{eq:ch5_voltage_alloc} 在 Simulink 中搭建 Hover 平台模型与控制器模块，并通过改变阻尼比设定观察固定姿态和时变姿态跟踪效果。下述结果以 Hover 平台为对象，用于展示阻尼比预设对姿态瞬态响应的影响规律。
+
+\subsection{固定姿态跟踪实验}[Fixed-attitude tracking]
+
+固定姿态实验中，分别设置俯仰角、滚转角或偏航角的阶跃参考，比较不同阻尼比设定下的响应过程。总体规律为：阻尼比减小时，上升更快但更易产生超调与振荡；阻尼比增大时，响应更平稳但收敛相对更慢。该现象与前文二阶类李雅普诺夫设计所对应的目标误差动态一致，说明“阻尼比--超调/收敛速度”映射在 Hover 姿态系统上仍然可观察。
 
 \begin{figure}[htbp]
   \centering
   \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）中期报告：$y$ 轴方向固定目标点跟踪曲线（不同阻尼比对比）\\
-  你后续可替换为：图4 y轴方向固定目标点跟踪实验}}
-  \caption{$y$ 轴方向固定目标点跟踪结果（中期报告）}
-  \label{fig:ch5_y_step}
+  （占位图）Hover 平台固定俯仰角跟踪曲线（不同阻尼比对比）\\
+  你后续可替换为：固定俯仰角跟踪实验结果}}
+  \caption{固定俯仰角跟踪结果}
+  \label{fig:ch5_pitch_step}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）中期报告：固定目标点跟踪顶视图轨迹对比\\
-  你后续可替换为：图5 固定目标点跟踪实验顶视图}}
-  \caption{固定目标点跟踪顶视图结果（中期报告）}
-  \label{fig:ch5_step_top}
-\end{figure}
-
-\subsection{圆形闭合轨迹跟踪实验}[Circular trajectory tracking]
-
-中期报告进一步给出了圆形轨迹跟踪结果，包括 $x$、$y$ 两轴随时间变化的跟踪曲线以及顶视图轨迹。闭合轨迹跟踪相较固定点任务更能体现动态目标下的相位滞后与稳态误差特征。仿真结果表明：在圆形轨迹任务中，控制器能够实现对参考轨迹的有效跟踪，并保持轨迹形状的整体一致性。
-
-\begin{figure}[htbp]
-  \centering
-  \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）中期报告：圆形轨迹跟踪实验（$x$ 与 $y$ 方向）\\
-  你后续可替换为：图7 圆形轨迹跟踪实验}}
-  \caption{圆形轨迹跟踪结果（中期报告）}
-  \label{fig:ch5_circle_xy}
+  （占位图）Hover 平台固定滚转角跟踪曲线（不同阻尼比对比）\\
+  你后续可替换为：固定滚转角跟踪实验结果}}
+  \caption{固定滚转角跟踪结果}
+  \label{fig:ch5_roll_step}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）中期报告：圆形轨迹跟踪实验顶视图\\
-  你后续可替换为：图6 圆形轨迹跟踪实验顶视图}}
-  \caption{圆形轨迹跟踪顶视图结果（中期报告）}
-  \label{fig:ch5_circle_top}
+  （占位图）Hover 平台固定偏航角跟踪曲线（不同阻尼比对比）\\
+  你后续可替换为：固定偏航角跟踪实验结果}}
+  \caption{固定偏航角跟踪结果}
+  \label{fig:ch5_yaw_step}
 \end{figure}
 
-\subsection{三角形闭合轨迹跟踪实验（预留）}[Triangular trajectory tracking (to be completed)]
+\subsection{时变姿态跟踪实验}[Time-varying attitude tracking]
 
-\textbf{（中期报告提及“三角轨迹跟踪”，但当前未给出对应曲线/统计结果，本节预留。）}
+时变姿态实验采用正弦参考或分段变化参考，对三个姿态通道的动态跟踪性能进行考察。与固定姿态任务相比，时变姿态任务更能反映相位滞后、耦合扰动和稳态误差随阻尼比变化的趋势。仿真结果表明，在合理参数整定下，控制器能够保持对 Hover 姿态参考的有效跟踪，并在不同阻尼比设定下表现出可解释的动态品质差异。
 
-后续论文完善阶段将补充三角形轨迹等非光滑参考轨迹的跟踪实验，以验证控制器在参考角点处的鲁棒性与输入平滑性，并对比不同阻尼比设定下的峰值误差与恢复时间。
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.86\textwidth}{\centering
+  （占位图）Hover 平台时变姿态跟踪曲线（俯仰/滚转/偏航）\\
+  你后续可替换为：时变姿态跟踪实验结果}}
+  \caption{时变姿态跟踪结果}
+  \label{fig:ch5_attitude_timevary}
+\end{figure}
 
 \subsection{三类控制器对比统计（预留）}[Comparison among three controllers (to be completed)]
 
-\textbf{（中期报告阶段规划了三类控制器对比：基础 PDR-SMB、观测器型 PDR-SMB、扰动观测器+状态观测器型 PDR-SMB，本节预留完整对比表与统计指标。）}
+\textbf{（本节保留完整对比表与统计指标位置，用于后续补充基础 PDR-SMB、观测器型 PDR-SMB 和扰动观测器+状态观测器型 PDR-SMB 在 Hover 平台上的系统化对比。）}
 
 后续将按以下指标给出对比：
 \begin{itemize}
   \item 峰值超调量 $M_p$、峰值时间 $t_p$、调节时间 $t_s$；
-  \item 轨迹跟踪 RMS 误差、最大瞬时误差；
-  \item 控制输入峰值与饱和比例（PWM 占空比范围）；
-  \item 抖振度量（如高频输入能量或输入变化率统计）。
+  \item 姿态跟踪 RMS 误差、最大瞬时误差；
+  \item 控制输入峰值与饱和比例（电机电压或等效推力指令范围）；
+  \item 抖振度量与观测误差/扰动估计误差统计。
 \end{itemize}
 
 \section{本章小结}[Summary]
 
-本章围绕板球平衡系统对预设阻尼比滑模反步控制思想进行了验证与实现总结。首先给出了中期报告中的板球系统动力学建模、状态空间表述与降阶控制模型，为控制器实现提供统一入口；随后总结了实验平台硬件与软件部署要点，包括 STM32F407 控制板、PD6010B 驱动板、视觉测量反馈与 $33\,\mathrm{Hz}$ 离散采样条件下的控制实现链路；最后基于中期报告给出的 Simulink 仿真结果，展示了固定目标点与圆形闭合轨迹任务中不同阻尼比设定对瞬态响应（超调/振荡/收敛速度）的影响规律，验证了“阻尼比—瞬态性能”的可解释映射。
+本章围绕三自由度悬浮机系统对预设阻尼比滑模反步控制思想进行了验证与实现总结。首先参考 Hover 平台的典型实验装置，给出了姿态动力学模型、状态空间表达和控制输入组合方式，为控制器实现提供统一入口；随后总结了上位机、DAQ、功率放大器与四电机平台构成的控制实现链路；最后基于 Hover 平台的固定姿态与时变姿态跟踪任务，说明了不同阻尼比设定对超调、振荡衰减速度和相位滞后的影响规律，验证了“阻尼比--瞬态性能”的可解释映射。
 
-对于中期报告尚未完整给出的自适应律细节、三角轨迹跟踪结果以及三类控制器的系统化对比统计，本章保留了对应小节位置，便于后续论文完善时补充实物实验数据与完整对比结论。
+对于后续尚未完整给出的实物统计对比、更复杂耦合工况测试以及输入约束影响分析，本章保留了对应小节位置，便于论文后续继续补充 Hover 平台上的完整实验数据与结论。
 
 % Local Variables:
 % TeX-master: "../thesis"

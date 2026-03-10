@@ -8,7 +8,7 @@
 
 因此，本章引入扰动观测器来估计系统中的不确定性并补偿。本章节针对一类严格反馈形式的不确定非线性系统，设计基于扰动观测器的预设阻尼比反步控制器。首先给出扰动观测器相关引理，证明扰动观测器有效性；然后利用扰动观测器估计虚拟控制函数时间导数及系统未知非线性，并将观测结果实时补偿到虚拟控制函数和控制输入中；进一步通过合适的虚拟控制函数和控制输入构造二阶李雅普诺夫不等式，并基于李雅普诺夫稳定性判据进行闭环系统稳定性分析，得到系统稳定且具有近似预设阻尼比。
 
-最后，面向板球系统开展两组仿真实验，展示跟踪定点和时变信号的效果，并给出满足参数规则的三种阻尼比实现，从而验证本章方法的有效性。
+最后，面向 Hover 姿态系统开展两组仿真实验，展示固定姿态和时变姿态跟踪效果，并给出满足参数规则的三种阻尼比实现，从而验证本章方法的有效性。
 
 \section{系统描述及预备知识}[System description and preliminaries]
 
@@ -26,10 +26,25 @@
 \end{equation}
 其中 $x_i\in\mathbb{R}$ 为系统状态，$u\in\mathbb{R}$ 为控制输入，$y$ 为可测输出，$b_i\neq0$ 为已知控制增益，$f_i(\cdot)$ 为未知非线性项，$d_i$ 为外部扰动。
 
+与第2章保持一致，在控制器设计中将各级未知非线性与匹配扰动统一表示为
+\begin{equation}\label{eq:ch3_hi_delta}
+f_i(\bar x_i)+d_i=h_i(\bar x_i)+\delta_i(\bar x_i),\qquad
+|\delta_i|\le \bar\delta_i,\quad |\dot\delta_i|\le \bar{\dot\delta}_i,\quad i=1,2,\ldots,n,
+\end{equation}
+其中 $h_i(\bar x_i)$ 为已知光滑名义项，$\delta_i(\bar x_i)$ 表示剩余不确定性。
+
 其中扰动 $d_i(t)$ 未知但有界，满足：
 \begin{equation}\label{eq:ch4_d_bound}
 \left|d_i(t)\right|\le d_{i,\max},\quad \left|\dot d_i(t)\right|\le \dot d_{i,\max},\quad i=1,\ldots,n.
 \end{equation}
+
+\begin{assumption}\label{assump:ch3_yd}
+目标信号 $y_d(t)$、$\dot y_d(t)$ 和 $\ddot y_d(t)$ 连续且有界。
+\end{assumption}
+
+\begin{assumption}\label{assump:ch3_fi}
+对于 $i=1,2,\ldots,n$，未知非线性函数 $f_i$ 及其一阶导数连续有界。
+\end{assumption}
 
 \subsection{扰动观测器相关引理}[Disturbance-observer-related lemmas]
 
@@ -115,7 +130,7 @@ s=z_n+\sum_{i=3}^{n-1}c_iz_i+c_2\left(z_2+m_2z_1+m_1\int_0^t z_1(\tau)\,d\tau\ri
 
 第二步：将系统中的复合不确定项记为
 \[
-\Delta_i=f_i(x_i)+d_i,\quad i=1,2,\ldots,n,
+\Delta_i=h_i(x_i)+\delta_i,\quad i=1,2,\ldots,n,
 \]
 并记 $r_d=\dot y_d$。为便于调用上一小节的扰动观测器结果，将误差系统写为紧凑形式
 \begin{equation}\label{eq:ch4_step_compact}
@@ -129,7 +144,7 @@ z&=[z_1,z_2,\ldots,z_n]^\mathrm{T},\\
 B(z)&=\mathrm{diag}(b_1,b_2,\ldots,b_n),\\
 \nu&=[\alpha_1,\alpha_2,\ldots,\alpha_{n-1},u]^\mathrm{T},\\
 D(z)&=I_{n\times n},\\
-w(t)&=[\Delta_1-r_d,\Delta_2-\dot\alpha_1,\ldots,\Delta_n-\dot\alpha_{n-1}]^\mathrm{T}.
+w(t)&=[\Delta_1-r_d,\Delta_2-d\alpha_1,\ldots,\Delta_n-d\alpha_{n-1}]^\mathrm{T}.
 \end{aligned}
 \]
 为与第2章一致，以下不失一般性取 $b_1=1$。
@@ -142,31 +157,40 @@ w(t)&=[\Delta_1-r_d,\Delta_2-\dot\alpha_1,\ldots,\Delta_n-\dot\alpha_{n-1}]^\mat
 \end{equation}
 记
 \[
-\hat w=[\hat\Delta_1-r_d,\hat\Delta_2-\dot\alpha_1,\ldots,\hat\Delta_n-\dot\alpha_{n-1}]^\mathrm{T},
+\hat w=[\hat\Delta_1-r_d,\hat\Delta_2-d\alpha_1,\ldots,\hat\Delta_n-d\alpha_{n-1}]^\mathrm{T},
 \]
 并定义各通道估计误差
 \[
 \tilde\Delta_i=\Delta_i-\hat\Delta_i=w_{s,i},\quad i=1,2,\ldots,n.
 \]
+同时，与第2章一致，对虚拟控制函数导数采用有限差分近似
+\begin{equation}\label{eq:ch3_dalpha}
+  d\alpha_i=\frac{\alpha_i(t+\Delta t)-\alpha_i(t)}{\Delta t},\qquad i=1,2,\ldots,n-1,
+\end{equation}
+其中 $\Delta t$ 为采样周期，并满足
+\begin{equation}\label{eq:ch3_dalpha_expand}
+  d\alpha_i=\dot\alpha_i+O_i(\Delta t),\qquad i=1,2,\ldots,n-1,
+\end{equation}
+其中 $O_i(\Delta t)$ 表示有限差分带来的截断误差，并与 $\delta_i$ 一并并入后续闭环误差系统的剩余不确定项。
 
 第三步：按与第2章相同的结构设计虚拟控制器与实际控制输入，只是将未知项替换为扰动观测器估计量：
 \begin{equation}\label{eq:ch4_alpha1}
 \alpha_1=-\frac{1}{b_1}(\hat\Delta_1-r_d),
 \end{equation}
 \begin{equation}\label{eq:ch4_alpha2}
-\alpha_2=-\frac{1}{b_2}\left(m_2z_2+m_1z_1+\hat\Delta_2-\dot\alpha_1\right),
+\alpha_2=-\frac{1}{b_2}\left(m_2z_2+m_1z_1+\hat\Delta_2-d\alpha_1\right),
 \end{equation}
 \begin{equation}\label{eq:ch4_alpha3}
-\alpha_3=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+\hat\Delta_3-\dot\alpha_2\right),
+\alpha_3=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+\hat\Delta_3-d\alpha_2\right),
 \end{equation}
 \begin{equation}\label{eq:ch4_alphai}
-\alpha_i=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+\hat\Delta_i-\dot\alpha_{i-1}\right),\quad i=4,\ldots,n-2,
+\alpha_i=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+\hat\Delta_i-d\alpha_{i-1}\right),\quad i=4,\ldots,n-2,
 \end{equation}
 \begin{equation}\label{eq:ch4_alpha_nm1}
-\alpha_{n-1}=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+\hat\Delta_{n-1}-\dot\alpha_{n-2}\right),
+\alpha_{n-1}=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+\hat\Delta_{n-1}-d\alpha_{n-2}\right),
 \end{equation}
 \begin{equation}\label{eq:ch4_u}
-u=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+\hat\Delta_n-\dot\alpha_{n-1}+\varepsilon\,\mathrm{sgn}(s)\right).
+u=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+\hat\Delta_n-d\alpha_{n-1}+\varepsilon\,\mathrm{sgn}(s)\right).
 \end{equation}
 
 第四步：由前两级控制律可得二阶主导误差动态
@@ -184,9 +208,9 @@ V_2=\frac{m_1}{2}z_1^2+\frac{1}{2}z_2^2,
 \dot V_2=-m_2z_2^2+b_2z_2z_3+m_1z_1\tilde\Delta_1+z_2\tilde\Delta_2.
 \end{equation}
 
-第五步：为保证滑模到达条件，选取
+第五步：为保证滑模到达条件，取最简到达律
 \begin{equation}\label{eq:ch4_reach}
-\dot s=-k_ss-\varepsilon\,\mathrm{sgn}(s)+d_s(t),\qquad |d_s(t)|\le \bar d_s,\ \varepsilon>0.
+\dot s=-\varepsilon\,\mathrm{sgn}(s)+d_s(t),\qquad |d_s(t)|\le \bar d_s,\ \varepsilon>0.
 \end{equation}
 
 至此，基于扰动观测器的预设阻尼比滑模反步控制器设计完成。
@@ -231,7 +255,7 @@ a_0=2\min\left\{\frac{c_2b_2-c_4b_3}{c_3},\frac{c_3b_3-c_5b_4}{c_4},\ldots,\frac
 \[
 \sum_{i=3}^{n}\tilde\Delta_i^2\le \bar\Delta^2.
 \]
-其中 $a_0$ 可通过适当选取 $c_i$ 保证。由比较引理可得 $z_3,\cdots,z_n$ 一致最终有界，因此有：
+其中 $a_0$ 可通过适当选取 $c_i$ 保证，而各通道估计误差 $\tilde\Delta_i$ 已综合包含名义建模误差 $\delta_i$ 与有限差分近似误差 $O_i(\Delta t)$。由比较引理可得 $z_3,\cdots,z_n$ 一致最终有界，因此有：
 \begin{equation}\label{eq:ch4_238}
 |z_3(t)|\le \sqrt{2c_0}\,e^{-at}+\bar z_3,
 \end{equation}
@@ -243,7 +267,7 @@ V_s=\frac{1}{2}s^2,
 \]
 由\eqref{eq:ch4_reach}可得
 \begin{equation}\label{eq:ch4_Vs_dot}
-\dot V_s=s\dot s\le -k_s s^2-(\varepsilon-\bar d_s)|s|.
+\dot V_s=s\dot s\le -(\varepsilon-\bar d_s)|s|.
 \end{equation}
 当 $\varepsilon>\bar d_s$ 时，$s$ 一致最终有界并收敛到滑模面邻域，从而与上式对 $z_3,\ldots,z_n$ 的有界性结论共同构成完整的“滑模+反步+扰动观测”闭环分析。
 

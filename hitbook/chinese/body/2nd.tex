@@ -4,7 +4,7 @@
 
 \section{引言}[Introduction]
 
-针对具有严格反馈结构的确定性非线性系统，标准反步控制法通过递归构造虚拟控制量与李雅普诺夫函数，能够实现稳定控制。面向含未知不确定项与外部扰动的实际对象，滑模反步方法进一步提升了系统抗干扰能力，但传统设计仍主要关注“稳定或收敛”，对阻尼比等动态性能指标的显式预设能力相对不足。基于这一问题，本章在研究系统稳定性的同时，将阻尼比作为核心动态指标纳入控制器设计，面向一类严格反馈形式的不确定非线性系统构建预设阻尼比滑模反步控制方法。首先，将阻尼比的讨论从阶跃响应扩展到时变参考跟踪场景，并给出相应定义与计算表达；随后利用经典二阶系统阻尼比的特征，建立二阶类李雅普诺夫稳定性判据。该判据表明，当相应二阶不等式成立时，系统输出能够以近似预设的阻尼比稳定跟踪目标信号，并可据此形成参数设置规则。在此基础上，本章进一步给出预设阻尼比滑模反步控制器设计流程。通过有限差分近似虚拟控制导数，构造满足二阶类李雅普诺夫条件的闭环误差系统，并在理论上证明跟踪误差最终有界且具备预设超调特性，最后完成闭环稳定性分析。为验证所提方法的有效性，针对板球系统开展两组仿真实验，分别展示了小球对跟踪定点信号和时变信号的跟踪效果，给出了符合参数规则的三种阻尼比的实现，实验结果验证了该控制方法的有效性。
+针对具有严格反馈结构的确定性非线性系统，标准反步控制法通过递归构造虚拟控制量与李雅普诺夫函数，能够实现稳定控制。面向含未知不确定项与外部扰动的实际对象，滑模反步方法进一步提升了系统抗干扰能力，但传统设计仍主要关注“稳定或收敛”，对阻尼比等动态性能指标的显式预设能力相对不足。基于这一问题，本章在研究系统稳定性的同时，将阻尼比作为核心动态指标纳入控制器设计，面向一类严格反馈形式的不确定非线性系统构建预设阻尼比滑模反步控制方法。首先，将阻尼比的讨论从阶跃响应扩展到时变参考跟踪场景，并给出相应定义与计算表达；随后利用经典二阶系统阻尼比的特征，建立二阶类李雅普诺夫稳定性判据。该判据表明，当相应二阶不等式成立时，系统输出能够以近似预设的阻尼比稳定跟踪目标信号，并可据此形成参数设置规则。在此基础上，本章进一步给出预设阻尼比滑模反步控制器设计流程。通过有限差分近似虚拟控制导数，构造满足二阶类李雅普诺夫条件的闭环误差系统，并在理论上证明跟踪误差最终有界且具备预设超调特性，最后完成闭环稳定性分析。为验证所提方法的有效性，针对 Hover 姿态系统开展两组仿真实验，分别展示对固定姿态信号和时变姿态信号的跟踪效果，给出了符合参数规则的三种阻尼比实现，实验结果验证了该控制方法的有效性。
 
 \section{系统描述及预备知识}[System description and preliminaries]
 
@@ -335,6 +335,13 @@ y&=x_1,
 \end{equation}
 其中 $x_i=[x_1,x_2,\ldots,x_i]^\mathrm{T}\in D_i\subset\mathbb{R}^i$，$u\in\mathbb{R}$，$y\subset\mathbb{R}$ 分别代表系统的状态、输入和输出。$f_i(x_i)$ 和 $d_i$ 分别代表系统的未建模动态和未知的外部扰动，$b_i$ 已知。
 
+在实际工程中，非线性函数 $f_i$ 往往并非完全已知。为便于控制器设计，将各级未知非线性与匹配扰动统一视作等效非线性项，并进一步假设
+\begin{equation}\label{eq:ch2_hi_delta}
+  f_i(\bar x_i)+d_i=h_i(\bar x_i)+\delta_i(\bar x_i),\qquad
+  |\delta_i|\le \bar\delta_i,\quad |\dot\delta_i|\le \bar{\dot\delta}_i,\quad i=1,2,\ldots,n,
+\end{equation}
+其中 $h_i(\bar x_i)$ 为已知的光滑函数，表示对等效非线性项 $f_i(\bar x_i)+d_i$ 的名义估计；$\delta_i(\bar x_i)$ 表示真实等效非线性与名义项之间的估计误差，用于刻画系统不确定性；$\bar\delta_i$ 和 $\bar{\dot\delta}_i$ 分别表示 $\delta_i$ 及其导数的已知上界。这样，$h_i(\bar x_i)$ 就可以作为后续未知非线性补偿设计的基础，而 $\delta_i(\bar x_i)$ 则统一并入稳定性分析。
+
 设 $\alpha_i$ 为滑模反步控制中的虚拟控制器，$z_i=x_i-\alpha_{i-1}$ 为状态量和虚拟控制器的误差，设计预设阻尼比滑模面形式如下：
 \begin{equation}\label{eq:ch3_sm_mid2}
   s=z_n+\sum_{i=3}^{n-1}c_iz_i+c_2\left(z_2+m_2z_1+m_1\int_0^t z_1(\tau)d\tau\right).
@@ -348,20 +355,27 @@ y&=x_1,
 设计虚拟控制器形式如下：
 \begin{equation}\label{eq:ch3_alpha_mid}
 \begin{aligned}
-\alpha_1&=-\frac{1}{b_1}(f_1-r_d),\\
-\alpha_2&=-\frac{1}{b_2}(m_2z_2+m_1z_1+f_2-\dot\alpha_1),\\
-\alpha_3&=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+f_3-\dot\alpha_2\right),\\
-\alpha_i&=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+f_i-\dot\alpha_{i-1}\right),\\
-\alpha_{n-1}&=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+f_{n-1}-\dot\alpha_{n-2}\right),\\
-u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+f_n-\dot\alpha_{n-1}+\varepsilon\,\mathrm{sgn}(s)\right).
+\alpha_1&=-\frac{1}{b_1}(h_1-r_d),\\
+\alpha_2&=-\frac{1}{b_2}(m_2z_2+m_1z_1+h_2-d\alpha_1),\\
+\alpha_3&=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+h_3-d\alpha_2\right),\\
+\alpha_i&=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+h_i-d\alpha_{i-1}\right),\\
+\alpha_{n-1}&=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+h_{n-1}-d\alpha_{n-2}\right),\\
+u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-d\alpha_{n-1}+\varepsilon\,\mathrm{sgn}(s)\right).
 \end{aligned}
 \end{equation}
 
-上式中，虚拟控制器序列用于逐层稳定中间误差，末端控制输入中的切换项用于增强抗扰能力。参数 $\varepsilon$ 越大，鲁棒性越强，但控制输入抖振风险也会增大，因此后续仿真中需要配合边界层或采样滤波进行折中。
+其中，虚拟控制函数导数采用有限差分近似：
+\begin{equation}\label{eq:ch2_finite_difference}
+  d\alpha_i=\frac{\alpha_i(t+\Delta t)-\alpha_i(t)}{\Delta t},\qquad i=1,2,\ldots,n-1,
+\end{equation}
+其中 $\Delta t$ 为采样周期。按照有限差分展开，可进一步写成
+\begin{equation}\label{eq:ch2_dalpha_expand}
+  d\alpha_i=\dot\alpha_i+O_i(\Delta t),\qquad i=1,2,\ldots,n-1,
+\end{equation}
+其中 $O_i(\Delta t)$ 表示由有限差分引入的截断误差项。
 
-在工程部署时，虚拟控制导数项往往是实现难点。若直接采用解析求导，模型误差和测量噪声会被放大，导致输入振荡。实际应用通常采用离散近似或平滑微分策略获取导数项，虽然会引入近似误差，但能显著改善数值稳定性与实时性。该误差可继续并入等效扰动项分析，因此不会破坏本章的理论闭环。
+上式中，虚拟控制器序列用于逐层稳定中间误差，$h_i$ 用于补偿各级已知名义非线性，$\delta_i$ 与有限差分截断误差 $O_i(\Delta t)$ 共同构成闭环中的剩余不确定项。末端控制输入中的切换项用于增强抗扰能力。参数 $\varepsilon$ 越大，鲁棒性越强，但控制输入抖振风险也会增大，因此后续仿真中需要配合边界层或采样滤波进行折中。
 
-在软件实现层面，建议将“模型计算、虚拟控制更新、鲁棒项计算、饱和与限幅处理”按固定顺序执行，并在每个控制周期记录关键中间变量。这样做有两点好处：其一，便于定位误差来源，例如是模型项偏差还是鲁棒项参数过大；其二，便于复现实验，保证不同工况下使用一致的执行流程。
 
 通过虚拟控制器可求得误差对时间的导数形式如下：
 \begin{equation}\label{eq:ch3_zdot_stab}
@@ -454,66 +468,106 @@ V_n(t)\le V_n(0)e^{-a_0t},\quad t\ge0.
 
 \section{数值仿真}[Numerical simulation]\label{sec:ch3_sim}
 
-% 本节给出将本章基准控制器应用于板球平衡系统时，仿真建模、任务设置、对比方式与结果呈现的推荐写法（与中期报告一致）。具体动力学模型、参数表与降阶/解耦过程可放在第6章实验章节或本节附录中；此处强调“如何把预设阻尼比指标落到可观测曲线与统计量”。
+本节将对式\eqref{eq:ch3_sys_mid}所示系统应用预设阻尼比滑模反步控制方法进行仿真验证。考虑到 Hover 三轴姿态动力学在单通道上均可写成二阶形式，本章选取滚转（roll）通道作为代表对象进行仿真。每组仿真均给出定点跟踪与时变跟踪结果，并在无风扰与风扰两种工况下进行对比，以验证本章控制器的有效性及参数可调性。
 
-% 仿真评价建议同时覆盖性能指标与代价指标两类结果。性能指标包括超调量、峰值时间、调节时间、稳态误差；代价指标包括控制输入峰值与输入均方值。两类指标联合呈现可以避免仅优化跟踪误差而忽略控制代价的片面结论。
+根据 Hover 平台建模关系，滚转通道满足
+\begin{equation}\label{eq:ch2_roll_origin}
+J_{\phi}\ddot{\phi}=u_{\phi}+\tau_{d\phi},
+\end{equation}
+其中 $\phi$ 为滚转角，$J_{\phi}$ 为滚转转动惯量，$u_{\phi}$ 为滚转通道控制力矩，$\tau_{d\phi}$ 为综合扰动力矩。滚转通道控制力矩由电机推力差形成，即
+\begin{equation}\label{eq:ch2_roll_input}
+u_{\phi}=L(F_4-F_2),\qquad F_j=K_fV_j,\ j=1,2,3,4.
+\end{equation}
+本文仿真采用的 Hover 综合参数如表\ref{tab:ch2_hover_param}所示。
 
-% 此外，建议统一统计窗口与采样频率，避免不同工况下指标计算口径不一致。对于时变轨迹任务，可在一个完整周期内计算平均绝对误差与最大瞬时误差，并与控制输入峰值同步报告。这样可以更清晰地说明“性能提升是否以更高控制代价为代偿”，保证结果解释客观可信。
+\begin{table}[H]
+  \centering
+  \caption{Hover 平台综合参数}
+  \label{tab:ch2_hover_param}
+  \begin{tabular}{cccc}
+    \toprule
+    参数 & 数值 & 参数 & 数值\\
+    \midrule
+    $I_x$ & $0.0552\,\mathrm{kg\cdot m^2}$ & $L$ & $0.1970\,\mathrm{m}$\\
+    $I_y$ & $0.0552\,\mathrm{kg\cdot m^2}$ & $K_f$ & $0.1188\,\mathrm{N/V}$\\
+    $I_z$ & $0.1104\,\mathrm{kg\cdot m^2}$ & $K_{\tau}$ & $0.0036\,\mathrm{N\cdot m/V}$\\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
-% 仿真中可采用“含未建模动态与扰动”的高阶板球模型，并通过小角度近似与解耦得到 $x$/$y$ 两个方向的子系统，再在每个子系统上应用本章控制器。
-% 为避免论文初稿阶段因图片/模型文件不齐导致编译失败，可先用占位框展示图与表（后续替换为真实图片）。
+令 $x_1=\phi,\ x_2=\dot\phi,\ u=u_{\phi}$，则滚转通道可整理为
+\begin{equation}\label{eq:ch2_roll_state}
+\dot x_1=x_2,\qquad
+\dot x_2=\frac{1}{J_{\phi}}u+f_{\phi}(x)+d_{\phi}(t),\qquad
+y=x_1,
+\end{equation}
+其中 $f_{\phi}(x)$ 表示未建模非线性项，$d_{\phi}(t)$ 表示外部扰动。该模型与本章控制器设计所采用的二阶严格反馈形式一致，可直接用于本章控制律验证。
 
-% \begin{figure}[htbp]
-%   \centering
-%   \fbox{\parbox{0.85\textwidth}{\centering
-%   （占位）此处放置 Simulink/BPS 模型结构图：包含执行器、板角、球位置、扰动注入与控制器模块。}}
-%   \caption{板球平衡系统仿真模型结构示意（占位）}
-%   \label{fig:ch3_bps_model}
-% \end{figure}
+为与本章基准控制器定位一致，本节控制器实现先基于名义模型设计，即在控制律构造时暂不显式补偿非线性项与外部扰动，仅保留其在仿真对象中的影响。令
+\[
+c_1=1,\qquad c_2=\frac{1}{J_{\phi}}.
+\]
+根据第\ref{sec:ch3_prob}节的设计思想，在滚转通道上定义误差变量
+\begin{equation}\label{eq:ch2_roll_err}
+z_1=x_1-y_d,\qquad z_2=x_2-\alpha_1,\qquad q=\int_0^t z_1(\tau)\,d\tau,
+\end{equation}
+并取积分型滑模面
+\begin{equation}\label{eq:ch2_roll_s}
+s=z_2+m_2z_1+m_1q.
+\end{equation}
+令 $b_{\phi}=1/J_{\phi}$，则本章方法在单轴仿真中的控制器实现为
+\begin{equation}\label{eq:ch2_roll_ctrl_prop}
+\alpha_1=\frac{\dot y_d}{c_1},
+\end{equation}
+\begin{equation}\label{eq:ch2_roll_u_prop}
+u=-\frac{1}{c_2}\left(m_1z_1+m_2z_2-\frac{\ddot y_d}{c_1}\right).
+\end{equation}
+该表达与二阶系统反步设计的标准形式一致，其中 $(m_1,m_2)$ 对应本章预设阻尼比参数。
 
-% \begin{figure}[htbp]
-%   \centering
-%   \fbox{\parbox{0.85\textwidth}{\centering（占位）固定目标点：$x$方向跟踪曲线与误差曲线}}
-%   \caption{$x$方向固定目标点跟踪结果（占位）}
-%   \label{fig:ch3_step_x}
-% \end{figure}
+为构造基线对比，传统滑模反步控制器取
+\begin{equation}\label{eq:ch2_roll_ctrl_base}
+\alpha_{1,\mathrm{b}}=-k_1z_1+\dot y_d,\qquad
+z_{2,\mathrm{b}}=x_2-\alpha_{1,\mathrm{b}},
+\end{equation}
+\begin{equation}\label{eq:ch2_roll_u_base}
+u_{\mathrm{b}}=-\frac{1}{b_{\phi}}\left(k_2z_{2,\mathrm{b}}+z_1-d\alpha_{1,\mathrm{b}}+\varepsilon_{\mathrm{b}}\,\mathrm{sgn}(z_{2,\mathrm{b}})\right),
+\end{equation}
+其中 $k_1,k_2,\varepsilon_{\mathrm{b}}>0$ 为传统方法参数。
 
-% \begin{figure}[htbp]
-%   \centering
-%   \fbox{\parbox{0.85\textwidth}{\centering（占位）固定目标点：$y$方向跟踪曲线与误差曲线}}
-%   \caption{$y$方向固定目标点跟踪结果（占位）}
-%   \label{fig:ch3_step_y}
-% \end{figure}
+仿真任务设置如下：定义定点跟踪信号
+\[
+y_{d1}=5^\circ,
+\]
+定义时变跟踪信号
+\[
+y_{d2}=5^\circ\sin(0.2t).
+\]
+仿真时令 $y_d\in\{y_{d1},y_{d2}\}$。为验证阻尼比可调性，选取三组目标阻尼比 $\zeta_d=0.6,\ 0.707,\ 1.0$，并按照
+\[
+\zeta_d=\frac{m_2}{2\sqrt{m_1}}
+\]
+配置 $(m_1,m_2)$。在控制器对比方面，除本章所提预设阻尼比滑模反步控制器外，设置传统滑模反步控制器作为基线方法，比较两类控制器在相同模型、相同参考信号和相同输入约束下的跟踪性能差异。
 
-% \begin{figure}[htbp]
-%   \centering
-%   \fbox{\parbox{0.85\textwidth}{\centering（占位）圆形轨迹：俯视图（实际轨迹 期望轨迹）}}
-%   \caption{圆形轨迹跟踪俯视图（占位）}
-%   \label{fig:ch3_circle_top}
-% \end{figure}
+为便于汇总预设阻尼比参数与实现效果，表\ref{tab:ch2_sigma_param}给出本章仿真参数及统计结果模板。表中数值暂按占位数据填写，后续可替换为实际仿真统计结果。
+\begin{table}[H]
+  \centering
+  \caption{预设阻尼比滑模反步控制参数及实现效果}
+  \label{tab:ch2_sigma_param}
+  \begin{tabular}{cccccccc}
+    \toprule
+    目标信号 & $k$ & $\alpha$ & $\beta$ & $p$ & $q$ & $\sigma$ (PV) & $\sigma$ (MV)\\
+    \midrule
+    $y_{d1}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
+    -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.33\% \\
+    -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
+    $y_{d2}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
+    -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.30\% \\
+    -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
-% \begin{table}[htbp]
-%   \centering
-%   \caption{预设阻尼比下超调量与峰值时间的理论/仿真对比（模板）}
-%   \label{tab:ch3_mp_compare}
-%   \begin{tabular}{cccccc}
-%     \hline
-%     $\zeta_d$ & $(m_1,m_2)$ & $M_p$（理论） & $M_p$（仿真） & $t_p$（理论） & $t_p$（仿真） \\
-%     \hline
-%     0.3 & -- & -- & -- & -- & -- \\
-%     0.6 & -- & -- & -- & -- & -- \\
-%     0.9 & -- & -- & -- & -- & -- \\
-%     \hline
-%   \end{tabular}
-% \end{table}
 
-% 同时建议给出“理论预估超调量 vs 实际统计超调量”的对比表，用于验证预设阻尼比映射的有效性：
-
-% 除标称工况外，还可附加一组扰动工况仿真（例如外加脉冲扰动或参数偏差），用于验证鲁棒项在非理想条件下对恢复速度与峰值偏差的抑制效果。该组结果可与标称工况并排展示，突出控制器在复杂条件下的一致性表现。
-
-% 若条件允许，还可增加一次“参数偏离测试”，即在不重新整定的前提下改变部分模型参数，观察控制器维持阻尼比特性的能力。这类测试可直接反映方法的参数鲁棒性，对比价值通常高于单一标称工况下的误差下降幅度。
-
-% 为了增强对比结果的说服力，建议在图表中统一采用同一纵轴尺度，并给出每组试验的初始条件和扰动注入时刻。这样可避免图形视觉比例差异带来的误判，也便于读者直接比较不同参数组在同一条件下的动态差异。
 
 
 \section{本章小结}[Summary]\label{sec:ch3_summary}
