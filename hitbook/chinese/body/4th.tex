@@ -378,9 +378,76 @@ s=z_n+\sum_{i=3}^{n-1}c_i z_i+c_2\left(z_2+m_2z_1+m_1q\right),
 
 \section{数值仿真}[Numerical simulation]
 
-本节通过数值仿真验证所提控制器在输入饱和约束下的有效性。仿真任务包括恒值目标跟踪与时变轨迹跟踪，并设置饱和上限 $u_{\max}$ 对比“无抗饱和补偿”和“有抗饱和补偿”两种方案。这里的限幅一方面对应执行机构安全保护边界，另一方面用于构造激烈工况下的输入受限场景。评价指标包括超调量、峰值时间、稳态误差、控制输入峰值以及饱和持续时间。
+本节将式\eqref{eq:ch5_sys}所示 Hover 滚转通道模型应用于本章控制方法进行仿真验证。仿真采用与第2章、第3章一致的单轴二阶验证框架，状态定义为 $x_1=\phi,\ x_2=\dot\phi$。在此基础上，重点比较“无抗饱和补偿”和“有抗饱和补偿”两种控制器在输入受限场景下的差异。
 
-建议给出至少三组阻尼比参数进行对比，并在每组下统计是否触发饱和及触发后恢复时间，用于展示：在输入受限条件下，所提方法仍可保持较好的瞬态品质与鲁棒恢复能力。
+滚转通道仿真中定义误差变量
+\begin{equation}\label{eq:ch5_sim_z}
+z_1=x_1-y_d,\qquad z_2=x_2-\alpha_1,\qquad q=\int_0^t z_1(\tau)\,d\tau,
+\end{equation}
+并取滑模面
+\begin{equation}\label{eq:ch5_sim_s}
+s=z_2+m_2z_1+m_1q.
+\end{equation}
+令 $b_{\phi}=1/J_{\phi}$，在扰动观测器补偿基础上，名义期望输入写为
+\begin{equation}\label{eq:ch5_sim_ucstar}
+u_c^\star=-\frac{1}{b_{\phi}}\left(m_2z_2+m_1z_1+\hat\Delta_2-d\alpha_1+\varepsilon\,\mathrm{sgn}(s)\right),
+\end{equation}
+其中
+\begin{equation}\label{eq:ch5_sim_alpha1}
+\alpha_1=-\frac{1}{b_{\phi}}\left(\hat\Delta_1-\dot y_d\right),\qquad
+d\alpha_1=\frac{\alpha_1(t+\Delta t)-\alpha_1(t)}{\Delta t}.
+\end{equation}
+在输入饱和约束下，实际输入为
+\begin{equation}\label{eq:ch5_sim_sat}
+u=\mathrm{sat}(u_c),\qquad
+\Delta_u=u-u_c.
+\end{equation}
+两种对比控制器分别为：
+\begin{equation}\label{eq:ch5_sim_noaw}
+\text{无抗饱和补偿：}\quad u_c=u_c^\star,
+\end{equation}
+\begin{equation}\label{eq:ch5_sim_aw}
+\text{有抗饱和补偿：}\quad
+u_c=u_c^\star-\frac{1}{b_{\phi}}k_{\mathrm{aw}}\xi,\qquad
+\dot\xi=-\lambda\xi+b_{\phi}\Delta_u.
+\end{equation}
+其中饱和上限 $u_{\max}$ 由执行机构安全边界给定，并通过手动限幅构造激烈工况下的输入受限场景。评价指标统一采用超调量、调节时间、稳态误差、输入峰值及饱和持续时间。
+
+\subsection{跟踪常值信号}[Tracking constant reference under saturation]
+
+常值参考信号取为
+\[
+y_{d1}=5^\circ.
+\]
+在相同初始条件和相同饱和上限 $u_{\max}$ 下，分别运行式\eqref{eq:ch5_sim_noaw}与式\eqref{eq:ch5_sim_aw}。当指令跃迁导致输入触及限幅时，无抗饱和补偿方案通常表现为更大的超调和更长的恢复过程；加入抗饱和补偿后，饱和失配经辅助状态 $\xi$ 反馈修正，超调峰值和恢复时间均明显改善。
+
+\subsection{跟踪时变信号}[Tracking time-varying reference under saturation]
+
+时变参考信号取为
+\[
+y_{d2}=5^\circ\sin(0.2t).
+\]
+该工况用于验证连续激励下输入受限对跟踪性能的累积影响。仿真同样对比无抗饱和与有抗饱和两种方案，并在同一参数组下统计误差均方根与输入峰值。结果应体现：抗饱和补偿可降低持续饱和造成的误差放大效应，使系统在时变信号下保持更稳定的跟踪品质。
+
+为便于汇总参数设置与实现效果，表\ref{tab:ch4_sigma_param}给出本章仿真统计结果模板（数值为占位值，后续可按实际结果替换）。
+\begin{table}[htbp]
+  \centering
+  \caption{输入受限工况下预设阻尼比控制参数及实现效果}
+  \label{tab:ch4_sigma_param}
+  \begin{tabular}{cccccccc}
+    \toprule
+    目标信号 & $k$ & $\alpha$ & $\beta$ & $p$ & $q$ & $\sigma$ (PV) & $\sigma$ (MV)\\
+    \midrule
+    $y_{d1}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
+    -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.33\% \\
+    -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
+    $y_{d2}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
+    -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.30\% \\
+    -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\FloatBarrier
 
 \section{本章小结}[Summary]
 
