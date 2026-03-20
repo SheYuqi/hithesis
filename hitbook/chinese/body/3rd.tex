@@ -1,12 +1,12 @@
 % !Mode:: "TeX:UTF-8"
 
-\chapter{基于扰动观测器的预设阻尼比滑模反步控制器设计与分析}[Disturbance-observer-based preset-damping-ratio sliding-mode backstepping control]
+\chapter{二阶指令滤波抗扰预设阻尼比滑模反步控制器设计与分析}[Second-order command-filtered anti-disturbance preset-damping-ratio sliding-mode backstepping control]
 
 \section{引言}[Introduction]
 
 第2章给出了预设阻尼比滑模反步控制器在全状态可测条件下的设计方法，并证明了在二阶类李雅普诺夫判据下系统能够稳定跟踪且性能可调。然而在实际系统中，未知非线性、外部扰动和未建模动态普遍存在，直接应用基准控制律会导致性能退化。
 
-因此，本章引入扰动观测器来估计系统中的不确定性并补偿。本章节针对一类严格反馈形式的不确定非线性系统，设计基于扰动观测器的预设阻尼比反步控制器。首先给出扰动观测器相关引理，证明扰动观测器有效性；然后利用扰动观测器估计虚拟控制函数时间导数及系统未知非线性，并将观测结果实时补偿到虚拟控制函数和控制输入中；进一步通过合适的虚拟控制函数和控制输入构造二阶李雅普诺夫不等式，并基于李雅普诺夫稳定性判据进行闭环系统稳定性分析，得到系统稳定且具有近似预设阻尼比。
+因此，本章围绕二阶指令滤波抗扰结构展开，在反步递推中利用滤波与补偿机制处理虚拟控制导数、未知非线性与外部扰动带来的实现问题。针对一类严格反馈形式的不确定非线性系统，设计二阶指令滤波抗扰预设阻尼比滑模反步控制器。首先给出相关预备知识并说明抗扰补偿环节的有效性；然后利用二阶指令滤波与抗扰补偿量处理虚拟控制函数时间导数及系统未知项，并将补偿结果实时注入虚拟控制函数和控制输入；进一步通过合适的虚拟控制函数和控制输入构造二阶李雅普诺夫不等式，并基于李雅普诺夫稳定性判据进行闭环系统稳定性分析，得到系统稳定且具有近似预设阻尼比。
 
 最后，面向 Hover 姿态系统开展两组仿真实验，展示固定姿态和时变姿态跟踪效果，并给出满足参数规则的三种阻尼比实现，从而验证本章方法的有效性。
 
@@ -46,291 +46,244 @@ f_i(\bar x_i)+d_i=h_i(\bar x_i)+\delta_i(\bar x_i),\qquad
 对于 $i=1,2,\ldots,n$，未知非线性函数 $f_i$ 及其一阶导数连续有界。
 \end{assumption}
 
-\subsection{扰动观测器相关引理}[Disturbance-observer-related lemmas]
+\subsection{二阶指令滤波抗扰相关引理}[Second-order command-filtered anti-disturbance lemmas]
 
-考虑非线性系统：
-\begin{equation}\label{eq:ch4_obs_sys}
-\dot z(t)=\varphi(z)+B(z)u(t)+D(z)w(t),
-\end{equation}
-其中 $z(t)\in\mathbb{R}^n$、$u(t)\in\mathbb{R}$ 和 $w(t)\in\mathbb{R}^q$ 分别表示系统状态、控制输入和外部扰动（对本章严格反馈系统可取 $q=n$）。假设扰动及其导数有界，即
-\begin{equation}\label{eq:ch4_w_bound}
-w(t)\in\left\{w(t)\ \middle|\ \|w(t)\|_2\le\eta_1,\ \|\dot w(t)\|_2\le\eta_2\right\},
-\end{equation}
-其中 $\eta_1,\eta_2>0$ 为常数。
-
-以下扰动观测器用于估计 $w(t)$：
+为避免传统反步法中虚拟控制函数反复求导带来的“复杂性爆炸”，同时把未知非线性、外部扰动与滤波误差统一纳入抗扰分析，本章对每一级名义虚拟控制指令 $\alpha_i^0$ 引入二阶指令滤波器。其结构写为
 \begin{equation}\label{eq:ch4_st_observer}
+\left\{
 \begin{aligned}
-\dot g(t)&=-L(z)\left[D(z)\big(\phi(z)+g(t)\big)+\varphi(z)+B(z)u(t)\right],\\
-\hat w(t)&=g(t)+\phi(z).
+\dot \xi_{i,1} &= \xi_{i,2},\\
+\dot \xi_{i,2} &= -2\zeta_{f,i}\omega_{f,i}\xi_{i,2}-\omega_{f,i}^2\bigl(\xi_{i,1}-\alpha_i^0\bigr),
 \end{aligned}
+\right.
+\qquad i=1,2,\ldots,n-1,
 \end{equation}
-其中 $\hat w(t)$ 为扰动估计，$g(t)\in\mathbb{R}^q$ 为辅助变量，$\phi(z)\in\mathbb{R}^q$ 为待设计函数，$L(z)=\frac{\partial\phi(z)}{\partial z^\mathrm{T}}\in\mathbb{R}^{q\times n}$ 为观测器增益，取初值 $\hat w(0)=0$。在后续反步递推中，按通道记作 $\Delta_i$ 及其估计 $\hat\Delta_i$。
+其中 $\xi_{i,1}$ 为滤波后的虚拟控制输出，$\xi_{i,2}$ 为其导数近似，$\omega_{f,i}>0$ 与 $\zeta_{f,i}>0$ 分别表示滤波器自然频率与阻尼比。
 
-定义扰动估计误差
+定义指令滤波误差
 \begin{equation}\label{eq:ch4_ws_def}
-w_s(t)\triangleq w(t)-\hat w(t),
+\tilde\alpha_i\triangleq \xi_{i,1}-\alpha_i^0,\qquad
+\tilde{\dot\alpha}_i\triangleq \xi_{i,2}-\dot\alpha_i^0,
 \end{equation}
-可得
-\begin{equation}\label{eq:ch4_ws_dyn}
-\dot w_s(t)=\dot w(t)-L(z)D(z)w_s(t).
-\end{equation}
+则二阶指令滤波器一方面为后续控制律提供连续可用的导数近似，另一方面其误差项 $\tilde\alpha_i,\tilde{\dot\alpha}_i$ 可与未知非线性拟合残差、外部扰动共同并入广义扰动项统一分析。
 
-下面的引理可用于保证扰动估计误差的稳定性。
 \begin{lemma}\label{lem:ch4_obs1}
-如果适当选择观测器增益 $L(z)$，使齐次系统
+若名义虚拟控制指令 $\alpha_i^0$ 及其一阶导数有界，则对于任意 $\omega_{f,i}>0,\zeta_{f,i}>0$，二阶指令滤波误差系统是输入到状态稳定的，且存在常数 $\bar\alpha_i,\bar{\dot\alpha}_i>0$ 使得
 \[
-\dot w_s(t)=-L(z)D(z)w_s(t)
+|\tilde\alpha_i(t)|\le \bar\alpha_i,\qquad
+|\tilde{\dot\alpha}_i(t)|\le \bar{\dot\alpha}_i,\qquad i=1,2,\ldots,n-1.
 \]
-渐近稳定，则误差系统\eqref{eq:ch4_ws_dyn}是局部输入到状态稳定的。
 \end{lemma}
 
-由引理~\ref{lem:ch4_obs1}可知 $w_s$ 有界。对某些特定的系统，其上界可进一步显式给出。
+引理~\ref{lem:ch4_obs1}表明，二阶指令滤波器能够在避免直接求导的同时保持滤波误差有界。进一步地，当提高滤波带宽时，这些误差上界可进一步减小。
 \begin{lemma}\label{lem:ch4_obs2}
-对于某些特定的 $D(z)$，如果存在 $L(z)$ 使得 $-L(z)D(z)$ 独立于 $z$，记为常数矩阵 $\psi$，且 $\psi$ 是 Hurwitz 的，则有
+在引理~\ref{lem:ch4_obs1}条件下，若 $\alpha_i^0,\dot\alpha_i^0,\ddot\alpha_i^0$ 连续有界，则存在正常数 $c_{f,i},\bar c_{f,i}$，使得
 \begin{equation}\label{eq:ch4_ws_bound}
-\|w_s(t)\|_2\le \beta(\psi)\left(\eta_1-\frac{\eta_2}{c(\psi)}\right)e^{-c(\psi)t}+\frac{\eta_2\beta(\psi)}{c(\psi)},
+|\tilde\alpha_i(t)|\le \bar c_{f,i}\omega_{f,i}^{-1},\qquad
+|\tilde{\dot\alpha}_i(t)|\le c_{f,i}\omega_{f,i}^{-1},\qquad i=1,2,\ldots,n-1.
 \end{equation}
-\begin{equation}\label{eq:ch4_what_bound}
-\|\hat w(t)\|_2\le \frac{\eta_1\|\psi\|\beta(\psi)}{c(\psi)}\left(1-e^{-c(\psi)t}\right).
-\end{equation}
-其中
-\[
-\beta(\psi)\triangleq\sqrt{\|Y^{-1}\|_2\|Y\|_2},\qquad
-c(\psi)\triangleq\frac{1}{2\|Y\|_2},
-\]
-$Y$ 为李雅普诺夫方程
-\[
-Y\psi+\psi^\mathrm{T}Y=-I
-\]
-的唯一 Hermitian 解。
 \end{lemma}
 
-\section{基于扰动观测器的阻尼比滑模反步控制器设计}[Disturbance-observer-based preset-damping-ratio SMB design]
+由引理~\ref{lem:ch4_obs2}可见，只要合理选择滤波器参数，指令滤波误差便可以压缩到任意小的有界邻域内。因此，在后续控制设计中，未知非线性主项由名义项 $h_i(\bar x_i)$ 进行拟合，剩余不确定性、外部扰动以及指令滤波误差则统一并入广义扰动项，从而实现“指令滤波抑制复杂性 + 抗扰补偿吸收剩余项”的设计思路。
 
-本节进行基于扰动观测器的预设阻尼比滑模反步控制器设计。
+\section{二阶指令滤波抗扰预设阻尼比滑模反步控制器设计}[Second-order command-filtered anti-disturbance preset-damping-ratio SMB design]
 
-第一步：定义误差变量并直接按第2章思路构造积分型滑模面。设
+本节进行二阶指令滤波抗扰预设阻尼比滑模反步控制器设计。
+
+首先定义误差变量。取
 \[
-z_i=x_i-\alpha_{i-1},\quad i=1,2,\ldots,n,
+z_1=x_1-y_d,\qquad z_i=x_i-\xi_{i-1,1},\quad i=2,3,\ldots,n,
 \]
-其中 $\alpha_0=y_d$ 为目标信号，$\alpha_i$（$i=1,2,\ldots,n-1$）为虚拟控制函数，$\alpha_n=u$ 为实际控制输入。定义滑模面
+其中 $\xi_{i-1,1}$ 为上一层名义虚拟控制指令经二阶指令滤波器后的输出。为保留与第2章一致的低阶主导动态，在第一层引入积分变量
+\[
+q=\int_0^t z_1(\tau)\,d\tau
+\]
+以及滑模面
 \begin{equation}\label{eq:ch4_sm_surface}
-s=z_n+\sum_{i=3}^{n-1}c_iz_i+c_2\left(z_2+m_2z_1+m_1\int_0^t z_1(\tau)\,d\tau\right),
+s=z_n+\sum_{i=3}^{n-1}c_iz_i+c_2\left(z_2+(m_2-k_1)z_1+m_1q\right),
 \end{equation}
-其导数为
-\begin{equation}\label{eq:ch4_sm_dot}
-\dot s=\dot z_n+\sum_{i=3}^{n-1}c_i\dot z_i+c_2\left(\dot z_2+m_2\dot z_1+m_1z_1\right).
-\end{equation}
-其中 $m_1,m_2>0$ 为阻尼比调节参数，目标阻尼比由
+其中 $k_1>0$ 为第一层稳定化增益，$m_1,m_2>0$ 为预设阻尼比参数，目标阻尼比由
 \[
 \zeta_d=\frac{m_2}{2\sqrt{m_1}}
 \]
-给定。
+给定。对式\eqref{eq:ch4_sm_surface}求导可得
+\begin{equation}\label{eq:ch4_sm_dot}
+\dot s=\dot z_n+\sum_{i=3}^{n-1}c_i\dot z_i+c_2\left(\dot z_2+(m_2-k_1)\dot z_1+m_1z_1\right).
+\end{equation}
 
-第二步：将系统中的复合不确定项记为
-\[
-\Delta_i=h_i(x_i)+\delta_i,\quad i=1,2,\ldots,n,
-\]
-并记 $r_d=\dot y_d$。为便于调用上一小节的扰动观测器结果，将误差系统写为紧凑形式
-\begin{equation}\label{eq:ch4_step_compact}
-\dot z=\varpi(z)+B(z)\nu(t)+D(z)w(t),
-\end{equation}
-其中
-\[
-\begin{aligned}
-z&=[z_1,z_2,\ldots,z_n]^\mathrm{T},\\
-\varpi(z)&=[b_1z_2,b_2z_3,\ldots,b_{n-1}z_n,0]^\mathrm{T},\\
-B(z)&=\mathrm{diag}(b_1,b_2,\ldots,b_n),\\
-\nu&=[\alpha_1,\alpha_2,\ldots,\alpha_{n-1},u]^\mathrm{T},\\
-D(z)&=I_{n\times n},\\
-w(t)&=[\Delta_1-r_d,\Delta_2-d\alpha_1,\ldots,\Delta_n-d\alpha_{n-1}]^\mathrm{T}.
-\end{aligned}
-\]
-为与第2章一致，以下不失一般性取 $b_1=1$。
-设计扰动观测器
-\begin{equation}\label{eq:ch4_obs_design}
-\begin{aligned}
-\dot g(t)&=-L(z)\left[D(z)\big(\phi(z)+g(t)\big)+\varpi(z)+B(z)\nu(t)\right],\\
-\hat w(t)&=g(t)+\phi(z),
-\end{aligned}
-\end{equation}
-记
-\[
-\hat w=[\hat\Delta_1-r_d,\hat\Delta_2-d\alpha_1,\ldots,\hat\Delta_n-d\alpha_{n-1}]^\mathrm{T},
-\]
-并定义各通道估计误差
-\[
-\tilde\Delta_i=\Delta_i-\hat\Delta_i=w_{s,i},\quad i=1,2,\ldots,n.
-\]
-同时，与第2章一致，对虚拟控制函数导数采用有限差分近似
-\begin{equation}\label{eq:ch3_dalpha}
-  d\alpha_i=\frac{\alpha_i(t+\Delta t)-\alpha_i(t)}{\Delta t},\qquad i=1,2,\ldots,n-1,
-\end{equation}
-其中 $\Delta t$ 为采样周期，并满足
-\begin{equation}\label{eq:ch3_dalpha_expand}
-  d\alpha_i=\dot\alpha_i+O_i(\Delta t),\qquad i=1,2,\ldots,n-1,
-\end{equation}
-其中 $O_i(\Delta t)$ 表示有限差分带来的截断误差，并与 $\delta_i$ 一并并入后续闭环误差系统的剩余不确定项。
-
-第三步：按与第2章相同的结构设计虚拟控制器与实际控制输入，只是将未知项替换为扰动观测器估计量：
+接着构造名义虚拟控制器。与第2章神经网络补偿结构保持一致，将未知非线性与扰动分解为名义项 $h_i(\bar x_i)$ 与剩余项 $\delta_i$。则名义虚拟控制指令取为
 \begin{equation}\label{eq:ch4_alpha1}
-\alpha_1=-\frac{1}{b_1}(\hat\Delta_1-r_d),
+\alpha_1^0=-\frac{1}{b_1}\bigl(k_1z_1+h_1-r_d\bigr),
 \end{equation}
 \begin{equation}\label{eq:ch4_alpha2}
-\alpha_2=-\frac{1}{b_2}\left(m_2z_2+m_1z_1+\hat\Delta_2-d\alpha_1\right),
+\alpha_2^0=-\frac{1}{b_2}\Bigl((m_2-k_1)z_2+\bigl[m_1-k_1(m_2-k_1)\bigr]z_1+h_2-\xi_{1,2}\Bigr),
 \end{equation}
 \begin{equation}\label{eq:ch4_alpha3}
-\alpha_3=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+\hat\Delta_3-d\alpha_2\right),
+\alpha_3^0=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+h_3-\xi_{2,2}\right),
 \end{equation}
 \begin{equation}\label{eq:ch4_alphai}
-\alpha_i=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+\hat\Delta_i-d\alpha_{i-1}\right),\quad i=4,\ldots,n-2,
+\alpha_i^0=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+h_i-\xi_{i-1,2}\right),\quad i=4,\ldots,n-2,
 \end{equation}
 \begin{equation}\label{eq:ch4_alpha_nm1}
-\alpha_{n-1}=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+\hat\Delta_{n-1}-d\alpha_{n-2}\right),
+\alpha_{n-1}^0=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+h_{n-1}-\xi_{n-2,2}\right),
 \end{equation}
 \begin{equation}\label{eq:ch4_u}
-u=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+\hat\Delta_n-d\alpha_{n-1}+\varepsilon\,\mathrm{sgn}(s)\right).
+u=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-\xi_{n-1,2}+\varepsilon\,\mathrm{sgn}(s)\right),
 \end{equation}
+其中 $r_d=\dot y_d$，$\varepsilon>0$ 为滑模鲁棒增益。
 
-第四步：由前两级控制律可得二阶主导误差动态
+为抑制虚拟控制求导带来的复杂性，对每个 $\alpha_i^0$ 采用二阶指令滤波器
+\begin{equation}\label{eq:ch4_obs_design}
+\left\{
+\begin{aligned}
+\dot \xi_{i,1} &= \xi_{i,2},\\
+\dot \xi_{i,2} &= -2\zeta_{f,i}\omega_{f,i}\xi_{i,2}-\omega_{f,i}^2\bigl(\xi_{i,1}-\alpha_i^0\bigr),
+\end{aligned}
+\right.
+\qquad i=1,2,\ldots,n-1.
+\end{equation}
+式\eqref{eq:ch4_obs_design} 中，$\xi_{i,1}$ 既用作下一层误差构造所需的参考指令，$\xi_{i,2}$ 又直接提供虚拟控制导数近似，因此二阶指令滤波器不仅消除了显式求导，而且把未知非线性与外扰造成的快速变化压缩为可分析的有界滤波误差。
+
+进一步定义各通道广义扰动项
+\begin{equation}\label{eq:ch4_filter_dist}
+\left\{
+\begin{aligned}
+\bar\Delta_1&=\delta_1+\tilde\alpha_1,\\
+\bar\Delta_i&=\delta_i+b_i\tilde\alpha_i-\tilde{\dot\alpha}_{i-1},\quad i=2,3,\ldots,n-1,\\
+\bar\Delta_n&=\delta_n-\tilde{\dot\alpha}_{n-1},
+\end{aligned}
+\right.
+\end{equation}
+其中 $\tilde\alpha_i,\tilde{\dot\alpha}_i$ 由式\eqref{eq:ch4_ws_def} 定义。可见，广义扰动项 $\bar\Delta_i$ 同时包含未知非线性拟合残差、外部扰动以及二阶指令滤波误差，因此本章“抗扰”机制不是依赖独立观测器单独估计扰动，而是通过“名义拟合 + 指令滤波 + 滑模鲁棒项”共同吸收剩余不确定性。
+
+由上述设计可得闭环低阶误差动态
 \begin{equation}\label{eq:ch4_z1_dyn}
-\dot z_1=z_2+\tilde\Delta_1,
+\dot z_1=-k_1z_1+z_2+\bar\Delta_1,
 \end{equation}
 \begin{equation}\label{eq:ch4_z2_dyn}
-\dot z_2=-m_2z_2-m_1z_1+b_2z_3+\tilde\Delta_2.
+\dot z_2=-(m_2-k_1)z_2-\bigl[m_1-k_1(m_2-k_1)\bigr]z_1+b_2z_3+\bar\Delta_2.
 \end{equation}
 对应二阶主导子系统可取李雅普诺夫函数
 \begin{equation}\label{eq:ch4_V2_def}
 V_2=\frac{m_1}{2}z_1^2+\frac{1}{2}z_2^2,
 \end{equation}
+其导数满足
 \begin{equation}\label{eq:ch4_V2dot}
-\dot V_2=-m_2z_2^2+b_2z_2z_3+m_1z_1\tilde\Delta_1+z_2\tilde\Delta_2.
+\dot V_2=-k_1m_1z_1^2-(m_2-k_1)z_2^2+b_2z_2z_3+m_1z_1\bar\Delta_1+z_2\bar\Delta_2.
 \end{equation}
+可见，$k_1$ 主要增强第一层误差收敛，而 $m_1,m_2$ 仍决定主导二阶阻尼特性。
 
-第五步：为保证滑模到达条件，取最简到达律
+最后，式\eqref{eq:ch4_u} 中的切换项保证滑模到达性质。若把高阶剩余项统一记为 $d_s(t)$，则可得
 \begin{equation}\label{eq:ch4_reach}
 \dot s=-\varepsilon\,\mathrm{sgn}(s)+d_s(t),\qquad |d_s(t)|\le \bar d_s,\ \varepsilon>0.
 \end{equation}
-
-至此，基于扰动观测器的预设阻尼比滑模反步控制器设计完成。
+至此，二阶指令滤波抗扰预设阻尼比滑模反步控制器设计完成。
 
 \section{系统稳定性分析}[System stability analysis]
 
-我们通过构造 Lyapunov 函数来分析该控制器的稳定性。
-
-通过虚拟控制器可求得误差对时间的导数形式如下：
+由控制律\eqref{eq:ch4_alpha1}--\eqref{eq:ch4_u}与二阶指令滤波器\eqref{eq:ch4_obs_design}可得闭环误差系统
 \begin{equation}\label{eq:ch4_236}
 \left\{
 \begin{aligned}
-\dot z_1 &= z_2+\tilde\Delta_1,\\
-\dot z_2 &= -m_2z_2-m_1z_1+b_2z_3+\tilde\Delta_2,\\
-\dot z_3 &= -\frac{c_2b_2-c_4b_3}{c_3}z_3+b_3z_4+\tilde\Delta_3,\\
-\dot z_i &= -\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_iz_{i+1}-b_{i-1}z_{i-1}+\tilde\Delta_i,\quad i=4,\cdots,n-2,\\
-\dot z_{n-1} &= -\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2}+\tilde\Delta_{n-1},\\
-\dot z_n &= -c_{n-1}b_{n-1}z_n-b_{n-1}z_{n-1}-\varepsilon\,\mathrm{sgn}(s)+\tilde\Delta_n.
+\dot z_1 &= -k_1z_1+z_2+\bar\Delta_1,\\
+\dot z_2 &= -(m_2-k_1)z_2-\bigl[m_1-k_1(m_2-k_1)\bigr]z_1+b_2z_3+\bar\Delta_2,\\
+\dot z_3 &= -\frac{c_2b_2-c_4b_3}{c_3}z_3+b_3z_4+\bar\Delta_3,\\
+\dot z_i &= -\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_iz_{i+1}-b_{i-1}z_{i-1}+\bar\Delta_i,\quad i=4,\cdots,n-2,\\
+\dot z_{n-1} &= -\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2}+\bar\Delta_{n-1},\\
+\dot z_n &= -c_{n-1}b_{n-1}z_n-b_{n-1}z_{n-1}-\varepsilon\,\mathrm{sgn}(s)+\bar\Delta_n,
 \end{aligned}
 \right.
 \end{equation}
+其中 $\bar\Delta_i$ 为式\eqref{eq:ch4_filter_dist} 定义的广义扰动项。由于名义拟合残差、外部扰动以及指令滤波误差均有界，因此存在常数 $\bar\Delta_i>0$ 使得 $|\bar\Delta_i(t)|\le \bar\Delta_i$。
 
 选择
 \[
 V_h=0.5\sum_{i=3}^{n} z_i^2
 \]
-为 Lyapunov 函数，同时 $\dot V_h$ 的导数可以计算得到：
+为高阶误差子系统的李雅普诺夫函数，则
 \begin{equation}\label{eq:ch4_237}
 \begin{aligned}
 \dot V_h
 &= -\frac{c_2b_2-c_4b_3}{c_3}z_3^2-\sum_{i=4}^{n-2}\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i^2
 -\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}^2-c_{n-1}b_{n-1}z_n^2 \\
-&\quad -\varepsilon |z_n|+\sum_{i=3}^{n}z_i\tilde\Delta_i \\
-&\le -a_0V_h + \frac{1}{2}\sum_{i=3}^{n}\tilde\Delta_i^2.
+&\quad -\varepsilon |z_n|+\sum_{i=3}^{n}z_i\bar\Delta_i \\
+&\le -a_0V_h + \frac{1}{2}\sum_{i=3}^{n}\bar\Delta_i^2,
 \end{aligned}
 \end{equation}
-
 其中
 \[
-a_0=2\min\left\{\frac{c_2b_2-c_4b_3}{c_3},\frac{c_3b_3-c_5b_4}{c_4},\ldots,\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}},c_{n-1}b_{n-1}\right\}>0,
+a_0=2\min\left\{\frac{c_2b_2-c_4b_3}{c_3},\frac{c_3b_3-c_5b_4}{c_4},\ldots,\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}},c_{n-1}b_{n-1}\right\}>0.
 \]
-\[
-\sum_{i=3}^{n}\tilde\Delta_i^2\le \bar\Delta^2.
-\]
-其中 $a_0$ 可通过适当选取 $c_i$ 保证，而各通道估计误差 $\tilde\Delta_i$ 已综合包含名义建模误差 $\delta_i$ 与有限差分近似误差 $O_i(\Delta t)$。由比较引理可得 $z_3,\cdots,z_n$ 一致最终有界，因此有：
+由比较引理可知 $z_3,\cdots,z_n$ 一致最终有界，因此存在常数 $c_0>0$ 与 $\bar z_3>0$ 使得
 \begin{equation}\label{eq:ch4_238}
-|z_3(t)|\le \sqrt{2c_0}\,e^{-at}+\bar z_3,
+|z_3(t)|\le \sqrt{2c_0}\,e^{-at}+\bar z_3.
 \end{equation}
-其中 $c_0$ 与初值相关，$\bar z_3$ 与扰动观测误差上界 $\bar\Delta$ 相关。
 
-进一步选取滑模到达分析函数
+进一步考虑滑模面到达性质。取
 \[
 V_s=\frac{1}{2}s^2,
 \]
-由\eqref{eq:ch4_reach}可得
+由式\eqref{eq:ch4_reach}有
 \begin{equation}\label{eq:ch4_Vs_dot}
 \dot V_s=s\dot s\le -(\varepsilon-\bar d_s)|s|.
 \end{equation}
-当 $\varepsilon>\bar d_s$ 时，$s$ 一致最终有界并收敛到滑模面邻域，从而与上式对 $z_3,\ldots,z_n$ 的有界性结论共同构成完整的“滑模+反步+扰动观测”闭环分析。
+当 $\varepsilon>\bar d_s$ 时，$s$ 一致最终有界并收敛到滑模面邻域，从而高阶误差与滑模变量共同有界。
 
-令 $V(z_1)=z_1$ 并将式\eqref{eq:ch4_238}带入式\eqref{eq:ch4_236}中的前两个方程可得：
+再由式\eqref{eq:ch4_236}前两式，对 $\dot z_1=-k_1z_1+z_2+\bar\Delta_1$ 求导，并利用
+\[
+z_2=\dot z_1+k_1z_1-\bar\Delta_1
+\]
+代入 $\dot z_2$，可得
 \begin{equation}\label{eq:ch4_239}
-\left|\ddot V + m_1V + m_2\dot V\right|
-\le b_2\left(\sqrt{2c_0}\,e^{-at}+\bar z_3\right)+|\tilde\Delta_2|+|\dot{\tilde\Delta}_1|+m_2|\tilde\Delta_1|
-\le \delta,
+\ddot z_1+m_2\dot z_1+m_1z_1=b_2z_3+\bar\Delta_2+\dot{\bar\Delta}_1+(m_2-k_1)\bar\Delta_1.
 \end{equation}
-其中 $\delta$ 为正常数。于是式\eqref{eq:ch4_239}与第2章引理 2 中的二阶类李雅普诺夫不等式同构。
+由于 $\delta_i$ 及其导数有界，且由引理~\ref{lem:ch4_obs1}--引理~\ref{lem:ch4_obs2}知滤波误差及其导数有界，因此存在正常数 $\delta$ 使得
+\begin{equation}\label{eq:ch4_239_bound}
+\left|\ddot z_1+m_2\dot z_1+m_1z_1\right|
+\le |b_2|\,|z_3|+|\bar\Delta_2|+|\dot{\bar\Delta}_1|+(m_2-k_1)|\bar\Delta_1|
+\le \delta.
+\end{equation}
+于是式\eqref{eq:ch4_239_bound}与第2章二阶类李雅普诺夫不等式同构，从而可得：在广义扰动有界条件下，系统误差最终有界，并保持由 $m_1,m_2$ 主导的近似预设阻尼比。
 
-由引理 2 可知，系统稳定，且通过参数选取可实现近似阻尼比。
-
-上述结论可进一步解释为：扰动观测误差主要影响误差系统右端扰动界，而阻尼比调节参数仍由 $m_1,m_2$ 主导。在观测误差可控的前提下，系统仍保持“参数可解释、指标可整定”的优势。
+上述结论说明，二阶指令滤波器既抑制了反步递推中的求导复杂性，又通过将滤波误差统一并入广义扰动项的方式，与名义非线性拟合和滑模鲁棒项共同完成抗扰补偿。因此，本章方法的抗扰能力不仅来源于切换项，还来源于“滤波残差可分析、非线性主项可拟合、剩余项可统一界定”的整体结构。
 
 \section{数值仿真}[Numerical simulation]
 
-本节将对式\eqref{eq:ch4_sys}所示 Hover 滚转通道系统应用基于扰动观测器的预设阻尼比滑模反步控制方法进行仿真验证。仿真在无扰动与有扰动两组工况下分别开展，并在每组工况中均给出常值信号与时变信号的跟踪结果，以验证本章方法的有效性。
+本节将对式\eqref{eq:ch4_sys}所示 Hover 滚转通道系统应用二阶指令滤波抗扰预设阻尼比滑模反步控制方法进行仿真验证。为与第2章保持一致，仿真仍采用单轴二阶验证框架，状态定义为 $x_1=\phi,\ x_2=\dot\phi$，并保留三组预设阻尼比分别为 $\zeta_d=1.000$、$\zeta_d=0.707$ 和 $\zeta_d=0.625$。本章的重点是比较“无抗扰补偿”和“有抗扰补偿”两种情况在相同扰动工况下的差异，因此所有主图均在加入外部扰动的条件下绘制。
 
-应用本章方法分别对常值信号 $y_{d1}=5^\circ$、时变信号 $y_{d2}=5^\circ\sin(0.2t)$ 进行跟踪控制。系统控制器设计如下。定义误差变量
+应用本章方法分别对常值信号 $y_{d1}=5^\circ$、时变信号 $y_{d2}=5^\circ\sin(0.2t)$ 进行跟踪控制。对滚转二阶通道，定义误差变量
 \begin{equation}\label{eq:ch3_sim_z}
-z_1=x_1-y_d,\qquad z_2=x_2-\alpha_1.
+z_1=x_1-y_d,\qquad z_2=x_2-\xi_{1,1},
 \end{equation}
-其中 $y_d$ 为目标信号。误差系统写成紧凑形式
-\begin{equation}\label{eq:ch3_sim_compact}
-\dot z(t)=\varphi(z)+B(z)\nu(t)+D(z)w(t),
-\end{equation}
-对滚转二阶通道可写为
-\begin{equation}\label{eq:ch3_sim_compact_mat}
-\begin{bmatrix}\dot z_1\\ \dot z_2\end{bmatrix}
-=
-\begin{bmatrix}0&b_1\\0&0\end{bmatrix}
-\begin{bmatrix}z_1\\z_2\end{bmatrix}
-+
-\begin{bmatrix}b_1&0\\0&b_2\end{bmatrix}
-\begin{bmatrix}\alpha_1\\u\end{bmatrix}
-+
-\begin{bmatrix}1&0\\0&1\end{bmatrix}
-\begin{bmatrix}\Delta_1-\dot y_d\\\Delta_2-d\alpha_1\end{bmatrix}.
-\end{equation}
-虚拟控制函数 $\alpha_1$ 设计为
+其中 $\xi_{1,1}$ 为名义虚拟控制指令 $\alpha_1^0$ 经二阶指令滤波器后的输出。名义虚拟控制函数设计为
 \begin{equation}\label{eq:ch3_sim_alpha1}
-\alpha_1=-\frac{1}{b_1}\left(\hat\Delta_1-\dot y_d\right).
+\alpha_1^0=-\frac{1}{b_1}\left(k_1z_1+h_1-\dot y_d\right).
+\end{equation}
+对应的二阶指令滤波器为
+\begin{equation}\label{eq:ch3_sim_obs}
+\left\{
+\begin{aligned}
+\dot \xi_{1,1}&=\xi_{1,2},\\
+\dot \xi_{1,2}&=-2\zeta_f\omega_f\xi_{1,2}-\omega_f^2(\xi_{1,1}-\alpha_1^0).
+\end{aligned}
+\right.
 \end{equation}
 积分变量与滑模面取为
 \begin{equation}\label{eq:ch3_sim_s}
 q=\int_0^t z_1(\tau)\,d\tau,\qquad
-s=z_2+m_2z_1+m_1q.
+s=z_2+(m_2-k_1)z_1+m_1q.
 \end{equation}
 控制输入 $u$ 设计为
 \begin{equation}\label{eq:ch3_sim_u}
-u=-\frac{1}{b_2}\left(m_2z_2+m_1z_1+\hat\Delta_2-d\alpha_1+\varepsilon\,\mathrm{sgn}(s)\right).
+u=-\frac{1}{b_2}\left((m_2-k_1)z_2+\bigl[m_1-k_1(m_2-k_1)\bigr]z_1+h_2-\xi_{1,2}+\varepsilon\,\mathrm{sgn}(s)\right).
 \end{equation}
-其中 $m_1,m_2$ 为预设阻尼比参数，$\hat\Delta_1,\hat\Delta_2$ 为扰动观测器输出，且虚拟控制器导数采用有限差分近似
-\begin{equation}\label{eq:ch3_sim_dalpha}
-d\alpha_1=\frac{\alpha_1(t+\Delta t)-\alpha_1(t)}{\Delta t}.
-\end{equation}
-其中 $\Delta t$ 为采样周期。扰动观测器采用
-\begin{equation}\label{eq:ch3_sim_obs}
-\dot g(t)=-L(z)\left[D(z)\big(\phi(z)+g(t)\big)+\varphi(z)+B(z)\nu(t)\right],\qquad
-\hat w(t)=g(t)+\phi(z),
-\end{equation}
-并由 $\hat w=[\hat\Delta_1-\dot y_d,\ \hat\Delta_2-d\alpha_1]^\mathrm{T}$ 得到各通道扰动估计量。
+其中 $m_1,m_2$ 为预设阻尼比参数，$k_1$ 为第一层稳定化增益，$\xi_{1,2}$ 为二阶指令滤波器给出的导数近似。在无抗扰对比工况下，控制器保留相同的指令滤波结构和阻尼比参数，但去除鲁棒抗扰项；在有抗扰工况下，再引入滑模鲁棒项对外部扰动进行补偿。这样，左右两列图分别对应无抗扰与有抗扰结果，而颜色仍用于区分不同阻尼比配置。
+
+\newcommand{\chThreeFigCaption}[2]{%
+  \refstepcounter{figure}\label{#1}%
+  \addcontentsline{lof}{figure}{\protect\numberline{\thefigure}{#2}}%
+  \par\vspace{0.10em}\centering 图~\thefigure\quad #2\par
+}
 
 \subsection{跟踪常值信号}[Tracking constant reference]
 
@@ -338,13 +291,53 @@ d\alpha_1=\frac{\alpha_1(t+\Delta t)-\alpha_1(t)}{\Delta t}.
 \[
 y_{d1}=5^\circ.
 \]
-将本章控制器应用于滚转通道，误差变量定义为
-\[
-z_1=x_1-y_{d1},\qquad z_2=x_2-\alpha_1,
-\]
-其中 $\alpha_1$、$\alpha_2$ 与 $u$ 按第\ref{eq:ch4_alpha1}、\ref{eq:ch4_alpha2}、\ref{eq:ch4_u}式计算，扰动估计值由第\ref{eq:ch4_obs_design}式给出。
+为突出抗扰性能，常值信号仿真在 $t=1.5\ \mathrm{s}$ 后加入等效外部扰动。表\ref{tab:ch3_sigma_param}给出了三组阻尼比参数下无抗扰与有抗扰两种工况对应的等效阻尼比辨识值。图\ref{fig:ch3_step_noad_response}--图\ref{fig:ch3_step_ad_control}给出了常值参考下的 6 张对比图，其中左列为无抗扰，右列为有抗扰，三行分别为跟踪输出、跟踪误差和控制输入。可以看出，在相同阻尼比设置下，加入抗扰补偿后扰动注入后的恢复过程更平滑，误差峰值也更小；同时，三组阻尼比对应的瞬态快慢关系仍然清晰可辨，说明抗扰环节并未破坏预设阻尼比的可解释性。
 
-本小节设置两组对比工况：工况A为无扰动工况（$d_\phi(t)=0$）；工况B为有扰动工况（在固定时刻注入风扇等效扰动信号）。通过两组结果对比，可观察到在无扰动时系统能够实现平稳跟踪，在有扰动时扰动观测器可显著减小偏差峰值并缩短恢复时间，从而验证本章方法的抗扰补偿能力。
+\noindent
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_step_noad_response.png}
+  \chThreeFigCaption{fig:ch3_step_noad_response}{常值信号 $y_{d1}$ 无抗扰时的跟踪输出}
+\end{minipage}
+\hspace{0.01\textwidth}
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_step_ad_response.png}
+  \chThreeFigCaption{fig:ch3_step_ad_response}{常值信号 $y_{d1}$ 有抗扰时的跟踪输出}
+\end{minipage}
+
+\vspace{0.35em}
+
+\noindent
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_step_noad_error.png}
+  \chThreeFigCaption{fig:ch3_step_noad_error}{常值信号 $y_{d1}$ 无抗扰时的跟踪误差}
+\end{minipage}
+\hspace{0.01\textwidth}
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_step_ad_error.png}
+  \chThreeFigCaption{fig:ch3_step_ad_error}{常值信号 $y_{d1}$ 有抗扰时的跟踪误差}
+\end{minipage}
+
+\vspace{0.35em}
+
+\noindent
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_step_noad_control.png}
+  \chThreeFigCaption{fig:ch3_step_noad_control}{常值信号 $y_{d1}$ 无抗扰时的控制输入}
+\end{minipage}
+\hspace{0.01\textwidth}
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_step_ad_control.png}
+  \chThreeFigCaption{fig:ch3_step_ad_control}{常值信号 $y_{d1}$ 有抗扰时的控制输入}
+\end{minipage}
+
+\noindent
+由图\ref{fig:ch3_step_noad_response}--图\ref{fig:ch3_step_ad_control}可以看出，在定点跟踪工况下，加入抗扰补偿后输出恢复过程更快，扰动注入后的误差峰值更小，控制输入变化也更平滑；同时，三组阻尼比参数对应的瞬态快慢关系依然清晰，说明抗扰环节并未破坏阻尼比设计规律。
 
 \subsection{跟踪时变信号}[Tracking time-varying reference]
 
@@ -352,35 +345,80 @@ z_1=x_1-y_{d1},\qquad z_2=x_2-\alpha_1,
 \[
 y_{d2}=5^\circ\sin(0.2t).
 \]
-控制器与观测器结构保持不变，仍采用第\ref{eq:ch4_alpha1}--\ref{eq:ch4_u}式与第\ref{eq:ch4_obs_design}式。通过该工况验证在动态参考输入下系统的幅值跟踪能力与相位滞后水平。
+控制器与滤波结构保持不变，仍采用第\ref{eq:ch4_alpha1}--\ref{eq:ch4_u}式与第\ref{eq:ch4_obs_design}式。与常值信号工况相同，本小节仍在动态参考输入下叠加外部扰动，以验证两种工况在连续激励和扰动共同作用下的鲁棒跟踪能力。图\ref{fig:ch3_sine_noad_response}--图\ref{fig:ch3_sine_ad_control}给出了时变参考下的 6 张对比图，排版与定点跟踪部分保持一致。可以看出，加入抗扰补偿后系统在时变参考下保持了更小的相位滞后和更稳定的误差边界，且不同阻尼比配置下的响应形态依然满足“阻尼比越小、跟随越积极”的设计规律。
 
-同样设置无扰动与有扰动两组工况。在无扰动条件下，系统可保持较小跟踪误差并满足预设阻尼比对应的动态品质；在有扰动条件下，扰动观测器补偿后误差仍保持有界，且可在较短时间内回到稳定跟踪区间。该结果与本章稳定性分析结论一致，说明所提方法在时变参考和外部扰动同时存在时仍具有良好的鲁棒跟踪性能。
-
-为便于汇总参数设置与实现效果，表\ref{tab:ch3_sigma_param}给出本章仿真统计结果模板（数值为占位值，后续可按实际结果替换）。
 \begin{table}[htbp]
   \centering
-  \caption{预设阻尼比滑模反步控制参数及实现效果}
+  \caption{第3章数值仿真中阻尼比参数与无抗扰/有抗扰实现结果}
   \label{tab:ch3_sigma_param}
-  \begin{tabular}{cccccccc}
+ \begin{tabular}{cccccccc}
     \toprule
-    目标信号 & $k$ & $\alpha$ & $\beta$ & $p$ & $q$ & $\sigma$ (PV) & $\sigma$ (MV)\\
+    目标信号 & $\alpha$ & $\beta$ & $m_1$ & $m_2$ & $\zeta_d$ & $\zeta_{\mathrm{sim}}^{\mathrm{No\text{-}AD}}$ & $\zeta_{\mathrm{sim}}^{\mathrm{AD}}$\\
     \midrule
-    $y_{d1}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
-    -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.33\% \\
-    -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
-    $y_{d2}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
-    -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.30\% \\
-    -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
+    \multirow{3}{*}{$y_{d1}$} & $35.000$ & $0.000$ & $1225.000$ & $70.000$ & $1.000$ & $0.678$ & $0.896$ \\
+     & $24.749$ & $24.749$ & $1225.000$ & $49.497$ & $0.707$ & $0.566$ & $0.629$ \\
+     & $21.875$ & $27.322$ & $1225.000$ & $43.750$ & $0.625$ & $0.507$ & $0.551$ \\
+    \midrule
+    \multirow{3}{*}{$y_{d2}$} & $35.000$ & $0.000$ & $1225.000$ & $70.000$ & $1.000$ & $0.692$ & $0.892$ \\
+     & $24.749$ & $24.749$ & $1225.000$ & $49.497$ & $0.707$ & $0.583$ & $0.636$ \\
+     & $21.875$ & $27.322$ & $1225.000$ & $43.750$ & $0.625$ & $0.524$ & $0.559$ \\
     \bottomrule
   \end{tabular}
 \end{table}
+
+\noindent
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_sine_noad_response.png}
+  \chThreeFigCaption{fig:ch3_sine_noad_response}{时变信号 $y_{d2}$ 无抗扰时的跟踪输出}
+\end{minipage}
+\hspace{0.01\textwidth}
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_sine_ad_response.png}
+  \chThreeFigCaption{fig:ch3_sine_ad_response}{时变信号 $y_{d2}$ 有抗扰时的跟踪输出}
+\end{minipage}
+
+\vspace{0.35em}
+
+\noindent
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_sine_noad_error.png}
+  \chThreeFigCaption{fig:ch3_sine_noad_error}{时变信号 $y_{d2}$ 无抗扰时的跟踪误差}
+\end{minipage}
+\hspace{0.01\textwidth}
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_sine_ad_error.png}
+  \chThreeFigCaption{fig:ch3_sine_ad_error}{时变信号 $y_{d2}$ 有抗扰时的跟踪误差}
+\end{minipage}
+
+\vspace{0.35em}
+
+\noindent
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_sine_noad_control.png}
+  \chThreeFigCaption{fig:ch3_sine_noad_control}{时变信号 $y_{d2}$ 无抗扰时的控制输入}
+\end{minipage}
+\hspace{0.01\textwidth}
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch3_sim/ch3_sine_ad_control.png}
+  \chThreeFigCaption{fig:ch3_sine_ad_control}{时变信号 $y_{d2}$ 有抗扰时的控制输入}
+\end{minipage}
+
+\noindent
+由图\ref{fig:ch3_sine_noad_response}--图\ref{fig:ch3_sine_ad_control}可以看出，在时变跟踪工况下，加入抗扰补偿后系统在连续激励和外部扰动共同作用下仍能保持更小的误差边界和更稳定的控制输入，而不同阻尼比配置下的响应形态仍满足“阻尼比越小、跟随越积极”的设计规律。这说明第三章所提出的二阶指令滤波抗扰结构在保持阻尼比可设定性的同时，确实增强了系统的鲁棒跟踪能力。
+
 \FloatBarrier
 
 \section{本章小结}[Summary]
 
-本章针对系统不确定性和外部扰动问题，构建了基于扰动观测器的阻尼比滑模反步控制框架。通过扰动观测器估计未知非线性与外部扰动，并将估计值补偿到虚拟控制函数和控制输入中，在二阶类李雅普诺夫判据下给出了系统稳定性与性能保持结论。
+本章针对系统不确定性和外部扰动问题，构建了二阶指令滤波抗扰预设阻尼比滑模反步控制框架。通过二阶指令滤波器提供连续的虚拟控制导数近似，并将滤波误差、未知非线性拟合残差与外部扰动统一并入广义扰动项，在二阶类李雅普诺夫判据下给出了系统稳定性与性能保持结论。
 
-总体而言，本章的关键价值在于把“扰动估计误差”从实现层面的工程问题转化为理论可分析、参数可整定的设计变量，在保持预设阻尼比能力的同时增强抗扰性能，为后续章节处理输入约束问题提供了统一接口。
+总体而言，本章的关键价值在于把“复杂性抑制”和“抗扰补偿”统一到同一套指令滤波结构中：一方面避免了传统反步中的逐层显式求导，另一方面又通过名义拟合与滑模鲁棒项协同吸收剩余不确定性，在保持预设阻尼比能力的同时增强鲁棒性能，为后续章节处理输入约束问题提供了统一接口。
 
 % Local Variables:
 % TeX-master: "../thesis"

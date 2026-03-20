@@ -1,0 +1,4 @@
+zeta,omega_n,m1,m2,theoretical_overshoot_percent,simulated_step_overshoot_percent,step_peak_control
+1.000,30.000,900.000,60.000,0.000,0.000,0.557
+0.707,30.000,900.000,42.420,4.325,4.037,0.559
+0.600,30.000,900.000,36.000,9.478,9.003,0.559
