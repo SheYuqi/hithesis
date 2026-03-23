@@ -417,42 +417,7 @@ u=\mathrm{sat}(u_c),\qquad
 u_c=u_c^\star-\frac{1}{b_{\phi}}k_{\mathrm{aw}}\xi,\qquad
 \dot\xi=-\lambda\xi+b_{\phi}\Delta_u.
 \end{equation}
-其中饱和上限 $u_{\max}$ 由执行机构安全边界给定，并通过手动限幅构造激烈工况下的输入受限场景。与第3章一致，二阶指令滤波器既用于替代虚拟控制显式求导，又把滤波误差与名义拟合残差统一并入抗扰分析。图中虚线表示无抗饱和补偿结果，实线表示加入抗饱和补偿后的结果，颜色用于区分不同阻尼比参数。评价指标统一采用超调量、调节时间、稳态误差、输入峰值及饱和持续时间。
-
-\subsection{跟踪常值信号}[Tracking constant reference under saturation]
-
-常值参考信号取为
-\[
-y_{d1}=5^\circ.
-\]
-在相同初始条件和相同饱和上限 $u_{\max}$ 下，分别运行式\eqref{eq:ch5_sim_noaw}与式\eqref{eq:ch5_sim_aw}。为了保证对比公平，三组阻尼比参数均在同一限幅约束下运行，使控制输入在初始跃迁阶段必然触及饱和边界。表\ref{tab:ch4_sigma_param}给出了两种方案下的阻尼比辨识结果，图\ref{fig:ch4_step_response}--图\ref{fig:ch4_step_control}给出了常值参考信号下的跟踪输出、跟踪误差及控制输入。
-
-\subsection{跟踪时变信号}[Tracking time-varying reference under saturation]
-
-时变参考信号取为
-\[
-y_{d2}=5^\circ\sin(0.2t).
-\]
-该工况用于验证连续激励下输入受限对跟踪性能的累积影响。图\ref{fig:ch4_sine_response}--图\ref{fig:ch4_sine_control}表明，当输入长期处于限幅附近时，无抗饱和补偿方案更容易出现幅值削顶和误差放大；加入抗饱和补偿后，控制输入虽仍受到限幅约束，但输出恢复过程更连续，时变跟踪品质更稳定。
-
-\begin{table}[htbp]
-  \centering
-  \caption{第4章数值仿真中阻尼比参数与抗饱和对比结果}
-  \label{tab:ch4_sigma_param}
-  \begin{tabular}{cccccccc}
-    \toprule
-    目标信号 & $\alpha$ & $\beta$ & $m_1$ & $m_2$ & $\zeta_d$ & $\zeta_{\mathrm{sim}}^{\mathrm{No\text{-}AW}}$ & $\zeta_{\mathrm{sim}}^{\mathrm{AW}}$\\
-    \midrule
-    \multirow{3}{*}{$y_{d1}$} & $35.000$ & $0.000$ & $1225.000$ & $70.000$ & $1.000$ & $0.899$ & $0.831$ \\
-     & $24.749$ & $24.749$ & $1225.000$ & $49.497$ & $0.707$ & $0.643$ & $0.554$ \\
-     & $21.875$ & $27.322$ & $1225.000$ & $43.750$ & $0.625$ & $0.572$ & $0.477$ \\
-    \midrule
-    \multirow{3}{*}{$y_{d2}$} & $35.000$ & $0.000$ & $1225.000$ & $70.000$ & $1.000$ & $0.894$ & $0.828$ \\
-     & $24.749$ & $24.749$ & $1225.000$ & $49.497$ & $0.707$ & $0.651$ & $0.558$ \\
-     & $21.875$ & $27.322$ & $1225.000$ & $43.750$ & $0.625$ & $0.582$ & $0.484$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+其中饱和上限 $u_{\max}$ 由执行机构安全边界给定，并通过手动限幅构造激烈工况下的输入受限场景；为使抗饱和补偿效果能够被清晰观察，本节统一取 $u_{\max}=0.18$。为与第2章、第3章保持一致，本章仿真同样固定第一层稳定化增益 $k_1=5.0$。与第3章一致，二阶指令滤波器既用于替代虚拟控制显式求导，又把滤波误差与名义拟合残差统一并入抗扰分析。图中左侧子图表示无抗饱和补偿结果，右侧子图表示加入抗饱和补偿后的结果，颜色用于区分不同阻尼比参数。评价指标统一采用超调量、调节时间、稳态误差、输入峰值及饱和持续时间。
 
 \newcommand{\chFourFigCaption}[2]{%
   \refstepcounter{figure}\label{#1}%
@@ -460,17 +425,25 @@ y_{d2}=5^\circ\sin(0.2t).
   \par\vspace{0.10em}\centering 图~\thefigure\quad #2\par
 }
 
+\subsection{跟踪常值信号}[Tracking constant reference under saturation]
+
+常值参考信号取为
+\[
+y_{d1}=5^\circ.
+\]
+在相同初始条件和相同饱和上限 $u_{\max}$ 下，分别运行式\eqref{eq:ch5_sim_noaw}与式\eqref{eq:ch5_sim_aw}。为了保证对比公平，三组阻尼比参数均在同一限幅约束下运行，使控制输入在初始跃迁阶段必然触及饱和边界。表\ref{tab:ch4_sigma_param}给出了两种方案下的阻尼比辨识结果，其中左列为无抗饱和补偿结果，右列为加入抗饱和补偿后的结果，三行分别为跟踪输出、跟踪误差和控制输入。
+
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_response.png}
-  \chFourFigCaption{fig:ch4_step_response}{跟踪常值信号 $y_{d1}$ 的跟踪响应}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_noaw_response.png}
+  \chFourFigCaption{fig:ch4_step_noaw_response}{常值信号 $y_{d1}$ 无抗饱和补偿的跟踪输出}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_error.png}
-  \chFourFigCaption{fig:ch4_step_error}{跟踪常值信号 $y_{d1}$ 的跟踪误差}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_aw_response.png}
+  \chFourFigCaption{fig:ch4_step_aw_response}{常值信号 $y_{d1}$ 有抗饱和补偿的跟踪输出}
 \end{minipage}
 
 \vspace{0.35em}
@@ -478,14 +451,14 @@ y_{d2}=5^\circ\sin(0.2t).
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_control.png}
-  \chFourFigCaption{fig:ch4_step_control}{跟踪常值信号 $y_{d1}$ 的控制输入}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_noaw_error.png}
+  \chFourFigCaption{fig:ch4_step_noaw_error}{常值信号 $y_{d1}$ 无抗饱和补偿的跟踪误差}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_response.png}
-  \chFourFigCaption{fig:ch4_sine_response}{跟踪时变信号 $y_{d2}$ 的跟踪响应}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_aw_error.png}
+  \chFourFigCaption{fig:ch4_step_aw_error}{常值信号 $y_{d1}$ 有抗饱和补偿的跟踪误差}
 \end{minipage}
 
 \vspace{0.35em}
@@ -493,18 +466,72 @@ y_{d2}=5^\circ\sin(0.2t).
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_error.png}
-  \chFourFigCaption{fig:ch4_sine_error}{跟踪时变信号 $y_{d2}$ 的跟踪误差}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_noaw_control.png}
+  \chFourFigCaption{fig:ch4_step_noaw_control}{常值信号 $y_{d1}$ 无抗饱和补偿的控制输入}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_control.png}
-  \chFourFigCaption{fig:ch4_sine_control}{跟踪时变信号 $y_{d2}$ 的控制输入}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_aw_control.png}
+  \chFourFigCaption{fig:ch4_step_aw_control}{常值信号 $y_{d1}$ 有抗饱和补偿的控制输入}
 \end{minipage}
 
 \noindent
-图中虚线表示无抗饱和补偿结果，实线表示加入抗饱和补偿后的结果，颜色用于区分不同阻尼比。从图\ref{fig:ch4_step_response}--图\ref{fig:ch4_step_control}可以看出，在定点跟踪且输入受限的场景下，抗饱和补偿能够显著减小限幅后的误差积累，使系统在饱和解除后更快回到稳定跟踪区间；从图\ref{fig:ch4_sine_response}--图\ref{fig:ch4_sine_control}可以看出，在时变参考下该补偿机制同样能够减轻持续饱和导致的幅值削顶和误差放大。由此说明，即使在输入幅值受限的条件下，所提控制器仍能保持阻尼比参数的区分度，并改善受限工况下的跟踪品质。
+由图\ref{fig:ch4_step_noaw_response}--图\ref{fig:ch4_step_aw_control}以及表\ref{tab:ch4_sigma_param}可见，在定点跟踪工况下，加入抗饱和补偿后输出超调得到抑制，误差回落更快，控制输入在限幅附近的恢复过程也更平滑。等效阻尼比结果表明，抗饱和补偿后的闭环响应更接近目标阻尼比，从而说明所提方法能够在输入受限条件下更好地保持阻尼比整定效果。
+
+\subsection{跟踪时变信号}[Tracking time-varying reference under saturation]
+
+时变参考信号取为
+\[
+y_{d2}=5^\circ\sin(0.2t).
+\]
+该工况用于验证连续激励下输入受限对跟踪性能的累积影响。图\ref{fig:ch4_sine_noaw_response}--图\ref{fig:ch4_sine_aw_control}给出了时变参考下的 6 张对比图，排版与定点跟踪部分保持一致。
+
+\noindent
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_noaw_response.png}
+  \chFourFigCaption{fig:ch4_sine_noaw_response}{时变信号 $y_{d2}$ 无抗饱和补偿的跟踪输出}
+\end{minipage}
+\hspace{0.01\textwidth}
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_response.png}
+  \chFourFigCaption{fig:ch4_sine_aw_response}{时变信号 $y_{d2}$ 有抗饱和补偿的跟踪输出}
+\end{minipage}
+
+\vspace{0.35em}
+
+\noindent
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_noaw_error.png}
+  \chFourFigCaption{fig:ch4_sine_noaw_error}{时变信号 $y_{d2}$ 无抗饱和补偿的跟踪误差}
+\end{minipage}
+\hspace{0.01\textwidth}
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_error.png}
+  \chFourFigCaption{fig:ch4_sine_aw_error}{时变信号 $y_{d2}$ 有抗饱和补偿的跟踪误差}
+\end{minipage}
+
+\vspace{0.35em}
+
+\noindent
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_noaw_control.png}
+  \chFourFigCaption{fig:ch4_sine_noaw_control}{时变信号 $y_{d2}$ 无抗饱和补偿的控制输入}
+\end{minipage}
+\hspace{0.01\textwidth}
+\begin{minipage}[t]{0.485\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_control.png}
+  \chFourFigCaption{fig:ch4_sine_aw_control}{时变信号 $y_{d2}$ 有抗饱和补偿的控制输入}
+\end{minipage}
+
+\noindent
+由图\ref{fig:ch4_sine_noaw_response}--图\ref{fig:ch4_sine_aw_control}可以看出，在时变参考下，无抗饱和补偿时更容易出现幅值削顶和误差放大；加入抗饱和补偿后，控制输入虽仍受到限幅约束，但输出恢复过程更连续，时变跟踪品质更稳定。由此说明，即使在输入幅值受限的条件下，所提控制器仍能保持阻尼比参数的区分度，并改善受限工况下的跟踪品质。
 \FloatBarrier
 
 \section{本章小结}[Summary]

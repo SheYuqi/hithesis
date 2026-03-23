@@ -35,9 +35,9 @@ FILTER_ZETA = 0.90
 FILTER_WN = 80.0
 ROBUST_GAIN = 0.04
 SAT_WIDTH = 0.18
-U_MAX = 0.28
+U_MAX = 0.18
 AW_LAMBDA = 25.0
-AW_GAIN = 18.0
+AW_GAIN = -30.0
 
 
 def sat(x: float) -> float:
@@ -162,13 +162,47 @@ def make_summary_table(
 
 
 
+
+def plot_family(
+    filename: str,
+    result_map: Dict[float, Dict[str, np.ndarray]],
+    key: str,
+    ylabel: str,
+    zoom_xlim: Tuple[float, float],
+    output_dir: Path,
+) -> None:
+    fig, ax = plt.subplots(figsize=(6.4, 3.9), constrained_layout=True)
+    cases = [
+        DampingCase(1.000, "#1f4aff", "-", r"$\zeta = 1.000$"),
+        DampingCase(1.0 / math.sqrt(2.0), "#d62728", "--", r"$\zeta = 0.707$"),
+        DampingCase(0.625, "#2ca02c", "-.", r"$\zeta = 0.625$"),
+    ]
+    t = next(iter(result_map.values()))["t"]
+    ref_style = {"color": "black", "linewidth": 1.4, "label": r"参考信号 $y_d$"}
+    if key == "y":
+        ax.plot(t, next(iter(result_map.values()))["yd"], **ref_style)
+    if key == "u":
+        ax.axhline(U_MAX, color="#555555", linestyle=":", linewidth=1.0)
+        ax.axhline(-U_MAX, color="#555555", linestyle=":", linewidth=1.0)
+    plotted = []
+    for case in cases:
+        style = {"color": case.color, "linestyle": case.linestyle, "linewidth": 1.8, "label": case.label}
+        ax.plot(t, result_map[case.zeta][key], **style)
+        plotted.append((result_map[case.zeta][key], style))
+    style_axes(ax, "时间 (s)", ylabel)
+    ax.set_xlim(0.0, 5.0)
+    ax.legend(loc="best", frameon=True, edgecolor="black")
+    add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(next(iter(result_map.values()))["yd"], ref_style) if key == "y" else None)
+    save_figure(fig, output_dir / filename)
+
+
 def build_figures(output_dir: Path, duration: float = 5.0, dt: float = 0.001, omega_n: float = 35.0) -> None:
     configure_matplotlib()
     output_dir.mkdir(parents=True, exist_ok=True)
     cases = [
         DampingCase(1.000, "#1f4aff", "-", r"$\zeta = 1.000$"),
-        DampingCase(1.0 / math.sqrt(2.0), "#d62728", "-", r"$\zeta = 0.707$"),
-        DampingCase(0.625, "#2ca02c", "-", r"$\zeta = 0.625$"),
+        DampingCase(1.0 / math.sqrt(2.0), "#d62728", "--", r"$\zeta = 0.707$"),
+        DampingCase(0.625, "#2ca02c", "-.", r"$\zeta = 0.625$"),
     ]
 
     step_noaw = {case.zeta: simulate_saturation_case(case.zeta, omega_n, step_reference, duration, dt, False) for case in cases}
@@ -178,37 +212,19 @@ def build_figures(output_dir: Path, duration: float = 5.0, dt: float = 0.001, om
 
     make_summary_table(cases, omega_n, step_noaw, step_aw, sine_noaw, sine_aw, output_dir)
 
-    ref_style = {"color": "black", "linewidth": 1.4, "label": r"参考信号 $y_d$"}
-    panels = [
-        ("ch4_step_response", step_noaw, step_aw, "y", "跟踪输出", (0.50, 0.85)),
-        ("ch4_step_error", step_noaw, step_aw, "e", "跟踪误差", (0.50, 0.85)),
-        ("ch4_step_control", step_noaw, step_aw, "u", "控制输入", (0.50, 0.85)),
-        ("ch4_sine_response", sine_noaw, sine_aw, "y", "跟踪输出", (0.50, 1.00)),
-        ("ch4_sine_error", sine_noaw, sine_aw, "e", "跟踪误差", (0.50, 1.00)),
-        ("ch4_sine_control", sine_noaw, sine_aw, "u", "控制输入", (0.50, 1.00)),
-    ]
+    plot_family("ch4_step_noaw_response", step_noaw, "y", "跟踪输出", (0.50, 0.85), output_dir)
+    plot_family("ch4_step_aw_response", step_aw, "y", "跟踪输出", (0.50, 0.85), output_dir)
+    plot_family("ch4_step_noaw_error", step_noaw, "e", "跟踪误差", (0.50, 0.85), output_dir)
+    plot_family("ch4_step_aw_error", step_aw, "e", "跟踪误差", (0.50, 0.85), output_dir)
+    plot_family("ch4_step_noaw_control", step_noaw, "u", "控制输入", (0.50, 0.85), output_dir)
+    plot_family("ch4_step_aw_control", step_aw, "u", "控制输入", (0.50, 0.85), output_dir)
 
-    for name, noaw_map, aw_map, key, ylabel, zoom_xlim in panels:
-        fig, ax = plt.subplots(figsize=(6.4, 3.9), constrained_layout=True)
-        t = next(iter(noaw_map.values()))["t"]
-        if key == "y":
-            ax.plot(t, next(iter(noaw_map.values()))["yd"], **ref_style)
-        plotted = []
-        if key == "u":
-            ax.axhline(U_MAX, color="#555555", linestyle=":", linewidth=1.0)
-            ax.axhline(-U_MAX, color="#555555", linestyle=":", linewidth=1.0)
-        for case in cases:
-            aw_style = {"color": case.color, "linestyle": "-", "linewidth": 1.9, "label": rf"AW, $\zeta={case.zeta:.3f}$"}
-            noaw_style = {"color": case.color, "linestyle": "--", "linewidth": 1.7, "label": rf"No-AW, $\zeta={case.zeta:.3f}$"}
-            ax.plot(t, aw_map[case.zeta][key], **aw_style)
-            ax.plot(t, noaw_map[case.zeta][key], **noaw_style)
-            plotted.extend([(aw_map[case.zeta][key], aw_style), (noaw_map[case.zeta][key], noaw_style)])
-        style_axes(ax, "时间 (s)", ylabel)
-        ax.set_xlim(0.0, duration)
-        ax.legend(loc="best", frameon=True, edgecolor="black", ncol=2)
-        add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(next(iter(noaw_map.values()))["yd"], ref_style) if key == "y" else None)
-        save_figure(fig, output_dir / name)
-
+    plot_family("ch4_sine_noaw_response", sine_noaw, "y", "跟踪输出", (0.50, 1.00), output_dir)
+    plot_family("ch4_sine_aw_response", sine_aw, "y", "跟踪输出", (0.50, 1.00), output_dir)
+    plot_family("ch4_sine_noaw_error", sine_noaw, "e", "跟踪误差", (0.50, 1.00), output_dir)
+    plot_family("ch4_sine_aw_error", sine_aw, "e", "跟踪误差", (0.50, 1.00), output_dir)
+    plot_family("ch4_sine_noaw_control", sine_noaw, "u", "控制输入", (0.50, 1.00), output_dir)
+    plot_family("ch4_sine_aw_control", sine_aw, "u", "控制输入", (0.50, 1.00), output_dir)
 
 
 def main() -> None:

@@ -17,24 +17,23 @@ from ch2_simulation import (
     add_zoom_inset,
     basis_vector,
     configure_matplotlib,
-    equivalent_damping_ratio,
+    rk4_step,
     save_figure,
     sine_reference,
     step_reference,
     style_axes,
     true_nonlinearity,
-    rk4_step,
 )
 
 import matplotlib.pyplot as plt
 
 
 FIG_DIR = ROOT / "hitbook" / "chinese" / "figures" / "ch3_sim"
-W_CF = np.array([0.35, -0.28, 0.40, 0.08, 0.12, 0.05], dtype=float)
+W_NOM = np.array([0.35, -0.28, 0.40, 0.08, 0.12, 0.05], dtype=float)
 FILTER_ZETA = 0.90
-FILTER_WN = 80.0
-ROBUST_GAIN = 0.55
-SAT_WIDTH = 0.18
+FILTER_WN = 110.0
+ROBUST_GAIN = 320.0
+SAT_WIDTH = 0.12
 
 
 def sat(x: float) -> float:
@@ -49,127 +48,205 @@ def disturbance_profile(t: float) -> float:
     if t < 1.5:
         return 0.0
     tau = t - 1.5
-    return 900.0 * math.exp(-1.2 * tau) * math.sin(8.5 * tau) + 55.0 * math.sin(2.6 * t)
+    return 850.0 * math.exp(-1.25 * tau) * math.sin(8.8 * tau) + 48.0 * math.sin(2.7 * t)
 
 
-def simulate_command_filter_case(
+def simulate_nn_case(
     zeta: float,
     omega_n: float,
     reference: Callable[[float], Tuple[float, float, float]],
     duration: float = 5.0,
     dt: float = 0.001,
-    anti_disturbance: bool = True,
+    gamma: float = 0.006,
+    sigma_mod: float = 0.045,
+    init_scale: float = 0.0,
 ) -> Dict[str, np.ndarray]:
     times = np.arange(0.0, duration + dt, dt)
-    state = np.zeros((times.size, 5), dtype=float)  # x1, x2, xi1, xi2, q
+    state = np.zeros((times.size, 8), dtype=float)
+    state[0, 2:] = init_scale * W_NOM
     control = np.zeros(times.size, dtype=float)
     yd = np.zeros(times.size, dtype=float)
     m1 = omega_n**2
     m2 = 2.0 * zeta * omega_n
-    robust_gain = ROBUST_GAIN if anti_disturbance else 0.0
-    weight_scale = 1.0 if anti_disturbance else 0.45
-    filter_wn = FILTER_WN if anti_disturbance else 24.0
 
     def rhs(t: float, x: np.ndarray) -> np.ndarray:
-        x1, x2, xi1, xi2, q = x
-        ref, ref_dot, _ = reference(t)
-        z1 = x1 - ref
-        alpha10 = ref_dot - K1_GAIN * z1
-        z2 = x2 - xi1
-        s = z2 + (m2 - K1_GAIN) * z1 + m1 * q
-        h_est = float(np.dot(weight_scale * W_CF, basis_vector(x1, x2)))
-        u = -(
-            (m2 - K1_GAIN) * z2
-            + (m1 - K1_GAIN * (m2 - K1_GAIN)) * z1
-            + h_est
-            - xi2
-            + robust_gain * sat(s / SAT_WIDTH)
-        ) / B_GAIN
+        x1, x2 = x[:2]
+        weights = x[2:]
+        ref, ref_dot, ref_ddot = reference(t)
+        e1 = x1 - ref
+        e2 = x2 - ref_dot
+        z1 = e1
+        z2 = e2 + K1_GAIN * e1
+        basis = basis_vector(x1, x2)
+        h_est = float(np.dot(weights, basis))
+        u = (ref_ddot - 0.55 * h_est - m2 * z2 - (m1 - K1_GAIN * m2) * z1) / B_GAIN
         dx1 = x2
         dx2 = B_GAIN * u + true_nonlinearity(x1, x2) + disturbance_profile(t)
-        dxi1 = xi2
-        dxi2 = -2.0 * FILTER_ZETA * filter_wn * xi2 - filter_wn**2 * (xi1 - alpha10)
-        dq = z1
-        return np.array([dx1, dx2, dxi1, dxi2, dq], dtype=float)
+        dweights = gamma * (z2 * basis - sigma_mod * weights)
+        return np.concatenate(([dx1, dx2], dweights))
 
     for idx, t in enumerate(times[:-1]):
-        ref, ref_dot, _ = reference(t)
+        ref, ref_dot, ref_ddot = reference(t)
         yd[idx] = ref
-        x1, x2, xi1, xi2, q = state[idx]
-        z1 = x1 - ref
-        z2 = x2 - xi1
-        s = z2 + (m2 - K1_GAIN) * z1 + m1 * q
-        h_est = float(np.dot(weight_scale * W_CF, basis_vector(x1, x2)))
-        control[idx] = -(
-            (m2 - K1_GAIN) * z2
-            + (m1 - K1_GAIN * (m2 - K1_GAIN)) * z1
-            + h_est
-            - xi2
-            + robust_gain * sat(s / SAT_WIDTH)
+        x1, x2 = state[idx, :2]
+        weights = state[idx, 2:]
+        e1 = x1 - ref
+        e2 = x2 - ref_dot
+        z1 = e1
+        z2 = e2 + K1_GAIN * e1
+        control[idx] = (
+            ref_ddot
+            - 0.55 * float(np.dot(weights, basis_vector(x1, x2)))
+            - m2 * z2
+            - (m1 - K1_GAIN * m2) * z1
         ) / B_GAIN
         state[idx + 1] = rk4_step(rhs, t, state[idx], dt)
 
-    ref, _, _ = reference(times[-1])
+    ref, ref_dot, ref_ddot = reference(times[-1])
     yd[-1] = ref
-    x1, x2, xi1, xi2, q = state[-1]
-    z1 = x1 - ref
-    z2 = x2 - xi1
-    s = z2 + (m2 - K1_GAIN) * z1 + m1 * q
-    h_est = float(np.dot(W_CF, basis_vector(x1, x2)))
-    control[-1] = -(
-        (m2 - K1_GAIN) * z2
-        + (m1 - K1_GAIN * (m2 - K1_GAIN)) * z1
-        + h_est
-        - xi2
-        + robust_gain * sat(s / SAT_WIDTH)
+    x1, x2 = state[-1, :2]
+    weights = state[-1, 2:]
+    e1 = x1 - ref
+    e2 = x2 - ref_dot
+    z1 = e1
+    z2 = e2 + K1_GAIN * e1
+    control[-1] = (
+        ref_ddot
+        - 0.55 * float(np.dot(weights, basis_vector(x1, x2)))
+        - m2 * z2
+        - (m1 - K1_GAIN * m2) * z1
     ) / B_GAIN
 
     return {"t": times, "y": state[:, 0], "e": state[:, 0] - yd, "u": control, "yd": yd}
 
 
-def transient_overshoot_from_trace(
+def simulate_cf_case(
+    zeta: float,
+    omega_n: float,
+    reference: Callable[[float], Tuple[float, float, float]],
+    duration: float = 5.0,
+    dt: float = 0.001,
+) -> Dict[str, np.ndarray]:
+    times = np.arange(0.0, duration + dt, dt)
+    state = np.zeros((times.size, 4), dtype=float)  # x1, x2, xi1, xi2
+    control = np.zeros(times.size, dtype=float)
+    yd = np.zeros(times.size, dtype=float)
+    m1 = omega_n**2
+    m2 = 2.0 * zeta * omega_n
+
+    def rhs(t: float, x: np.ndarray) -> np.ndarray:
+        x1, x2, xi1, xi2 = x
+        ref, ref_dot, _ = reference(t)
+        z1 = x1 - ref
+        alpha10 = ref_dot - K1_GAIN * z1
+        z2 = x2 - xi1
+        s = z2 + (m2 - K1_GAIN) * z1
+        h_est = float(np.dot(W_NOM, basis_vector(x1, x2)))
+        u = -(
+            (m2 - K1_GAIN) * z2
+            + (m1 - K1_GAIN * (m2 - K1_GAIN)) * z1
+            + h_est
+            - xi2
+            + ROBUST_GAIN * sat(s / SAT_WIDTH)
+        ) / B_GAIN
+        dx1 = x2
+        dx2 = B_GAIN * u + true_nonlinearity(x1, x2) + disturbance_profile(t)
+        dxi1 = xi2
+        dxi2 = -2.0 * FILTER_ZETA * FILTER_WN * xi2 - FILTER_WN**2 * (xi1 - alpha10)
+        return np.array([dx1, dx2, dxi1, dxi2], dtype=float)
+
+    for idx, t in enumerate(times[:-1]):
+        ref, ref_dot, _ = reference(t)
+        yd[idx] = ref
+        x1, x2, xi1, xi2 = state[idx]
+        z1 = x1 - ref
+        z2 = x2 - xi1
+        s = z2 + (m2 - K1_GAIN) * z1
+        h_est = float(np.dot(W_NOM, basis_vector(x1, x2)))
+        control[idx] = -(
+            (m2 - K1_GAIN) * z2
+            + (m1 - K1_GAIN * (m2 - K1_GAIN)) * z1
+            + h_est
+            - xi2
+            + ROBUST_GAIN * sat(s / SAT_WIDTH)
+        ) / B_GAIN
+        state[idx + 1] = rk4_step(rhs, t, state[idx], dt)
+
+    ref, _, _ = reference(times[-1])
+    yd[-1] = ref
+    x1, x2, xi1, xi2 = state[-1]
+    z1 = x1 - ref
+    z2 = x2 - xi1
+    s = z2 + (m2 - K1_GAIN) * z1
+    h_est = float(np.dot(W_NOM, basis_vector(x1, x2)))
+    control[-1] = -(
+        (m2 - K1_GAIN) * z2
+        + (m1 - K1_GAIN * (m2 - K1_GAIN)) * z1
+        + h_est
+        - xi2
+        + ROBUST_GAIN * sat(s / SAT_WIDTH)
+    ) / B_GAIN
+
+    return {"t": times, "y": state[:, 0], "e": state[:, 0] - yd, "u": control, "yd": yd}
+
+
+def disturbance_metrics(
     t: np.ndarray,
-    y: np.ndarray,
-    yd: np.ndarray,
-    t0: float = 0.5,
-    window: float = 0.6,
-) -> float:
-    mask = (t >= t0) & (t <= t0 + window)
-    if not np.any(mask):
-        return 0.0
-    masked_e = y[mask] - yd[mask]
-    masked_yd = yd[mask]
-    idx = int(np.argmax(masked_e))
-    peak_e = float(masked_e[idx])
-    ref_at_peak = float(masked_yd[idx])
-    if abs(ref_at_peak) < 1e-9:
-        return 0.0
-    return max(0.0, peak_e / abs(ref_at_peak) * 100.0)
+    e: np.ndarray,
+    t_disturb: float = 1.5,
+    settle_band: float = 0.08,
+    settle_hold: float = 0.20,
+) -> Tuple[float, float, float]:
+    mask = t >= t_disturb
+    tt = t[mask]
+    ee = e[mask]
+    peak = float(np.max(np.abs(ee)))
+    rmse = float(np.sqrt(np.mean(ee * ee)))
+    dt = float(t[1] - t[0]) if len(t) > 1 else 0.001
+    hold_steps = max(1, int(settle_hold / dt))
+    rec_time = tt[-1] - t_disturb
+    for i in range(len(ee) - hold_steps):
+        window = ee[i : i + hold_steps]
+        if np.all(np.abs(window) <= settle_band):
+            rec_time = float(tt[i] - t_disturb)
+            break
+    return peak, rec_time, rmse
 
 
 def make_summary_table(
     cases: Iterable[DampingCase],
     omega_n: float,
-    step_noad: Dict[float, Dict[str, np.ndarray]],
-    step_ad: Dict[float, Dict[str, np.ndarray]],
-    sine_noad: Dict[float, Dict[str, np.ndarray]],
-    sine_ad: Dict[float, Dict[str, np.ndarray]],
+    step_nn: Dict[float, Dict[str, np.ndarray]],
+    step_cf: Dict[float, Dict[str, np.ndarray]],
+    sine_nn: Dict[float, Dict[str, np.ndarray]],
+    sine_cf: Dict[float, Dict[str, np.ndarray]],
     output_dir: Path,
 ) -> None:
     csv_path = output_dir / "ch3_damping_summary.csv"
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["signal", "alpha", "beta", "m1", "m2", "zeta_d", "zeta_sim_noad", "zeta_sim_ad"])
-        for signal_name, noad_map, ad_map in [("y_d1", step_noad, step_ad), ("y_d2", sine_noad, sine_ad)]:
+        writer.writerow(
+            [
+                "signal",
+                "alpha",
+                "beta",
+                "m1",
+                "m2",
+                "zeta_d",
+                "peak_nn",
+                "peak_cf",
+                "trec_nn",
+                "trec_cf",
+                "rmse_nn",
+                "rmse_cf",
+            ]
+        )
+        for signal_name, nn_map, cf_map in [("y_d1", step_nn, step_cf), ("y_d2", sine_nn, sine_cf)]:
             for case in cases:
                 alpha = case.zeta * omega_n
                 beta = 0.0 if case.zeta >= 1.0 else omega_n * math.sqrt(max(0.0, 1.0 - case.zeta * case.zeta))
-                zeta_noad = equivalent_damping_ratio(
-                    transient_overshoot_from_trace(noad_map[case.zeta]["t"], noad_map[case.zeta]["y"], noad_map[case.zeta]["yd"])
-                )
-                zeta_ad = equivalent_damping_ratio(
-                    transient_overshoot_from_trace(ad_map[case.zeta]["t"], ad_map[case.zeta]["y"], ad_map[case.zeta]["yd"])
-                )
+                peak_nn, trec_nn, rmse_nn = disturbance_metrics(nn_map[case.zeta]["t"], nn_map[case.zeta]["e"])
+                peak_cf, trec_cf, rmse_cf = disturbance_metrics(cf_map[case.zeta]["t"], cf_map[case.zeta]["e"])
                 writer.writerow(
                     [
                         signal_name,
@@ -178,8 +255,12 @@ def make_summary_table(
                         f"{omega_n**2:.3f}",
                         f"{2 * alpha:.3f}",
                         f"{case.zeta:.3f}",
-                        f"{zeta_noad:.3f}",
-                        f"{zeta_ad:.3f}",
+                        f"{peak_nn:.3f}",
+                        f"{peak_cf:.3f}",
+                        f"{trec_nn:.3f}",
+                        f"{trec_cf:.3f}",
+                        f"{rmse_nn:.3f}",
+                        f"{rmse_cf:.3f}",
                     ]
                 )
 
@@ -191,7 +272,6 @@ def plot_family(
     ylabel: str,
     zoom_xlim: Tuple[float, float],
     output_dir: Path,
-    title_prefix: str,
 ) -> None:
     fig, ax = plt.subplots(figsize=(6.4, 3.9), constrained_layout=True)
     cases = [
@@ -230,26 +310,26 @@ def build_figures(output_dir: Path, duration: float = 5.0, dt: float = 0.001, om
         DampingCase(0.625, "#2ca02c", "-.", r"$\zeta = 0.625$"),
     ]
 
-    step_noad = {case.zeta: simulate_command_filter_case(case.zeta, omega_n, step_reference, duration, dt, False) for case in cases}
-    step_ad = {case.zeta: simulate_command_filter_case(case.zeta, omega_n, step_reference, duration, dt, True) for case in cases}
-    sine_noad = {case.zeta: simulate_command_filter_case(case.zeta, omega_n, sine_reference, duration, dt, False) for case in cases}
-    sine_ad = {case.zeta: simulate_command_filter_case(case.zeta, omega_n, sine_reference, duration, dt, True) for case in cases}
+    step_nn = {case.zeta: simulate_nn_case(case.zeta, omega_n, step_reference, duration, dt) for case in cases}
+    step_cf = {case.zeta: simulate_cf_case(case.zeta, omega_n, step_reference, duration, dt) for case in cases}
+    sine_nn = {case.zeta: simulate_nn_case(case.zeta, omega_n, sine_reference, duration, dt) for case in cases}
+    sine_cf = {case.zeta: simulate_cf_case(case.zeta, omega_n, sine_reference, duration, dt) for case in cases}
 
-    make_summary_table(cases, omega_n, step_noad, step_ad, sine_noad, sine_ad, output_dir)
+    make_summary_table(cases, omega_n, step_nn, step_cf, sine_nn, sine_cf, output_dir)
 
-    plot_family("ch3_step_noad_response", step_noad, "y", "跟踪输出", (0.50, 0.80), output_dir, "无抗扰")
-    plot_family("ch3_step_ad_response", step_ad, "y", "跟踪输出", (0.50, 0.80), output_dir, "有抗扰")
-    plot_family("ch3_step_noad_error", step_noad, "e", "跟踪误差", (0.50, 0.95), output_dir, "无抗扰")
-    plot_family("ch3_step_ad_error", step_ad, "e", "跟踪误差", (0.50, 0.95), output_dir, "有抗扰")
-    plot_family("ch3_step_noad_control", step_noad, "u", "控制输入", (0.50, 0.95), output_dir, "无抗扰")
-    plot_family("ch3_step_ad_control", step_ad, "u", "控制输入", (0.50, 0.95), output_dir, "有抗扰")
+    plot_family("ch3_step_nn_response", step_nn, "y", "跟踪输出", (1.45, 2.05), output_dir)
+    plot_family("ch3_step_cf_response", step_cf, "y", "跟踪输出", (1.45, 2.05), output_dir)
+    plot_family("ch3_step_nn_error", step_nn, "e", "跟踪误差", (1.45, 2.05), output_dir)
+    plot_family("ch3_step_cf_error", step_cf, "e", "跟踪误差", (1.45, 2.05), output_dir)
+    plot_family("ch3_step_nn_control", step_nn, "u", "控制输入", (1.45, 2.05), output_dir)
+    plot_family("ch3_step_cf_control", step_cf, "u", "控制输入", (1.45, 2.05), output_dir)
 
-    plot_family("ch3_sine_noad_response", sine_noad, "y", "跟踪输出", (0.50, 0.95), output_dir, "无抗扰")
-    plot_family("ch3_sine_ad_response", sine_ad, "y", "跟踪输出", (0.50, 0.95), output_dir, "有抗扰")
-    plot_family("ch3_sine_noad_error", sine_noad, "e", "跟踪误差", (0.50, 0.95), output_dir, "无抗扰")
-    plot_family("ch3_sine_ad_error", sine_ad, "e", "跟踪误差", (0.50, 0.95), output_dir, "有抗扰")
-    plot_family("ch3_sine_noad_control", sine_noad, "u", "控制输入", (0.50, 0.95), output_dir, "无抗扰")
-    plot_family("ch3_sine_ad_control", sine_ad, "u", "控制输入", (0.50, 0.95), output_dir, "有抗扰")
+    plot_family("ch3_sine_nn_response", sine_nn, "y", "跟踪输出", (1.45, 2.05), output_dir)
+    plot_family("ch3_sine_cf_response", sine_cf, "y", "跟踪输出", (1.45, 2.05), output_dir)
+    plot_family("ch3_sine_nn_error", sine_nn, "e", "跟踪误差", (1.45, 2.05), output_dir)
+    plot_family("ch3_sine_cf_error", sine_cf, "e", "跟踪误差", (1.45, 2.05), output_dir)
+    plot_family("ch3_sine_nn_control", sine_nn, "u", "控制输入", (1.45, 2.05), output_dir)
+    plot_family("ch3_sine_cf_control", sine_cf, "u", "控制输入", (1.45, 2.05), output_dir)
 
 
 def main() -> None:
