@@ -1,0 +1,99 @@
+from pathlib import Path
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
+
+ANN_ROOT = Path('/home/syq/课题/thesis/Sinetarget/ANN')
+SBC_ROOT = Path('/home/syq/课题/thesis/Sinetarget/SBC/old_data')
+OUT_DIR = Path('hitbook/chinese/figures/ch5_ann_sine')
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'TeX Gyre Termes', 'DejaVu Serif'],
+    'mathtext.fontset': 'stix',
+    'axes.linewidth': 1.0,
+    'axes.labelsize': 20,
+    'xtick.labelsize': 15,
+    'ytick.labelsize': 15,
+    'legend.fontsize': 9,
+})
+
+ANN_DAMPINGS = [('0.625', '0.625'), ('0.707', '0.707'), ('1', '1.000')]
+SBC_DAMPINGS = [('0.6', '0.600'), ('0.707', '0.707'), ('1', '1.000')]
+COLORS = {'1.000': '#1f77b4', '0.707': '#d62728', '0.625': '#2ca02c', '0.600': '#2ca02c'}
+ANN_STYLES = {
+    '1.000': dict(color=COLORS['1.000'], linestyle='-', linewidth=2.0),
+    '0.707': dict(color=COLORS['0.707'], linestyle='--', linewidth=2.0),
+    '0.625': dict(color=COLORS['0.625'], linestyle='-.', linewidth=2.0),
+}
+SBC_STYLES = {
+    '1.000': dict(color=COLORS['1.000'], linestyle=':', linewidth=2.1),
+    '0.707': dict(color=COLORS['0.707'], linestyle=':', linewidth=2.1),
+    '0.600': dict(color=COLORS['0.600'], linestyle=':', linewidth=2.1),
+}
+YLABELS = {'roll': 'Output', 'pitch': 'Output', 'yaw': 'Output'}
+XLIM = (0.0, 60.0)
+ZOOM = {'pitch': (0.0, 3.0), 'roll': (0.0, 3.0), 'yaw': (0.0, 3.0)}
+
+for axis in ['pitch', 'roll', 'yaw']:
+    ann = {}
+    sbc = {}
+    t = None
+    for folder, label in ANN_DAMPINGS:
+        base = ANN_ROOT / folder
+        if t is None:
+            t = np.loadtxt(base / 'time.csv', delimiter=',')
+        ann[label] = np.rad2deg(np.loadtxt(base / f'{axis}.csv', delimiter=','))
+    for folder, label in SBC_DAMPINGS:
+        base = SBC_ROOT / folder
+        sbc[label] = np.rad2deg(np.loadtxt(base / f'{axis}.csv', delimiter=','))
+
+    y_ref = np.mean(np.vstack([ann[k] for k in ann]), axis=0)
+    fig, ax = plt.subplots(figsize=(7.2, 4.3), dpi=220)
+    ax.plot(t, y_ref, color='black', linestyle='-', linewidth=2.0, label=r'$y_d$')
+    for label in ['1.000', '0.707', '0.625']:
+        ax.plot(t, ann[label], label=fr'ANN, $\zeta={label}$', **ANN_STYLES[label])
+    for label in ['1.000', '0.707', '0.600']:
+        ax.plot(t, sbc[label], label=fr'SBC, $\zeta={label}$', **SBC_STYLES[label])
+
+    ax.set_xlim(*XLIM)
+    mask = (t >= XLIM[0]) & (t <= XLIM[1])
+    vals = np.concatenate([ann[k][mask] for k in ann] + [sbc[k][mask] for k in sbc] + [y_ref[mask]])
+    ymin, ymax = float(vals.min()), float(vals.max())
+    span = max(ymax - ymin, 1e-3)
+    ax.set_ylim(ymin - 0.08 * span, ymax + 0.08 * span)
+    ax.set_xlabel('Time(sec)', fontweight='bold')
+    ax.set_ylabel(YLABELS[axis], fontweight='bold')
+    ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
+    ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
+    leg = ax.legend(loc='lower right', ncol=2, frameon=True, fancybox=False, edgecolor='0.35')
+    leg.get_frame().set_linewidth(0.8)
+
+    x1, x2 = ZOOM[axis]
+    maskz = (t >= x1) & (t <= x2)
+    valsz = np.concatenate([ann[k][maskz] for k in ann] + [sbc[k][maskz] for k in sbc] + [y_ref[maskz]])
+    yzmin, yzmax = float(valsz.min()), float(valsz.max())
+    zspan = max(yzmax - yzmin, 1e-3)
+    y1, y2 = yzmin - 0.08 * zspan, yzmax + 0.08 * zspan
+
+    axins = inset_axes(ax, width='55%', height='45%', loc='center left', borderpad=1.5)
+    axins.plot(t, y_ref, color='black', linestyle='-', linewidth=1.6)
+    for label in ['1.000', '0.707', '0.625']:
+        axins.plot(t, ann[label], **ANN_STYLES[label])
+    for label in ['1.000', '0.707', '0.600']:
+        axins.plot(t, sbc[label], **SBC_STYLES[label])
+    axins.set_xlim(x1, x2)
+    axins.set_ylim(y1, y2)
+    axins.grid(True, alpha=0.25)
+    axins.tick_params(direction='in', labelsize=8, top=True, right=True)
+    axins.set_xlabel('Time (s)', fontsize=8)
+    for spine in axins.spines.values():
+        spine.set_linewidth(1.0)
+
+    mark_inset(ax, axins, loc1=2, loc2=4, fc='none', ec='0.2', lw=1.0)
+    fig.tight_layout()
+    fig.savefig(OUT_DIR / f'ch5_ann_sine_{axis}.png', bbox_inches='tight')
+    plt.close(fig)

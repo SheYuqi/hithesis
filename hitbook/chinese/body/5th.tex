@@ -3,7 +3,6 @@
 \chapter{预设阻尼比自适应滑模反步控制在三自由度悬浮机系统上的验证}
 [Experimental verification of preset damping-ratio adaptive sliding-mode backstepping on a 3-DOF hover system]
 
-
 \section{引言}[Introduction]
 
 本章面向三自由度悬浮机系统（3-DOF Hover System），对前述预设阻尼比滑模反步控制思想进行验证与分析。验证目标主要包括：
@@ -23,10 +22,8 @@
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox{0.78\textwidth}{\centering
-  （占位图）Quanser 三自由度悬浮机控制系统实验装置\\
-  你后续可替换为：控制系统实物装置图}}
-  \caption{三自由度悬浮机控制系统实验装置}
+  \includegraphics[width=0.88\textwidth]{figures/ch5_ref/ch5_hover_hardware_hd.png}
+  \caption{四旋翼悬浮机控制系统的实验装置}
   \label{fig:ch5_hover_hardware}
 \end{figure}
 
@@ -50,10 +47,8 @@
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox{0.72\textwidth}{\centering
-  （占位图）三自由度悬浮机实验平台及机体坐标示意\\
-  你后续可替换为：悬浮机平台结构与姿态角定义图}}
-  \caption{三自由度悬浮机实验平台}
+  \includegraphics[width=0.74\textwidth]{figures/ch5_ref/ch5_hover_platform_hd.png}
+  \caption{四旋翼悬浮机实验平台}
   \label{fig:ch5_hover_platform}
 \end{figure}
 
@@ -177,45 +172,60 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
 
 本实验采用第2章提出的预设阻尼比滑模反步控制器，在 Hover 平台三姿态通道上进行验证。实验包含常值参考与时变参考两类任务，并在三组阻尼比参数（如 $\zeta=0.6,\ 0.707,\ 1.0$）下比较系统响应。
 
-在常值信号跟踪任务中，分别设置俯仰角、滚转角和偏航角的固定参考，观察超调量与收敛过程。实验结果显示：阻尼比较小时响应更快但振荡更明显；阻尼比较大时响应更平稳但调节时间相对增加，体现了本文“阻尼比可调”的设计特性。
+\subsubsection{常值参考实验}
+
+在常值信号跟踪任务中，这里同时给出神经网络方法与 SBC 方法的三轴实测结果。图\ref{fig:ch5_ann_const_pitch}--图\ref{fig:ch5_ann_const_yaw} 将三组阻尼比 $\zeta=1.000$、$\zeta=0.707$ 与 $\zeta=0.625$ 的实验数据绘制在同一张图中，其中相同颜色表示相同阻尼比，不同线型对应不同控制方法。可以看到，阻尼比较小时两种方法的姿态通道上升都更快，但 SBC 曲线整体更平滑、振荡更弱；随着阻尼比增大，输出曲线趋于平缓，表明本文提出的阻尼比调节思想在 Hover 平台上具有可观测的实验效果，同时 SBC 方法在稳定性上表现更优。
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）Hover 平台固定俯仰角跟踪曲线（不同阻尼比对比）\\
-  你后续可替换为：固定俯仰角跟踪实验结果}}
-  \caption{固定俯仰角跟踪结果}
-  \label{fig:ch5_pitch_step}
+  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_const/ch5_ann_const_pitch.png}
+  \caption{ANN 与 SBC 方法下俯仰通道常值参考跟踪结果}
+  \label{fig:ch5_ann_const_pitch}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）Hover 平台固定滚转角跟踪曲线（不同阻尼比对比）\\
-  你后续可替换为：固定滚转角跟踪实验结果}}
-  \caption{固定滚转角跟踪结果}
-  \label{fig:ch5_roll_step}
+  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_const/ch5_ann_const_roll.png}
+  \caption{ANN 与 SBC 方法下滚转通道常值参考跟踪结果}
+  \label{fig:ch5_ann_const_roll}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）Hover 平台固定偏航角跟踪曲线（不同阻尼比对比）\\
-  你后续可替换为：固定偏航角跟踪实验结果}}
-  \caption{固定偏航角跟踪结果}
-  \label{fig:ch5_yaw_step}
+  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_const/ch5_ann_const_yaw.png}
+  \caption{ANN 与 SBC 方法下偏航通道常值参考跟踪结果}
+  \label{fig:ch5_ann_const_yaw}
 \end{figure}
+\FloatBarrier
 
-在时变信号跟踪任务中，采用正弦参考对三姿态通道进行动态跟踪。结果表明，在合理参数整定下，控制器可保持稳定跟踪，并在不同阻尼比设定下呈现可解释的相位与幅值变化规律。
+\subsubsection{时变参考实验}
+
+在时变信号跟踪任务中，采用正弦参考对三姿态通道进行动态跟踪。这里同样给出 ANN 与 SBC 两种方法的三轴实测结果。图\ref{fig:ch5_ann_sine_pitch}--图\ref{fig:ch5_ann_sine_yaw} 将三组阻尼比的时变响应绘制在同一坐标系中，可以更直观看到不同阻尼比设定对相位滞后、幅值变化与动态恢复过程的影响。其中，SBC 方法的时变实验数据采用 $\zeta=1.000$、$\zeta=0.707$ 与 $\zeta=0.600$ 三组参数，其整体趋势与本文其余工况下的阻尼比调节规律保持一致。总体上看，较小阻尼比对应的动态响应更灵敏，而较大阻尼比下输出曲线更平缓；同时，相比 ANN 方法，SBC 方法的输出波动更小，说明其在保持阻尼比可调性的同时具有更好的稳定性。
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）Hover 平台时变姿态跟踪曲线（俯仰/滚转/偏航）\\
-  你后续可替换为：时变姿态跟踪实验结果}}
-  \caption{时变姿态跟踪结果}
-  \label{fig:ch5_attitude_timevary}
+  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_pitch.png}
+  \caption{ANN 与 SBC 方法下俯仰通道时变参考跟踪结果}
+  \label{fig:ch5_ann_sine_pitch}
 \end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_roll.png}
+  \caption{ANN 与 SBC 方法下滚转通道时变参考跟踪结果}
+  \label{fig:ch5_ann_sine_roll}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_yaw.png}
+  \caption{ANN 与 SBC 方法下偏航通道时变参考跟踪结果}
+  \label{fig:ch5_ann_sine_yaw}
+\end{figure}
+\FloatBarrier
+
+为便于对 Hover 平台三轴实验中的参数设置与预设阻尼比实现效果进行统一说明，表\ref{tab:ch5_exp1_sigma} 给出了实验1采用的典型参数组及对应指标。
+
 \begin{table}[htbp]
   \centering
   \caption{实验1三轴预设阻尼比控制参数及实现效果}
@@ -249,20 +259,116 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
 \end{table}
 \FloatBarrier
 
-\subsection{实验2：基于扰动观测器的预设阻尼比滑模反步控制实验}[Experiment 2: disturbance-observer-based preset damping-ratio SMB control]
+\subsection{实验2：二阶指令滤波抗扰预设阻尼比滑模反步控制实验}[Experiment 2: command-filter anti-disturbance preset damping-ratio SMB control]
 
-本实验采用第3章提出的基于扰动观测器的预设阻尼比滑模反步控制器，在与实验1相同的参考信号和参数组下开展对比。为突出抗扰性能，分别设置无扰动与有扰动工况（有扰动工况通过风扇等效扰动注入实现）。
+本实验采用第3章提出的二阶指令滤波抗扰预设阻尼比滑模反步控制器，在与实验1相同的姿态命令下开展对比验证。为突出抗扰设计对 Hover 平台姿态跟踪性能的改善作用，左列给出无抗扰补偿时的实验结果，右列给出加入二阶指令滤波抗扰机制后的实验结果；每幅图内同时保留三组阻尼比曲线，用于比较抗扰能力与阻尼比调节效果的综合表现。
 
-实验结果表明：在无扰动工况下，两种控制器均可实现有效跟踪；在有扰动工况下，基于扰动观测器的控制器能够减小误差峰值并缩短扰动恢复时间，稳态误差也更小，说明扰动观测补偿对 Hover 姿态控制具有明显改进效果。
+\subsubsection{常值参考实验}
+
+常值参考实验用于观察在固定姿态命令下，外界扰动存在时三轴响应的恢复过程。图\ref{fig:ch5_exp2_const_roll_left}--图\ref{fig:ch5_exp2_const_yaw_right} 中，左列为无抗扰补偿时的实测结果，右列为加入二阶指令滤波抗扰机制后的结果。可以看到，在相同阻尼比设定下，抗扰补偿后曲线在方框标示区间内更快回到稳定跟踪状态，说明该方法能够有效削弱扰动对姿态通道瞬态过程的破坏。
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）实验2：有/无扰动观测补偿的姿态跟踪与误差对比\\
-  你后续可替换为：实验2对比结果图}}
-  \caption{实验2控制效果对比}
-  \label{fig:ch5_do_compare}
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_roll_left.png}
+    \caption{常值参考下滚转通道无抗扰补偿响应}
+    \label{fig:ch5_exp2_const_roll_left}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_roll_right.png}
+    \caption{常值参考下滚转通道抗扰补偿响应}
+    \label{fig:ch5_exp2_const_roll_right}
+  \end{minipage}
 \end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_pitch_left.png}
+    \caption{常值参考下俯仰通道无抗扰补偿响应}
+    \label{fig:ch5_exp2_const_pitch_left}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_pitch_right.png}
+    \caption{常值参考下俯仰通道抗扰补偿响应}
+    \label{fig:ch5_exp2_const_pitch_right}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_yaw_left.png}
+    \caption{常值参考下偏航通道无抗扰补偿响应}
+    \label{fig:ch5_exp2_const_yaw_left}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_yaw_right.png}
+    \caption{常值参考下偏航通道抗扰补偿响应}
+    \label{fig:ch5_exp2_const_yaw_right}
+  \end{minipage}
+\end{figure}
+
+\FloatBarrier
+\subsubsection{时变参考实验}
+
+时变参考实验进一步用于考察连续变化姿态命令下的动态抗扰性能。图\ref{fig:ch5_exp2_sine_roll_left}--图\ref{fig:ch5_exp2_sine_yaw_right} 给出了三轴在时变参考输入和外界扰动共同作用下的实测结果。与左列无抗扰补偿情形相比，右列加入二阶指令滤波抗扰机制后，姿态输出在方框标示区间内的偏离程度整体减小，动态恢复更快，表明该方法在连续跟踪任务中同样能够保持较好的抗扰效果。
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_roll_left.png}
+    \caption{时变参考下滚转通道无抗扰补偿响应}
+    \label{fig:ch5_exp2_sine_roll_left}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_roll_right.png}
+    \caption{时变参考下滚转通道抗扰补偿响应}
+    \label{fig:ch5_exp2_sine_roll_right}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_pitch_left.png}
+    \caption{时变参考下俯仰通道无抗扰补偿响应}
+    \label{fig:ch5_exp2_sine_pitch_left}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_pitch_right.png}
+    \caption{时变参考下俯仰通道抗扰补偿响应}
+    \label{fig:ch5_exp2_sine_pitch_right}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_yaw_left.png}
+    \caption{时变参考下偏航通道无抗扰补偿响应}
+    \label{fig:ch5_exp2_sine_yaw_left}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_yaw_right.png}
+    \caption{时变参考下偏航通道抗扰补偿响应}
+    \label{fig:ch5_exp2_sine_yaw_right}
+  \end{minipage}
+\end{figure}
+
+\FloatBarrier
 \begin{table}[htbp]
   \centering
   \caption{实验2三轴预设阻尼比控制参数及实现效果}
@@ -298,51 +404,116 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
 
 \subsection{实验3：抗饱和预设阻尼比滑模反步控制实验}[Experiment 3: anti-windup preset damping-ratio SMB control]
 
-本实验采用第4章的抗饱和控制器，在输入限幅条件下开展对比验证。为保护实验设备并保证测试安全，控制输入幅值按平台电压约束进行手动限制；同时，该限幅设置也用于模拟激烈工况下执行器接近饱和的场景。实验分别比较“无抗饱和补偿”和“有抗饱和补偿”两种方案在常值与时变参考信号下的控制表现。
+本实验采用第4章的抗饱和预设阻尼比滑模反步控制器，在输入限幅条件下开展 Hover 平台三轴姿态对比实验。实验数据来自常值参考与时变参考两组实测结果，其中 `base` 表示未加入抗饱和补偿，`sat` 表示加入抗饱和辅助动态后的控制结果。为便于比较抗饱和补偿对不同阻尼比设置的影响，图中统一给出 $\zeta=1.000$、$\zeta=0.707$ 与 $\zeta=0.625$ 三组实验曲线。
 
-实验结果表明：当输入接近或进入饱和区时，无抗饱和补偿方案更易出现误差增大与恢复变慢；引入抗饱和辅助动态后，控制器可有效削弱限幅引起的性能退化，跟踪误差与恢复时间均得到改善，验证了第4章抗饱和设计在 Hover 平台上的工程有效性。
+从实验现象看，在执行器接近饱和的区间内，未加入抗饱和补偿时，姿态输出更容易出现响应滞后、恢复较慢或局部振荡增强；加入抗饱和补偿后，输出曲线在相同阻尼比设定下通常更接近目标响应轨迹，饱和后的恢复过程也更平滑。为突出这一差异，以下各图均用方框标出了抗饱和补偿作用较明显的时间区间。
+
+\subsubsection{常值参考实验}
+
+常值参考实验主要用于观察在固定姿态命令下，输入饱和对三轴响应过程的影响。图\ref{fig:ch5_const_roll_base}--图\ref{fig:ch5_const_yaw_sat} 给出了滚转、俯仰和偏航三个通道的实测角度响应，其中左列为未加入抗饱和补偿时的结果，右列为加入抗饱和补偿后的结果。可以看到，在相同阻尼比参数下，抗饱和补偿能够减弱饱和阶段带来的响应畸变，使姿态角更快回到稳定跟踪状态。
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox{0.86\textwidth}{\centering
-  （占位图）实验3：有/无抗饱和补偿下的姿态跟踪与控制输入对比\\
-  你后续可替换为：实验3对比结果图}}
-  \caption{实验3控制效果对比}
-  \label{fig:ch5_aw_compare}
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_base.png}
+    \caption{常值参考下滚转通道无抗饱和补偿响应}
+    \label{fig:ch5_const_roll_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_sat.png}
+    \caption{常值参考下滚转通道抗饱和补偿响应}
+    \label{fig:ch5_const_roll_sat}
+  \end{minipage}
 \end{figure}
-\begin{table}[htbp]
-  \centering
-  \caption{实验3三轴预设阻尼比控制参数及实现效果}
-  \label{tab:ch5_exp3_sigma}
-  \begin{tabular}{ccccccccc}
-    \toprule
-    方向 & 目标信号 & $k$ & $\alpha$ & $\beta$ & $p$ & $q$ & $\sigma$ (PV) & $\sigma$ (MV)\\
-    \midrule
-    \multirow{6}{*}{Pitch} & $y_{d1}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
-    & -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.33\% \\
-    & -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
-    & $y_{d2}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
-    & -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.30\% \\
-    & -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
-    \midrule
-    \multirow{6}{*}{Roll} & $y_{d1}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
-    & -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.33\% \\
-    & -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
-    & $y_{d2}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
-    & -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.30\% \\
-    & -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
-    \midrule
-    \multirow{6}{*}{Yaw} & $y_{d1}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
-    & -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.33\% \\
-    & -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
-    & $y_{d2}$ & 750.00 & -- & -- & 1500.00 & 38.62 & 0.00\% & 0.00\% \\
-    & -- & -- & 671.00 & 671.00 & 1342.00 & 61.82 & 4.30\% & 4.30\% \\
-    & -- & -- & 507.35 & 695.00 & 1014.70 & 50.83 & 10.00\% & 10.00\% \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-\FloatBarrier
 
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_base.png}
+    \caption{常值参考下俯仰通道无抗饱和补偿响应}
+    \label{fig:ch5_const_pitch_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_sat.png}
+    \caption{常值参考下俯仰通道抗饱和补偿响应}
+    \label{fig:ch5_const_pitch_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_base.png}
+    \caption{常值参考下偏航通道无抗饱和补偿响应}
+    \label{fig:ch5_const_yaw_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_sat.png}
+    \caption{常值参考下偏航通道抗饱和补偿响应}
+    \label{fig:ch5_const_yaw_sat}
+  \end{minipage}
+\end{figure}
+
+\FloatBarrier
+\subsubsection{时变参考实验}
+
+时变参考实验用于进一步考察输入受限条件下控制器对连续变化姿态命令的跟踪能力。图\ref{fig:ch5_sine_roll_base}--图\ref{fig:ch5_sine_yaw_sat} 给出了三轴在时变参考输入下的实测输出结果。与常值参考实验相比，时变工况更容易放大饱和引起的相位滞后和幅值失真；从图中可以看出，加入抗饱和补偿后，三轴曲线在方框标示区域内的偏离程度整体减小，说明该补偿机制对动态跟踪场景同样有效。
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_base.png}
+    \caption{时变参考下滚转通道无抗饱和补偿响应}
+    \label{fig:ch5_sine_roll_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_sat.png}
+    \caption{时变参考下滚转通道抗饱和补偿响应}
+    \label{fig:ch5_sine_roll_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_base.png}
+    \caption{时变参考下俯仰通道无抗饱和补偿响应}
+    \label{fig:ch5_sine_pitch_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_sat.png}
+    \caption{时变参考下俯仰通道抗饱和补偿响应}
+    \label{fig:ch5_sine_pitch_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_base.png}
+    \caption{时变参考下偏航通道无抗饱和补偿响应}
+    \label{fig:ch5_sine_yaw_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_sat.png}
+    \caption{时变参考下偏航通道抗饱和补偿响应}
+    \label{fig:ch5_sine_yaw_sat}
+  \end{minipage}
+\end{figure}
+
+\FloatBarrier
 
 \section{本章小结}[Summary]
 
