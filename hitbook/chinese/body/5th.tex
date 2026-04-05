@@ -1,24 +1,24 @@
 % !Mode:: "TeX:UTF-8"
 
-\chapter{预设阻尼比滑模反步控制方法在三自由度悬浮机系统上的实验验证}
-[Experimental verification of preset damping-ratio sliding-mode backstepping methods on a 3-DOF hover system]
+\chapter{预设阻尼比滑模反步控制方法在四旋翼悬浮机平台上的实验验证}
+[Experimental verification of preset damping-ratio sliding-mode backstepping methods on a quadrotor hover platform]
 
 \section{引言}[Introduction]
 
-本章面向三自由度悬浮机系统（3-DOF Hover System），对前述预设阻尼比滑模反步控制思想进行验证与分析。验证目标主要包括：
+本章面向四旋翼悬浮机平台，对前述预设阻尼比滑模反步控制思想进行验证与分析。验证目标主要包括：
 （1）检查预设阻尼比参数对姿态响应超调与收敛速度的调节规律是否清晰可观察；
 （2）在悬浮机典型任务（固定姿态跟踪、时变姿态跟踪）下评估控制器的跟踪性能；
-（3）给出 Hover 平台的工程实现链路，并比较不同控制方案在实物平台上的实现效果。
+（3）给出 四旋翼悬浮机平台的工程实现链路，并比较不同控制方案在实物平台上的实现效果。
 
-本章全部结果均来自 Hover 平台实物实验数据，其中固定姿态跟踪与时变姿态跟踪结果用于展示不同阻尼比设定下的瞬态差异，并对第2章神经网络预设阻尼比控制方法、第3章二阶指令滤波抗扰方法和第4章抗饱和扩展方法进行统一对比。
+本章全部结果均来自 四旋翼悬浮机平台实物实验数据，其中固定姿态跟踪与时变姿态跟踪结果用于展示不同阻尼比设定下的瞬态差异，并对第2章神经网络预设阻尼比控制方法、第3章二阶指令滤波抗扰方法和第4章抗饱和扩展方法进行统一对比。
 
 在前面的章节中，围绕严格反馈不确定非线性系统的预设阻尼比滑模反步控制问题，分别完成了神经网络补偿基准控制器设计、二阶指令滤波抗扰扩展设计以及考虑输入约束时的抗饱和分析，并从理论上证明了闭环系统的稳定性与阻尼比可调性。通过在误差动力学中引入二阶类李雅普诺夫约束，将阻尼比参数直接嵌入反步递推与滑模鲁棒补偿设计过程中，使系统在存在未建模动态、外部扰动和输入约束等条件下，仍能获得可解释的瞬态响应特性。
 
-本章将在三自由度悬浮机实验对象上验证本文所提预设阻尼比滑模反步控制方法的可行性与有效性。三自由度悬浮机是一类典型的欠阻尼、强耦合、带执行器约束的姿态控制对象，能够较好反映姿态通道耦合、测量噪声和输入饱和等实际工程因素。为此，本章首先对 Hover 平台进行姿态动力学建模，并给出面向控制实现的状态空间表达与输入组合形式；然后将前文提出的神经网络预设阻尼比控制器、二阶指令滤波抗扰控制器以及抗饱和扩展控制器部署到偏航、俯仰和滚转通道；最后通过固定姿态跟踪和时变姿态跟踪结果，比较不同阻尼比设定及不同控制方案下的超调量、收敛速度与稳态精度，从而验证本文方法在实际 Hover 平台上的适用性。
+本章将在四旋翼悬浮机实验对象上验证本文所提预设阻尼比滑模反步控制方法的可行性与有效性。四旋翼悬浮机是一类典型的欠阻尼、强耦合、带执行器约束的姿态控制对象，能够较好反映姿态通道耦合、测量噪声和输入饱和等实际工程因素。为此，本章首先对 四旋翼悬浮机平台进行姿态动力学建模，并给出面向控制实现的状态空间表达与输入组合形式；然后将前文提出的神经网络预设阻尼比控制器、二阶指令滤波抗扰控制器以及抗饱和扩展控制器部署到偏航、俯仰和滚转通道；最后通过固定姿态跟踪和时变姿态跟踪结果，比较不同阻尼比设定及不同控制方案下的超调量、收敛速度与稳态精度，从而验证本文方法在实际 四旋翼悬浮机平台上的适用性。
 
-\section{三自由度悬浮机系统描述}[Description of the 3-DOF hover system]
+\section{四旋翼悬浮机系统描述}[Description of the quadrotor hover system]
 
-本章采用 Quanser 三自由度悬浮机实验装置作为验证平台。整个控制系统由悬浮机本体、计算机、功率放大器和数据采集卡组成，姿态角测量信号由传感器经采集卡送入上位机，控制算法计算得到的电压指令再经功率放大器作用于四个电机，从而实现对机体姿态的闭环调节。实验平台及控制系统的组成形式可分别由后续实物照片和装置图给出。
+本章采用 Quanser 四旋翼悬浮机实验装置作为验证平台。整个控制系统由悬浮机本体、计算机、功率放大器和数据采集卡组成，姿态角测量信号由传感器经采集卡送入上位机，控制算法计算得到的电压指令再经功率放大器作用于四个电机，从而实现对机体姿态的闭环调节。实验平台及控制系统的组成形式可分别由后续实物照片和装置图给出。
 
 \begin{figure}[htbp]
   \centering
@@ -29,7 +29,7 @@
 
 \begin{table}[htbp]
   \centering
-  \caption{Quanser 三自由度悬浮机主要参数}
+  \caption{Quanser 四旋翼悬浮机主要参数}
   \label{tab:ch5_hover_param}
   \begin{tabular}{ccc}
     \toprule
@@ -58,7 +58,7 @@ x_{1,1}=\theta,\quad x_{2,1}=\dot\theta,\qquad
 x_{1,2}=\phi,\quad x_{2,2}=\dot\phi,\qquad
 x_{1,3}=\psi,\quad x_{2,3}=\dot\psi.
 \]
-在考虑外部扰动和未建模动态的情况下，三自由度悬浮机的状态空间模型可写成
+在考虑外部扰动和未建模动态的情况下，四旋翼悬浮机的状态空间模型可写成
 \begin{equation}\label{eq:ch5_hover_model}
 \left\{
 \begin{aligned}
@@ -110,7 +110,7 @@ V_4 &= \frac{u_m}{4K_f}+\frac{u_3}{4K_{\tau}}+\frac{u_2}{2LK_f},
 
 \section{控制器设计}[Controller design]
 
-由式 \eqref{eq:ch5_hover_model} 可知，三自由度悬浮机的俯仰、横滚和偏航通道均可视作带有综合不确定项的二阶系统，因此可将前文面向一般 $n$ 阶严格反馈系统建立的理论结果，落实到 Hover 平台的二阶姿态通道实物控制中。记
+由式 \eqref{eq:ch5_hover_model} 可知，四旋翼悬浮机的俯仰、横滚和偏航通道均可视作带有综合不确定项的二阶系统，因此可将前文面向一般 $n$ 阶严格反馈系统建立的理论结果，落实到 四旋翼悬浮机平台的二阶姿态通道实物控制中。记
 \[
 \eta_1=\theta,\qquad \eta_2=\phi,\qquad \eta_3=\psi,
 \]
@@ -141,11 +141,11 @@ m_{1,i}=\omega_{n,i}^2,\qquad m_{2,i}=2\zeta_i\omega_{n,i}.
 \dot W_i=\Gamma_i\bigl(z_{2,i}S_i(x_i)-\sigma_iW_i\bigr),\qquad
 \Gamma_i=\Gamma_i^{\mathrm T}>0,\ \sigma_i>0,\quad i=1,2,3.
 \end{equation}
-其中 $S_i(x_i)$ 为基函数向量，$W_i$ 为在线调节权值。于是，三自由度悬浮机三个姿态通道的神经网络预设阻尼比控制律可写为
+其中 $S_i(x_i)$ 为基函数向量，$W_i$ 为在线调节权值。于是，四旋翼悬浮机三个姿态通道的神经网络预设阻尼比控制律可写为
 \begin{equation}\label{eq:ch5_pdr_smb}
 u_i=J_i\left(\ddot\eta_{d,i}-\hat h_i(x_i)-m_{2,i}z_{2,i}-\bigl(m_{1,i}-k_{1,i}m_{2,i}\bigr)z_{1,i}\right),\qquad i=1,2,3.
 \end{equation}
-式 \eqref{eq:ch5_pdr_smb} 与式 \eqref{eq:ch5_nn_update} 对应第2章神经网络预设阻尼比控制方法在 Hover 平台上的实物实现，其中 $\hat h_i(x_i)$ 用于在线拟合主要未知非线性，$m_{1,i},m_{2,i}$ 用于塑造预设阻尼比对应的主导二阶动态。为便于工程对比，实验1同时给出传统 SBC+$\zeta$ 基线结果；该基线主要用于比较控制输入抖振与稳态波动，而阻尼比与超调量的可解释调节规律主要结合神经网络方法进行观察。
+式 \eqref{eq:ch5_pdr_smb} 与式 \eqref{eq:ch5_nn_update} 对应第2章神经网络预设阻尼比控制方法在 四旋翼悬浮机平台上的实物实现，其中 $\hat h_i(x_i)$ 用于在线拟合主要未知非线性，$m_{1,i},m_{2,i}$ 用于塑造预设阻尼比对应的主导二阶动态。为便于工程对比，实验1同时给出传统 SBC+$\zeta$ 基线结果；该基线主要用于比较控制输入抖振与稳态波动，而阻尼比与超调量的可解释调节规律主要结合神经网络方法进行观察。
 
 当考虑第3章中的二阶指令滤波抗扰机制时，可把虚拟控制导数近似误差、外部扰动和名义拟合残差统一并入广义抗扰项 $\bar\Delta_i$，并配合滑模鲁棒项处理剩余不确定性。此时，第3章方法在每个姿态通道上的实现形式可写为
 \begin{equation}\label{eq:ch5_do_pdr_smb}
@@ -165,69 +165,123 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
 \right.
 \qquad i=1,2,3.
 \end{equation}
-式 \eqref{eq:ch5_sat_controller} 中，$k_{\mathrm{aw},i}\xi_i$ 为抗饱和补偿项，用于削弱输入限幅对原有预设阻尼比瞬态性能的破坏；$\lambda_i$ 为辅助动态的调节参数。由此得到三个姿态通道的组合控制输入 $u_1,u_2,u_3$ 后，再利用式 \eqref{eq:ch5_voltage_alloc} 即可求得四个电机的电压指令 $V_1,V_2,V_3,V_4$，从而实现基于本文第2章、第3章和第4章理论的 Hover 平台控制器部署。
+式 \eqref{eq:ch5_sat_controller} 中，$k_{\mathrm{aw},i}\xi_i$ 为抗饱和补偿项，用于削弱输入限幅对原有预设阻尼比瞬态性能的破坏；$\lambda_i$ 为辅助动态的调节参数。由此得到三个姿态通道的组合控制输入 $u_1,u_2,u_3$ 后，再利用式 \eqref{eq:ch5_voltage_alloc} 即可求得四个电机的电压指令 $V_1,V_2,V_3,V_4$，从而实现基于本文第2章、第3章和第4章理论的 四旋翼悬浮机平台控制器部署。
 
 \section{实验结果}[Experimental results]
 
-本节围绕 Hover 平台姿态控制开展三组对比实验：（1）神经网络预设阻尼比控制实验；（2）二阶指令滤波抗扰预设阻尼比控制实验；（3）抗饱和预设阻尼比控制实验。每组实验均包含两类跟踪任务：一是稳态目标跟踪，二是时变目标跟踪。通过比较两类任务下的角度响应、跟踪误差与控制输入变化，评估各控制策略在稳定性、抗扰性和输入受限工况下的实际表现。
+本节围绕 四旋翼悬浮机平台姿态控制开展三组对比实验：（1）神经网络预设阻尼比控制实验；（2）二阶指令滤波抗扰预设阻尼比控制实验；（3）抗饱和预设阻尼比控制实验。每组实验均包含两类跟踪任务：一是稳态目标跟踪，二是时变目标跟踪。通过比较两类任务下的角度响应、跟踪误差与控制输入变化，评估各控制策略在稳定性、抗扰性和输入受限工况下的实际表现。
 
 \subsection{实验1：预设阻尼比滑模反步控制实验}[Experiment 1: preset damping-ratio sliding-mode backstepping control]
 
-本实验采用第2章提出的神经网络预设阻尼比控制方法，在 Hover 平台三姿态通道上进行验证。实验包含常值参考与时变参考两类任务，并在三组阻尼比参数（如 $\zeta=0.6,\ 0.707,\ 1.0$）下比较系统响应。为突出本文方法与传统滑模反步基线的差异，图中同时给出 ANN+$\zeta$ 与 SBC+$\zeta$ 两组结果，其中前者对应本文第2章方法，后者作为工程对比基线。
+本实验采用第2章提出的神经网络预设阻尼比控制方法，在四旋翼悬浮机平台三姿态通道上进行验证。实验包含常值参考与时变参考两类任务，并在三组阻尼比参数（如 $\zeta=0.625,\ 0.707,\ 1.000$）下比较系统响应。考虑到纯 SBC+$\zeta$ 结构在实物平台上更容易受到强非线性影响而出现明显抖振，因此本节将其作为代表性对比基线单独展示，而将阻尼比可调性的主结果集中体现在神经网络方法的三组阻尼比实验曲线中。
 
 \subsubsection{常值参考实验}
 
-在常值信号跟踪任务中，这里同时给出神经网络方法与 SBC 方法的三轴实测结果。图\ref{fig:ch5_ann_const_pitch}--图\ref{fig:ch5_ann_const_yaw} 将三组阻尼比 $\zeta=1.000$、$\zeta=0.707$ 与 $\zeta=0.625$ 的实验数据绘制在同一张图中，其中相同颜色表示相同阻尼比，不同线型对应不同控制方法。需要说明的是，神经网络方法的曲线主要用于观察预设阻尼比与超调量之间的对应关系，而 SBC 基线由于切换项带来的抖振更明显，其曲线更适合用于比较控制平滑性、稳态波动与工程实现代价。可以看到，阻尼比较小时神经网络方法的姿态通道上升更快且峰值变化更清晰；随着阻尼比增大，输出曲线趋于平缓，表明本文提出的阻尼比调节思想在 Hover 平台上具有可观测的实验效果。相比之下，SBC 方法在相同阻尼比设定下更容易出现高频抖动，导致超调峰值不如神经网络方法直观，但也更能反映传统滑模反步在实物实现中的输入振荡问题。
+在常值信号跟踪任务中，图\ref{fig:ch5_sbc_const_pitch}--图\ref{fig:ch5_ann_const_yaw} 左列给出了纯 SBC+$\zeta$ 方法在三姿态通道上的实测结果，右列给出了神经网络预设阻尼比控制方法在相同通道上的实验结果。可以看到，在强非线性实物平台上，纯 SBC+$\zeta$ 方案虽然能够维持基本跟踪，但更容易在稳态附近出现较明显的高频抖振，这会掩盖阻尼比调节对输出瞬态形态的影响。相比之下，神经网络方法在三组阻尼比 $\zeta=1.000$、$\zeta=0.707$ 与 $\zeta=0.625$ 下能够更清晰地呈现出上升快慢、峰值变化和响应平缓程度的差异，从而更好地体现本文阻尼比可调设计的核心特点。
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_const/ch5_ann_const_pitch.png}
-  \caption{ANN 与 SBC 方法下俯仰通道常值参考跟踪结果}
-  \label{fig:ch5_ann_const_pitch}
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_pitch.png}
+    \caption{纯 SBC+$\zeta$ 方法下俯仰通道常值参考跟踪结果}
+    \label{fig:ch5_sbc_const_pitch}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_pitch.png}
+    \caption{神经网络方法下俯仰通道常值参考跟踪结果}
+    \label{fig:ch5_ann_const_pitch}
+  \end{minipage}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_const/ch5_ann_const_roll.png}
-  \caption{ANN 与 SBC 方法下滚转通道常值参考跟踪结果}
-  \label{fig:ch5_ann_const_roll}
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_roll.png}
+    \caption{纯 SBC+$\zeta$ 方法下滚转通道常值参考跟踪结果}
+    \label{fig:ch5_sbc_const_roll}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_roll.png}
+    \caption{神经网络方法下滚转通道常值参考跟踪结果}
+    \label{fig:ch5_ann_const_roll}
+  \end{minipage}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_const/ch5_ann_const_yaw.png}
-  \caption{ANN 与 SBC 方法下偏航通道常值参考跟踪结果}
-  \label{fig:ch5_ann_const_yaw}
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_yaw.png}
+    \caption{纯 SBC+$\zeta$ 方法下偏航通道常值参考跟踪结果}
+    \label{fig:ch5_sbc_const_yaw}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_yaw.png}
+    \caption{神经网络方法下偏航通道常值参考跟踪结果}
+    \label{fig:ch5_ann_const_yaw}
+  \end{minipage}
 \end{figure}
 \FloatBarrier
 
 \subsubsection{时变参考实验}
 
-在时变信号跟踪任务中，采用正弦参考对三姿态通道进行动态跟踪。这里同样给出 ANN 与 SBC 两种方法的三轴实测结果。图\ref{fig:ch5_ann_sine_pitch}--图\ref{fig:ch5_ann_sine_yaw} 将三组阻尼比的时变响应绘制在同一坐标系中，可以更直观看到不同阻尼比设定对相位滞后、幅值变化与动态恢复过程的影响。其中，SBC 方法的时变实验数据采用 $\zeta=1.000$、$\zeta=0.707$ 与 $\zeta=0.600$ 三组参数，其整体趋势与本文其余工况下的阻尼比调节规律保持一致。总体上看，较小阻尼比对应的动态响应更灵敏，而较大阻尼比下输出曲线更平缓；神经网络方法在不同阻尼比下的相位与幅值差异更便于直接观察，而 SBC 方法则更适合体现切换控制在时变跟踪中的抖振和波动特征。因此，本实验中关于“阻尼比可解释调节”的结论主要依据 ANN 曲线给出，而 SBC 曲线主要作为工程实现对比基线。
+在时变信号跟踪任务中，图\ref{fig:ch5_sbc_sine_pitch}--图\ref{fig:ch5_ann_sine_yaw} 左列给出了纯 SBC+$\zeta$ 方法的三轴时变跟踪结果，右列给出了神经网络方法的对应结果。可以看到，纯 SBC+$\zeta$ 在时变工况下同样更容易出现抖振和局部波动，使不同阻尼比对应的动态差异不够直观；而神经网络方法在三组阻尼比设定下能够更清楚地反映相位滞后、幅值变化与动态恢复过程的不同趋势，说明引入神经网络对主要未知非线性进行拟合后，预设阻尼比设计在时变姿态跟踪任务中同样具有较好的可解释性和可观察性。
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_pitch.png}
-  \caption{ANN 与 SBC 方法下俯仰通道时变参考跟踪结果}
-  \label{fig:ch5_ann_sine_pitch}
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_pitch.png}
+    \caption{纯 SBC+$\zeta$ 方法下俯仰通道时变参考跟踪结果}
+    \label{fig:ch5_sbc_sine_pitch}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_pitch.png}
+    \caption{神经网络方法下俯仰通道时变参考跟踪结果}
+    \label{fig:ch5_ann_sine_pitch}
+  \end{minipage}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_roll.png}
-  \caption{ANN 与 SBC 方法下滚转通道时变参考跟踪结果}
-  \label{fig:ch5_ann_sine_roll}
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_roll.png}
+    \caption{纯 SBC+$\zeta$ 方法下滚转通道时变参考跟踪结果}
+    \label{fig:ch5_sbc_sine_roll}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_roll.png}
+    \caption{神经网络方法下滚转通道时变参考跟踪结果}
+    \label{fig:ch5_ann_sine_roll}
+  \end{minipage}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_yaw.png}
-  \caption{ANN 与 SBC 方法下偏航通道时变参考跟踪结果}
-  \label{fig:ch5_ann_sine_yaw}
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_yaw.png}
+    \caption{纯 SBC+$\zeta$ 方法下偏航通道时变参考跟踪结果}
+    \label{fig:ch5_sbc_sine_yaw}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_yaw.png}
+    \caption{神经网络方法下偏航通道时变参考跟踪结果}
+    \label{fig:ch5_ann_sine_yaw}
+  \end{minipage}
 \end{figure}
 \FloatBarrier
 
-为便于对 Hover 平台三轴实验中的参数设置与预设阻尼比实现效果进行统一说明，表\ref{tab:ch5_exp1_sigma} 给出了实验1采用的典型参数组及对应指标。
+为便于对 四旋翼悬浮机平台三轴实验中的参数设置与预设阻尼比实现效果进行统一说明，表\ref{tab:ch5_exp1_sigma} 给出了实验1采用的典型参数组及对应指标。
 
 \begin{table}[htbp]
   \centering
@@ -264,7 +318,7 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
 
 \subsection{实验2：二阶指令滤波抗扰预设阻尼比滑模反步控制实验}[Experiment 2: command-filter anti-disturbance preset damping-ratio SMB control]
 
-本实验采用第3章提出的二阶指令滤波抗扰预设阻尼比滑模反步控制器，在与实验1相同的姿态命令下开展对比验证。为突出抗扰设计对 Hover 平台姿态跟踪性能的改善作用，左列给出无抗扰补偿时的实验结果，右列给出加入二阶指令滤波抗扰机制后的实验结果；每幅图内同时保留三组阻尼比曲线，用于比较抗扰能力与阻尼比调节效果的综合表现。
+本实验采用第3章提出的二阶指令滤波抗扰预设阻尼比滑模反步控制器，在与实验1相同的姿态命令下开展对比验证。为突出抗扰设计对 四旋翼悬浮机平台姿态跟踪性能的改善作用，左列给出无抗扰补偿时的实验结果，右列给出加入二阶指令滤波抗扰机制后的实验结果；每幅图内同时保留三组阻尼比曲线，用于比较抗扰能力与阻尼比调节效果的综合表现。
 
 \subsubsection{常值参考实验}
 
@@ -407,7 +461,7 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
 
 \subsection{实验3：抗饱和预设阻尼比滑模反步控制实验}[Experiment 3: anti-windup preset damping-ratio SMB control]
 
-本实验采用第4章的抗饱和预设阻尼比滑模反步控制器，在输入限幅条件下开展 Hover 平台三轴姿态对比实验。实验数据来自常值参考与时变参考两组实测结果，其中 `base` 表示未加入抗饱和补偿，`sat` 表示加入抗饱和辅助动态后的控制结果。为便于比较抗饱和补偿对不同阻尼比设置的影响，图中统一给出 $\zeta=1.000$、$\zeta=0.707$ 与 $\zeta=0.625$ 三组实验曲线。
+本实验采用第4章的抗饱和预设阻尼比滑模反步控制器，在输入限幅条件下开展 四旋翼悬浮机平台三轴姿态对比实验。实验数据来自常值参考与时变参考两组实测结果，其中 `base` 表示未加入抗饱和补偿，`sat` 表示加入抗饱和辅助动态后的控制结果。为便于比较抗饱和补偿对不同阻尼比设置的影响，图中统一给出 $\zeta=1.000$、$\zeta=0.707$ 与 $\zeta=0.625$ 三组实验曲线。
 
 从实验现象看，在执行器接近饱和的区间内，未加入抗饱和补偿时，姿态输出更容易出现响应滞后、恢复较慢或局部振荡增强；加入抗饱和补偿后，输出曲线在相同阻尼比设定下通常更接近目标响应轨迹，饱和后的恢复过程也更平滑。为突出这一差异，以下各图均用方框标出了抗饱和补偿作用较明显的时间区间。
 
@@ -435,6 +489,22 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_u_base.png}
+    \caption{常值参考下滚转通道无抗饱和补偿控制输入}
+    \label{fig:ch5_const_roll_u_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_u_sat.png}
+    \caption{常值参考下滚转通道抗饱和补偿控制输入}
+    \label{fig:ch5_const_roll_u_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
     \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_base.png}
     \caption{常值参考下俯仰通道无抗饱和补偿响应}
     \label{fig:ch5_const_pitch_base}
@@ -451,6 +521,22 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_u_base.png}
+    \caption{常值参考下俯仰通道无抗饱和补偿控制输入}
+    \label{fig:ch5_const_pitch_u_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_u_sat.png}
+    \caption{常值参考下俯仰通道抗饱和补偿控制输入}
+    \label{fig:ch5_const_pitch_u_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
     \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_base.png}
     \caption{常值参考下偏航通道无抗饱和补偿响应}
     \label{fig:ch5_const_yaw_base}
@@ -460,6 +546,22 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
     \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_sat.png}
     \caption{常值参考下偏航通道抗饱和补偿响应}
     \label{fig:ch5_const_yaw_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_u_base.png}
+    \caption{常值参考下偏航通道无抗饱和补偿控制输入}
+    \label{fig:ch5_const_yaw_u_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_u_sat.png}
+    \caption{常值参考下偏航通道抗饱和补偿控制输入}
+    \label{fig:ch5_const_yaw_u_sat}
   \end{minipage}
 \end{figure}
 
@@ -488,6 +590,22 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_u_base.png}
+    \caption{时变参考下滚转通道无抗饱和补偿控制输入}
+    \label{fig:ch5_sine_roll_u_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_u_sat.png}
+    \caption{时变参考下滚转通道抗饱和补偿控制输入}
+    \label{fig:ch5_sine_roll_u_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
     \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_base.png}
     \caption{时变参考下俯仰通道无抗饱和补偿响应}
     \label{fig:ch5_sine_pitch_base}
@@ -497,6 +615,22 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
     \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_sat.png}
     \caption{时变参考下俯仰通道抗饱和补偿响应}
     \label{fig:ch5_sine_pitch_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_u_base.png}
+    \caption{时变参考下俯仰通道无抗饱和补偿控制输入}
+    \label{fig:ch5_sine_pitch_u_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_u_sat.png}
+    \caption{时变参考下俯仰通道抗饱和补偿控制输入}
+    \label{fig:ch5_sine_pitch_u_sat}
   \end{minipage}
 \end{figure}
 
@@ -516,11 +650,27 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \end{minipage}
 \end{figure}
 
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_u_base.png}
+    \caption{时变参考下偏航通道无抗饱和补偿控制输入}
+    \label{fig:ch5_sine_yaw_u_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_u_sat.png}
+    \caption{时变参考下偏航通道抗饱和补偿控制输入}
+    \label{fig:ch5_sine_yaw_u_sat}
+  \end{minipage}
+\end{figure}
+
 \FloatBarrier
 
 \section{本章小结}[Summary]
 
-本章围绕三自由度悬浮机系统对预设阻尼比滑模反步控制思想进行了实验验证与实现总结。首先参考 Hover 平台的典型实验装置，给出了姿态动力学模型、状态空间表达和控制输入组合方式，为控制器实现提供统一入口；随后总结了上位机、DAQ、功率放大器与四电机平台构成的控制实现链路；最后基于 Hover 平台的固定姿态与时变姿态跟踪任务，分别给出了神经网络预设阻尼比控制、二阶指令滤波抗扰控制和抗饱和扩展控制三组实物实验结果，说明了不同阻尼比设定对超调、振荡衰减速度和相位滞后的影响规律，并验证了抗扰与抗饱和设计的工程有效性。
+本章围绕四旋翼悬浮机系统对预设阻尼比滑模反步控制思想进行了实验验证与实现总结。首先参考 四旋翼悬浮机平台的典型实验装置，给出了姿态动力学模型、状态空间表达和控制输入组合方式，为控制器实现提供统一入口；随后总结了上位机、DAQ、功率放大器与四电机平台构成的控制实现链路；最后基于 四旋翼悬浮机平台的固定姿态与时变姿态跟踪任务，分别给出了神经网络预设阻尼比控制、二阶指令滤波抗扰控制和抗饱和扩展控制三组实物实验结果，说明了不同阻尼比设定对超调、振荡衰减速度和相位滞后的影响规律，并验证了抗扰与抗饱和设计的工程有效性。
 
 % Local Variables:
 % TeX-master: "../thesis"

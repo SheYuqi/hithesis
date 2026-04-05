@@ -35,9 +35,9 @@ FILTER_ZETA = 0.90
 FILTER_WN = 80.0
 ROBUST_GAIN = 0.04
 SAT_WIDTH = 0.18
-U_MAX = 0.18
-AW_LAMBDA = 25.0
-AW_GAIN = -30.0
+U_MAX = 0.14
+AW_LAMBDA = 12.0
+AW_GAIN = -50.0
 
 
 def sat(x: float) -> float:
@@ -212,12 +212,12 @@ def build_figures(output_dir: Path, duration: float = 5.0, dt: float = 0.001, om
 
     make_summary_table(cases, omega_n, step_noaw, step_aw, sine_noaw, sine_aw, output_dir)
 
-    plot_family("ch4_step_noaw_response", step_noaw, "y", "跟踪输出", (0.50, 0.85), output_dir)
-    plot_family("ch4_step_aw_response", step_aw, "y", "跟踪输出", (0.50, 0.85), output_dir)
-    plot_family("ch4_step_noaw_error", step_noaw, "e", "跟踪误差", (0.50, 0.85), output_dir)
-    plot_family("ch4_step_aw_error", step_aw, "e", "跟踪误差", (0.50, 0.85), output_dir)
-    plot_family("ch4_step_noaw_control", step_noaw, "u", "控制输入", (0.50, 0.85), output_dir)
-    plot_family("ch4_step_aw_control", step_aw, "u", "控制输入", (0.50, 0.85), output_dir)
+    plot_family("ch4_step_noaw_response", step_noaw, "y", "跟踪输出", (0.50, 0.95), output_dir)
+    plot_family("ch4_step_aw_response", step_aw, "y", "跟踪输出", (0.50, 0.95), output_dir)
+    plot_family("ch4_step_noaw_error", step_noaw, "e", "跟踪误差", (0.50, 0.95), output_dir)
+    plot_family("ch4_step_aw_error", step_aw, "e", "跟踪误差", (0.50, 0.95), output_dir)
+    plot_family("ch4_step_noaw_control", step_noaw, "u", "控制输入", (0.50, 0.95), output_dir)
+    plot_family("ch4_step_aw_control", step_aw, "u", "控制输入", (0.50, 0.95), output_dir)
 
     plot_family("ch4_sine_noaw_response", sine_noaw, "y", "跟踪输出", (0.50, 1.00), output_dir)
     plot_family("ch4_sine_aw_response", sine_aw, "y", "跟踪输出", (0.50, 1.00), output_dir)

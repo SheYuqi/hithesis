@@ -4,7 +4,7 @@
 
 \section{引言}[Introduction]
 
-针对具有严格反馈结构的确定性非线性系统，标准反步控制法通过递归构造虚拟控制量与李雅普诺夫函数，能够实现稳定控制。面向含未知不确定项与外部扰动的实际对象，滑模反步方法进一步提升了系统抗干扰能力，但传统设计仍主要关注“稳定或收敛”，对阻尼比等动态性能指标的显式预设能力相对不足。基于这一问题，本章在研究系统稳定性的同时，将阻尼比作为核心动态指标纳入控制器设计，面向一类严格反馈形式的不确定非线性系统构建预设阻尼比滑模反步控制方法。首先，将阻尼比的讨论从阶跃响应扩展到时变参考跟踪场景，并给出相应定义与计算表达；随后利用经典二阶系统阻尼比的特征，建立二阶类李雅普诺夫稳定性判据。该判据表明，当相应二阶不等式成立时，系统输出能够以近似预设的阻尼比稳定跟踪目标信号，并可据此形成参数设置规则。考虑到 Hover 姿态平台存在较强的未建模非线性、通道耦合、参数摄动以及执行机构非理想因素，若仅依赖固定模型与大增益滑模项，为覆盖这些不确定性往往需要提高切换强度，从而在离散采样和执行器带宽受限条件下更容易引起控制输入振荡。为此，本章在预设阻尼比滑模反步框架中引入普通径向基神经网络，对系统主要未知非线性进行在线逼近，并将神经网络逼近残差与外部扰动统一交由滑模鲁棒项处理。通过这种“神经网络名义补偿 + 滑模鲁棒抑制”的结构，可在保持闭环稳定性的同时降低对大切换增益的依赖。进一步地，本文通过有限差分近似虚拟控制导数，构造满足二阶类李雅普诺夫条件的闭环误差系统，并在理论上证明跟踪误差最终有界且具备与阻尼比设定一致的瞬态特性，最后完成闭环稳定性分析。为验证所提方法的有效性，针对 Hover 姿态系统开展两组仿真实验，分别展示对固定姿态信号和时变姿态信号的跟踪效果，给出了符合参数规则的三种阻尼比实现，实验结果验证了该控制方法的有效性。
+针对具有严格反馈结构的确定性非线性系统，标准反步控制法通过递归构造虚拟控制量与李雅普诺夫函数，能够实现稳定控制。面向含未知不确定项与外部扰动的实际对象，滑模反步方法进一步提升了系统抗干扰能力，但传统设计仍主要关注“稳定或收敛”，对阻尼比等动态性能指标的显式预设能力相对不足。基于这一问题，本章在研究系统稳定性的同时，将阻尼比作为核心动态指标纳入控制器设计，面向一类严格反馈形式的不确定非线性系统构建预设阻尼比滑模反步控制方法。首先，将阻尼比的讨论从阶跃响应扩展到时变参考跟踪场景，并给出相应定义与计算表达；随后利用经典二阶系统阻尼比的特征，建立二阶类李雅普诺夫稳定性判据。该判据表明，当相应二阶不等式成立时，系统输出能够以近似预设的阻尼比稳定跟踪目标信号，并可据此形成参数设置规则。考虑到 四旋翼悬浮机平台存在较强的未建模非线性、通道耦合、参数摄动以及执行机构非理想因素，若仅依赖固定模型与大增益滑模项，为覆盖这些不确定性往往需要提高切换强度，从而在离散采样和执行器带宽受限条件下更容易引起控制输入振荡。为此，本章在预设阻尼比滑模反步框架中引入普通径向基神经网络，对系统主要未知非线性进行在线逼近，并将神经网络逼近残差与外部扰动统一交由滑模鲁棒项处理。通过这种“神经网络名义补偿 + 滑模鲁棒抑制”的结构，可在保持闭环稳定性的同时降低对大切换增益的依赖。进一步地，本文通过有限差分近似虚拟控制导数，构造满足二阶类李雅普诺夫条件的闭环误差系统，并在理论上证明跟踪误差最终有界且具备与阻尼比设定一致的瞬态特性，最后完成闭环稳定性分析。为验证所提方法的有效性，针对 四旋翼悬浮机平台姿态系统开展两组仿真实验，分别展示对固定姿态信号和时变姿态信号的跟踪效果，给出了符合参数规则的三种阻尼比实现，实验结果验证了该控制方法的有效性。
 
 \section{系统描述及预备知识}[System description and preliminaries]
 
@@ -54,7 +54,7 @@ $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
 
 此外，严格反馈形式虽然是理论推导的标准结构，但并不意味着工程对象天然满足该形式。实际应用中通常需要通过坐标变换、近似解耦或层次化建模将对象改写到该框架下。只要改写后能保持输入通道方向与误差传播关系，本章给出的控制器设计与稳定性分析结论依然可以沿用。
 
-以本文 Hover 姿态平台为背景，系统在不同姿态与工作点下通常伴随气动力矩变化、摩擦与死区影响以及建模参数漂移，这些因素在控制上往往表现为难以精确解析描述的复合非线性项。若把这类复杂效应全部压到滑模切换项中处理，虽然能够提高鲁棒性，但往往需要更大的切换增益，并可能在实际采样实现中加剧输入抖动。因此，本章选择用神经网络对主要未知非线性进行在线统一逼近，再由滑模项处理剩余误差与扰动，以兼顾非线性补偿能力、鲁棒性和控制输入平滑性。
+以本文 四旋翼悬浮机平台为背景，系统在不同姿态与工作点下通常伴随气动力矩变化、摩擦与死区影响以及建模参数漂移，这些因素在控制上往往表现为难以精确解析描述的复合非线性项。若把这类复杂效应全部压到滑模切换项中处理，虽然能够提高鲁棒性，但往往需要更大的切换增益，并可能在实际采样实现中加剧输入抖动。因此，本章选择用神经网络对主要未知非线性进行在线统一逼近，再由滑模项处理剩余误差与扰动，以兼顾非线性补偿能力、鲁棒性和控制输入平滑性。
 
 \subsection{神经网络逼近与权值误差定义}[Preliminaries of neural-network approximation]
 
@@ -62,6 +62,19 @@ $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
 \begin{equation}\label{eq:ch2_nn_general}
   \hat f_i(\bar x_i)=W_i^{\mathrm T}S_i(\bar x_i),\qquad i=1,2,\ldots,n.
 \end{equation}
+
+\begin{lemma}\label{lem:ch2_nn}
+对任意紧集 $\Omega_i\subset \mathbb{R}^i$，若未知非线性函数 $f_i(\bar x_i)$ 在 $\Omega_i$ 上连续，则存在理想权值向量 $W_i^\ast\in\mathbb{R}^{l_i}$ 以及有界残差函数 $r_i(\bar x_i)$，使得
+\begin{equation}\label{eq:ch2_nn_lemma}
+  f_i(\bar x_i)=W_i^{\ast\mathrm T}S_i(\bar x_i)+r_i(\bar x_i),\qquad \forall\, \bar x_i\in \Omega_i,
+\end{equation}
+并且存在正常数 $\bar r_i>0$ 满足
+\begin{equation}\label{eq:ch2_nn_residual}
+  |r_i(\bar x_i)|\le \bar r_i,\qquad \forall\, \bar x_i\in \Omega_i.
+\end{equation}
+\end{lemma}
+
+引理~\ref{lem:ch2_nn}表明，在紧集范围内，未知非线性 $f_i(\bar x_i)$ 可以分解为“理想神经网络输出 + 有界逼近残差”两部分。对本文而言，这一结论的作用不是单独研究神经网络本身，而是为后续反步递推中的未知非线性补偿提供统一表达：神经网络用于拟合主要非线性部分，而无法完全消除的剩余误差则并入鲁棒分析。
 
 根据神经网络的逼近性质，对任意紧集 $\Omega_i\subset\mathbb{R}^i$，存在理想权值向量 $W_i^\ast$ 和有界逼近残差 $r_i(\bar x_i)$，使得
 \begin{equation}\label{eq:ch2_nn_approx}
@@ -74,6 +87,72 @@ $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
 
 由式\eqref{eq:ch2_nn_general}--\eqref{eq:ch2_weight_error}可知，未知非线性可以分解为“当前神经网络估计 + 权值误差项 + 最优逼近残差”三部分。这一分解非常关键，因为后续李雅普诺夫推导中的交叉项正是通过权值自适应律来抵消，而无法完全消除的残差则进入最终有界项。
 
+\begin{figure}[htbp]
+  \centering
+  \resizebox{0.88\textwidth}{!}{%
+  \begin{tikzpicture}[
+      >=latex,
+      x=1cm,
+      y=1cm,
+      input/.style={circle, fill=black, inner sep=1.25pt},
+      basis/.style={draw, rounded corners=2pt, minimum width=2.0cm, minimum height=0.62cm, align=center, fill=blue!5, draw=blue!45!black},
+      sum/.style={draw, circle, minimum size=1.05cm, align=center},
+      block/.style={draw, rounded corners=2pt, minimum width=2.9cm, minimum height=0.92cm, align=center, fill=blue!5, draw=blue!45!black},
+      updateblock/.style={draw, rounded corners=2pt, minimum width=4.0cm, minimum height=1.0cm, align=center},
+      line/.style={->, line width=0.8pt, draw=black!75},
+      auxline/.style={->, line width=0.75pt, draw=black!60},
+      guide/.style={densely dashed, rounded corners=3pt, draw=blue!50, line width=0.9pt}
+    ]
+    \node[input,label=left:$x_1$] (x1) at (0.0,2.0) {};
+    \node[input,label=left:$x_2$] (x2) at (0.0,1.0) {};
+    \node at (0.0,0.05) {$\vdots$};
+    \node[input,label=left:$x_i$] (xi) at (0.0,-1.0) {};
+    \node[align=center] at (1.5,2.75) {$\bar x_i=[x_1,\ldots,x_i]^{\mathrm T}$};
+
+    \node[basis] (s1) at (4.6,2.0) {$S_{i,1}(\bar x_i)$};
+    \node[basis] (s2) at (4.6,1.0) {$S_{i,2}(\bar x_i)$};
+    \node at (4.6,0.0) {$\vdots$};
+    \node[basis] (sl) at (4.6,-1.0) {$S_{i,l_i}(\bar x_i)$};
+
+    \draw[guide] (2.9,2.55) rectangle (6.3,-1.45);
+    \node[align=center] at (4.6,-2.0) {基函数向量\\$S_i(\bar x_i)$};
+
+    \node[sum] (sum) at (8.2,0.5) {$\sum$};
+    \node[align=center] at (8.5,-0.45) {$W_i^{\mathrm T}S_i(\bar x_i)$};
+
+    \node[block] (fhat) at (11.5,0.5) {$\hat f_i(\bar x_i)$};
+    \node[updateblock] (update) at (8.2,-3.25) {权值更新律\\$\dot W_i=\Gamma_i z_{2,i}S_i(\bar x_i)-\sigma_i\Gamma_i W_i$};
+
+    \draw[auxline] (x1) -- (s1.west);
+    \draw[auxline] (x1) -- (s2.west);
+    \draw[auxline] (x1) -- (sl.west);
+    \draw[auxline] (x2) -- (s1.west);
+    \draw[auxline] (x2) -- (s2.west);
+    \draw[auxline] (x2) -- (sl.west);
+    \draw[auxline] (xi) -- (s1.west);
+    \draw[auxline] (xi) -- (s2.west);
+    \draw[auxline] (xi) -- (sl.west);
+
+    \draw[line] (s1.east) -- (sum.west);
+    \draw[line] (s2.east) -- (sum.west);
+    \draw[line] (sl.east) -- (sum.west);
+    \node[fill=white, inner sep=1pt] at (6.7,1.55) {$w_{i,1}$};
+    \node[fill=white, inner sep=1pt] at (6.75,0.8) {$w_{i,2}$};
+    \node[fill=white, inner sep=1pt] at (6.95,-0.7) {$w_{i,l_i}$};
+    \draw[line] (sum.east) -- (fhat.west);
+
+    \draw[line] (11.5,0.04) -- (11.5,-0.95);
+    \draw[line] (11.5,-0.95) -- (10.2,-0.95);
+    \node[right, fill=white, inner sep=1pt] at (10.75,-0.78) {$z_{2,i}$};
+    \draw[line] (10.2,-0.95) -- (10.2,-3.25);
+    \draw[line] (8.2,-2.75) -- (8.2,-0.03);
+  \end{tikzpicture}%
+  }
+  \caption{用于未知非线性补偿的神经网络结构示意图}
+  \label{fig:ch2_nn_structure}
+\end{figure}
+
+图\ref{fig:ch2_nn_structure}给出了式\eqref{eq:ch2_nn_general}--\eqref{eq:ch2_weight_error}对应的结构示意。该图中，状态向量 $\bar x_i$ 进入基函数层生成 $S_i(\bar x_i)$，再经权值向量 $W_i$ 线性组合得到未知非线性的在线估计 $\hat f_i(\bar x_i)$。与此同时，误差变量 $z_{2,i}$ 通过权值更新律参与调节 $W_i$，从而在闭环运行过程中不断修正神经网络对主要未知非线性的拟合结果。这样，神经网络主要承担“名义非线性补偿”的作用，而剩余的逼近误差与外部扰动则由后续滑模鲁棒项统一处理。
 
 
 \subsection{阻尼比定义}[Damping ratio definition]
