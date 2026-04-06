@@ -94,6 +94,19 @@ def make_reference(mode: str, axis: str, t, traces):
     return experimental_sine_reference(axis, t)
 
 
+def paired_ylim(mode: str, axis: str):
+    all_series = []
+    for side in ['left', 'right']:
+        t, traces = load_column(mode, side, axis)
+        y_ref = make_reference(mode, axis, t, traces)
+        all_series.extend(list(traces.values()))
+        all_series.append(y_ref)
+    ymin = min(float(y.min()) for y in all_series)
+    ymax = max(float(y.max()) for y in all_series)
+    span = max(ymax - ymin, 1e-3)
+    return ymin - 0.08 * span, ymax + 0.08 * span
+
+
 def region_bounds(t, traces, window):
     t0, t1 = window
     mask = (t >= t0) & (t <= t1)
@@ -112,10 +125,8 @@ def plot_single(mode: str, side: str, axis: str):
     for label in ['1.000', '0.707', '0.625']:
         ax.plot(t, traces[label], label=fr'$\zeta={label}$', **STYLES[label])
     ax.set_xlim(0.0, float(t[-1]))
-    ymin = min(float(y.min()) for y in list(traces.values()) + [y_ref])
-    ymax = max(float(y.max()) for y in list(traces.values()) + [y_ref])
-    span = max(ymax - ymin, 1e-3)
-    ax.set_ylim(ymin - 0.08 * span, ymax + 0.08 * span)
+    ylow, yhigh = paired_ylim(mode, axis)
+    ax.set_ylim(ylow, yhigh)
     ax.set_xlabel('Time (s)')
     ax.set_ylabel(LABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)

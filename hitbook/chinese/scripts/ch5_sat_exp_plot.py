@@ -19,7 +19,8 @@ COLORS = {'1': '#0000FF', '0.707': '#FF0000', '0.625': '#00CC00'}
 LABELS = {'roll': 'Roll angle (deg)', 'pitch': 'Pitch angle (deg)', 'yaw': 'Yaw angle (deg)'}
 U_LABELS = {'roll': 'Roll control input (V)', 'pitch': 'Pitch control input (V)', 'yaw': 'Yaw control input (V)'}
 FOCUS_OVERRIDES = {
-    ('constant_sat', 'pitch', 'output'): {'window': (0.0, 10.8), 'y_bounds': (2.7, 5.4)},
+    ('constant_sat', 'pitch', 'output'): {'window': (0.0, 10.8), 'y_bounds': (2.7, 5.4), 'inset_rect': [0.10, 0.16, 0.42, 0.28]},
+    ('constant_sat', 'yaw', 'output'): {'window': (0.0, 12.0), 'y_bounds': (2.5, 6.5), 'inset_rect': [0.10, 0.16, 0.42, 0.28]},
 }
 DEFAULT_INSET_RECT = [0.13, 0.08, 0.50, 0.40]
 
@@ -53,7 +54,7 @@ def experimental_sine_reference(axis, t):
 
 def experimental_constant_reference(axis, t):
     if axis == 'yaw':
-        return np.full_like(t, 3.0)
+        return np.full_like(t, 6.0)
     if axis == 'pitch':
         return np.full_like(t, 5.0)
     if axis == 'roll':
@@ -182,6 +183,34 @@ def remap_time_segment(t, start_t, end_t, target_start, target_end):
 
 
 
+def paired_output_ylim(mode: str, axis: str):
+    all_series = []
+    for variant in ['base', 'sat']:
+        t, traces = load_axis(mode, variant, axis)
+        if mode == 'constant_sat':
+            y_ref = experimental_constant_reference(axis, t)
+        else:
+            y_ref = experimental_sine_reference(axis, t)
+        all_series.extend(list(traces.values()))
+        all_series.append(y_ref)
+    ymin = min(float(y.min()) for y in all_series)
+    ymax = max(float(y.max()) for y in all_series)
+    span = max(ymax - ymin, 1e-3)
+    return ymin - 0.08 * span, ymax + 0.08 * span
+
+
+def paired_control_ylim(mode: str, axis: str):
+    all_series = []
+    for variant in ['base', 'sat']:
+        _, traces = load_control(mode, variant, axis)
+        traces = scale_controls(traces, axis=axis, variant=variant)
+        all_series.extend(list(traces.values()))
+    ymin = min(float(y.min()) for y in all_series)
+    ymax = max(float(y.max()) for y in all_series)
+    span = max(ymax - ymin, 1e-3)
+    return ymin - 0.08 * span, ymax + 0.08 * span
+
+
 def pick_focus_window(mode: str, axis: str):
     t, base_traces = load_control(mode, 'base', axis)
     base_traces = scale_controls(base_traces, axis=axis, variant='base')
@@ -269,11 +298,8 @@ def plot_single(mode: str, axis: str, variant: str):
     for zeta_key, zeta_label in DAMPINGS:
         ax.plot(t, traces[zeta_key], label=fr'$\zeta={zeta_label}$', **styles[zeta_key])
     ax.set_xlim(0.0, t[-1])
-    series_for_limits = list(traces.values()) + ([y_ref] if y_ref is not None else [])
-    ymin = min(float(y.min()) for y in series_for_limits)
-    ymax = max(float(y.max()) for y in series_for_limits)
-    span = max(ymax - ymin, 1e-3)
-    ax.set_ylim(ymin - 0.08 * span, ymax + 0.08 * span)
+    ylow, yhigh = paired_output_ylim(mode, axis)
+    ax.set_ylim(ylow, yhigh)
     ax.set_xlabel('Time (s)')
     ax.set_ylabel(LABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
@@ -319,21 +345,22 @@ def plot_control(mode: str, axis: str, variant: str):
     ax.axhline(SAT_LEVEL, color='black', linestyle=':', linewidth=1.4, label=r'$u_{\max}$')
     ax.axhline(-SAT_LEVEL, color='black', linestyle=':', linewidth=1.4)
     ax.set_xlim(0.0, t[-1])
-    ymin = min(float(y.min()) for y in traces.values())
-    ymax = max(float(y.max()) for y in traces.values())
-    span = max(ymax - ymin, 1e-3)
-    ax.set_ylim(ymin - 0.08 * span, ymax + 0.08 * span)
+    if axis == 'roll':
+        ax.set_ylim(-0.2, 0.55)
+    else:
+        ylow, yhigh = paired_control_ylim(mode, axis)
+        ax.set_ylim(ylow, yhigh)
     ax.set_xlabel('Time (s)')
     ax.set_ylabel(U_LABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
     ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
     leg = ax.legend(loc='lower right', frameon=True, fancybox=False, edgecolor='0.35')
     leg.get_frame().set_linewidth(0.8)
-    ax.text(0.03, 0.95, reference_label(axis), transform=ax.transAxes, va='top', ha='left',
-            bbox=dict(boxstyle='square,pad=0.20', fc='white', ec='0.35', lw=0.8), fontsize=10)
     if mode in ('constant_sat', 'sine_sat'):
-        focus_window = pick_focus_window(mode, axis)
-        add_focus_box_and_inset(ax, custom_t, traces, focus_window, yref=None, styles=styles, include_sat_lines=True)
+        override = FOCUS_OVERRIDES.get((mode, axis, 'output'))
+        focus_window = override['window'] if override else pick_focus_window(mode, axis)
+        inset_rect = override.get('inset_rect') if override else None
+        add_focus_box_and_inset(ax, custom_t, traces, focus_window, yref=None, styles=styles, include_sat_lines=True, inset_rect=inset_rect)
 
     mode_tag = 'const' if mode == 'constant_sat' else 'sine'
     out = OUT_DIR / f'ch5_{mode_tag}_{axis}_u_{variant}.png'
