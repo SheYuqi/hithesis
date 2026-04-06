@@ -58,6 +58,16 @@ def experimental_sine_reference(axis, t):
     raise ValueError(axis)
 
 
+def experimental_constant_reference(axis, t):
+    if axis == 'yaw':
+        return np.full_like(t, 6.0)
+    if axis == 'pitch':
+        return np.full_like(t, 5.0)
+    if axis == 'roll':
+        return np.full_like(t, 4.0)
+    raise ValueError(axis)
+
+
 def reference_label(axis):
     if axis == 'yaw':
         return r'$y_d=3+3\sin(0.1t)$'
@@ -89,8 +99,7 @@ def load_column(mode: str, side: str, axis: str):
 
 def make_reference(mode: str, axis: str, t, traces):
     if mode == 'const':
-        target = np.mean([y[-200:].mean() for y in traces.values()])
-        return np.full_like(t, target)
+        return experimental_constant_reference(axis, t)
     return experimental_sine_reference(axis, t)
 
 
