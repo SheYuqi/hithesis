@@ -173,25 +173,26 @@ def plot_family(
 ) -> None:
     fig, ax = plt.subplots(figsize=(6.4, 3.9), constrained_layout=True)
     cases = [
-        DampingCase(1.000, "#1f4aff", "-", r"$\zeta = 1.000$"),
-        DampingCase(1.0 / math.sqrt(2.0), "#d62728", "--", r"$\zeta = 0.707$"),
-        DampingCase(0.625, "#2ca02c", "-.", r"$\zeta = 0.625$"),
+        DampingCase(1.000, "#0000FF", "-", r"$\zeta = 1.000$"),
+        DampingCase(1.0 / math.sqrt(2.0), "#FF0000", "--", r"$\zeta = 0.707$"),
+        DampingCase(0.625, "#00CC00", "-.", r"$\zeta = 0.625$"),
     ]
     t = next(iter(result_map.values()))["t"]
-    ref_style = {"color": "black", "linewidth": 1.4, "label": r"参考信号 $y_d$"}
+    ref_style = {"color": "black", "linewidth": 2.0, "label": r"参考信号 $y_d$"}
     if key == "y":
         ax.plot(t, next(iter(result_map.values()))["yd"], **ref_style)
     if key == "u":
-        ax.axhline(U_MAX, color="#555555", linestyle=":", linewidth=1.0)
-        ax.axhline(-U_MAX, color="#555555", linestyle=":", linewidth=1.0)
+        ax.axhline(U_MAX, color="#555555", linestyle=":", linewidth=1.4)
+        ax.axhline(-U_MAX, color="#555555", linestyle=":", linewidth=1.4)
     plotted = []
     for case in cases:
-        style = {"color": case.color, "linestyle": case.linestyle, "linewidth": 1.8, "label": case.label}
+        style = {"color": case.color, "linestyle": case.linestyle, "linewidth": 2.0, "label": case.label}
         ax.plot(t, result_map[case.zeta][key], **style)
         plotted.append((result_map[case.zeta][key], style))
     style_axes(ax, "时间 (s)", ylabel)
     ax.set_xlim(0.0, 5.0)
-    ax.legend(loc="best", frameon=True, edgecolor="black")
+    leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
+    leg.get_frame().set_linewidth(0.8)
     add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(next(iter(result_map.values()))["yd"], ref_style) if key == "y" else None)
     save_figure(fig, output_dir / filename)
 
@@ -200,9 +201,9 @@ def build_figures(output_dir: Path, duration: float = 5.0, dt: float = 0.001, om
     configure_matplotlib()
     output_dir.mkdir(parents=True, exist_ok=True)
     cases = [
-        DampingCase(1.000, "#1f4aff", "-", r"$\zeta = 1.000$"),
-        DampingCase(1.0 / math.sqrt(2.0), "#d62728", "--", r"$\zeta = 0.707$"),
-        DampingCase(0.625, "#2ca02c", "-.", r"$\zeta = 0.625$"),
+        DampingCase(1.000, "#0000FF", "-", r"$\zeta = 1.000$"),
+        DampingCase(1.0 / math.sqrt(2.0), "#FF0000", "--", r"$\zeta = 0.707$"),
+        DampingCase(0.625, "#00CC00", "-.", r"$\zeta = 0.625$"),
     ]
 
     step_noaw = {case.zeta: simulate_saturation_case(case.zeta, omega_n, step_reference, duration, dt, False) for case in cases}

@@ -141,11 +141,10 @@ $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
     \node[fill=white, inner sep=1pt] at (6.95,-0.7) {$w_{i,l_i}$};
     \draw[line] (sum.east) -- (fhat.west);
 
-    \draw[line] (11.5,0.04) -- (11.5,-0.95);
-    \draw[line] (11.5,-0.95) -- (10.2,-0.95);
-    \node[right, fill=white, inner sep=1pt] at (10.75,-0.78) {$z_{2,i}$};
-    \draw[line] (10.2,-0.95) -- (10.2,-3.25);
-    \draw[line] (8.2,-2.75) -- (8.2,-0.03);
+    \draw[line] (fhat.south) |- (update.east);
+    \node[right, fill=white, inner sep=1pt] at (10.95,-0.95) {$z_{2,i}$};
+    \draw[line] (update.north) -- (sum.south);
+
   \end{tikzpicture}%
   }
   \caption{用于未知非线性补偿的神经网络结构示意图}

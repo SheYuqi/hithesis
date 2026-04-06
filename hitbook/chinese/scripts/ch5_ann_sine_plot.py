@@ -10,7 +10,7 @@ OUT_DIR = Path('hitbook/chinese/figures/ch5_ann_sine')
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 ANN_DAMPINGS = [('0.625', '0.625'), ('0.707', '0.707'), ('1', '1.000')]
-COLORS = {'1.000': '#1f77b4', '0.707': '#d62728', '0.625': '#2ca02c'}
+COLORS = {'1.000': '#0000FF', '0.707': '#FF0000', '0.625': '#00CC00'}
 ANN_STYLES = {
     '1.000': dict(color=COLORS['1.000'], linestyle='-', linewidth=2.0),
     '0.707': dict(color=COLORS['0.707'], linestyle='--', linewidth=2.0),
@@ -21,8 +21,7 @@ XLIM = (0.0, 60.0)
 ZOOM = {'pitch': (0.0, 3.0), 'roll': (0.0, 3.0), 'yaw': (0.0, 3.0)}
 
 plt.rcParams.update({
-    'font.family': 'serif',
-    'font.serif': ['Times New Roman', 'TeX Gyre Termes', 'DejaVu Serif'],
+    'font.family': 'Noto Serif CJK JP',
     'mathtext.fontset': 'stix',
     'axes.linewidth': 1.0,
     'axes.labelsize': 20,
@@ -30,6 +29,26 @@ plt.rcParams.update({
     'ytick.labelsize': 15,
     'legend.fontsize': 9,
 })
+
+
+def experimental_sine_reference(axis, t):
+    if axis == 'yaw':
+        return 3.0 + 3.0 * np.sin(0.1 * t)
+    if axis == 'pitch':
+        return 2.5 + 2.5 * np.sin(0.2 * t)
+    if axis == 'roll':
+        return 2.0 + 2.0 * np.sin(0.2 * t)
+    raise ValueError(axis)
+
+
+def reference_label(axis):
+    if axis == 'yaw':
+        return r'$y_d=3+3\sin(0.1t)$'
+    if axis == 'pitch':
+        return r'$y_d=2.5+2.5\sin(0.2t)$'
+    if axis == 'roll':
+        return r'$y_d=2+2\sin(0.2t)$'
+    raise ValueError(axis)
 
 for axis in ['pitch', 'roll', 'yaw']:
     ann = {}
@@ -40,7 +59,7 @@ for axis in ['pitch', 'roll', 'yaw']:
             t = np.loadtxt(base / 'time.csv', delimiter=',')
         ann[label] = np.rad2deg(np.loadtxt(base / f'{axis}.csv', delimiter=','))
 
-    y_ref = np.mean(np.vstack([ann[k] for k in ann]), axis=0)
+    y_ref = experimental_sine_reference(axis, t)
     fig, ax = plt.subplots(figsize=(6.1, 3.7), dpi=220)
     ax.plot(t, y_ref, color='black', linestyle='-', linewidth=2.0, label=r'$y_d$')
     for label in ['1.000', '0.707', '0.625']:
@@ -58,6 +77,8 @@ for axis in ['pitch', 'roll', 'yaw']:
     ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
     leg = ax.legend(loc='lower right', frameon=True, fancybox=False, edgecolor='0.35')
     leg.get_frame().set_linewidth(0.8)
+    ax.text(0.03, 0.95, reference_label(axis), transform=ax.transAxes, va='top', ha='left',
+            bbox=dict(boxstyle='square,pad=0.20', fc='white', ec='0.35', lw=0.8), fontsize=10)
 
     x1, x2 = ZOOM[axis]
     maskz = (t >= x1) & (t <= x2)

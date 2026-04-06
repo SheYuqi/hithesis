@@ -10,7 +10,7 @@ OUT_DIR = Path('hitbook/chinese/figures/ch5_ann_const')
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 ANN_DAMPINGS = [('0.625', '0.625'), ('0.707', '0.707'), ('1', '1.000')]
-COLORS = {'1.000': '#1f77b4', '0.707': '#d62728', '0.625': '#2ca02c'}
+COLORS = {'1.000': '#0000FF', '0.707': '#FF0000', '0.625': '#00CC00'}
 ANN_STYLES = {
     '1.000': dict(color=COLORS['1.000'], linestyle='-', linewidth=2.0),
     '0.707': dict(color=COLORS['0.707'], linestyle='--', linewidth=2.0),
@@ -21,8 +21,7 @@ XLIM = (0.0, 60.0)
 ZOOM = {'pitch': (0.0, 1.2), 'roll': (0.0, 1.0), 'yaw': (0.0, 2.2)}
 
 plt.rcParams.update({
-    'font.family': 'serif',
-    'font.serif': ['Times New Roman', 'TeX Gyre Termes', 'DejaVu Serif'],
+    'font.family': 'Noto Serif CJK JP',
     'mathtext.fontset': 'stix',
     'axes.linewidth': 1.0,
     'axes.labelsize': 20,

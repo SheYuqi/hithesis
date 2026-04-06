@@ -46,13 +46,13 @@ def configure_matplotlib() -> None:
             "mathtext.fontset": "stix",
             "axes.unicode_minus": False,
             "font.size": 10,
-            "axes.labelsize": 10,
+            "axes.labelsize": 20,
             "axes.titlesize": 11,
             "legend.fontsize": 9,
-            "xtick.labelsize": 9,
-            "ytick.labelsize": 9,
-            "axes.linewidth": 0.8,
-            "grid.linewidth": 0.5,
+            "xtick.labelsize": 15,
+            "ytick.labelsize": 15,
+            "axes.linewidth": 1.0,
+            "grid.linewidth": 0.8,
         }
     )
 
@@ -433,12 +433,14 @@ def add_zoom_inset(
     y_max = max(np.max(values) for values in stacked)
     pad = 0.08 * max(1e-6, y_max - y_min)
     inset.set_ylim(y_min - pad, y_max + pad)
-    inset.grid(True, alpha=0.35)
-    inset.tick_params(direction="in")
+    inset.grid(True, linestyle=(0, (1.0, 5.0)), color="0.7", linewidth=0.8)
+    inset.tick_params(direction="in", labelsize=8, top=True, right=True)
     if ylabel:
         inset.set_ylabel(ylabel, fontsize=8)
     inset.set_xlabel("时间 (s)", fontsize=8)
-    mark_inset(ax, inset, loc1=2, loc2=4, fc="none", ec="black", lw=0.8)
+    for spine in inset.spines.values():
+        spine.set_linewidth(1.0)
+    mark_inset(ax, inset, loc1=2, loc2=4, fc="none", ec="0.2", lw=1.0)
     return inset
 
 
@@ -468,8 +470,8 @@ def annotate_step_overshoot(ax: plt.Axes, result_map: Dict[float, Dict[str, np.n
 def style_axes(ax: plt.Axes, xlabel: str, ylabel: str) -> None:
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    ax.grid(True, alpha=0.35)
-    ax.tick_params(direction="in", which="both", top=True, right=True)
+    ax.grid(True, linestyle=(0, (1.0, 5.0)), color="0.7", linewidth=0.8)
+    ax.tick_params(direction="in", which="both", top=True, right=True, length=6, width=1.0)
 
 
 def save_figure(fig: plt.Figure, basepath: Path) -> None:
@@ -489,9 +491,9 @@ def build_figures(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     cases = [
-        DampingCase(1.000, "#1f4aff", "-", r"$\zeta = 1.000$"),
-        DampingCase(1.0 / math.sqrt(2.0), "#d62728", "--", r"$\zeta = 0.707$"),
-        DampingCase(0.625, "#2ca02c", "-.", r"$\zeta = 0.625$"),
+        DampingCase(1.000, "#0000FF", "-", r"$\zeta = 1.000$"),
+        DampingCase(1.0 / math.sqrt(2.0), "#FF0000", "--", r"$\zeta = 0.707$"),
+        DampingCase(0.625, "#00CC00", "-.", r"$\zeta = 0.625$"),
     ]
 
     simulator = simulate_nn_closed_loop if mode == "nn" else simulate_ideal_closed_loop
@@ -506,12 +508,12 @@ def build_figures(
         case.zeta: {
             "color": case.color,
             "linestyle": case.linestyle,
-            "linewidth": 1.8,
+            "linewidth": 2.0,
             "label": case.label,
         }
         for case in cases
     }
-    ref_style = {"color": "black", "linewidth": 1.4, "label": r"参考信号 $y_d$"}
+    ref_style = {"color": "black", "linewidth": 2.0, "label": r"参考信号 $y_d$"}
     bs_style = {"color": "#4d4d4d", "linestyle": ":", "linewidth": 2.0, "label": "BS"}
 
     panels = [
@@ -582,7 +584,8 @@ def build_figures(
             plotted.append((data[key], style))
         style_axes(ax, "时间 (s)", ylabel)
         ax.set_xlim(0.0, duration)
-        ax.legend(loc="best", frameon=True, edgecolor="black")
+        leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
+        leg.get_frame().set_linewidth(0.8)
         inset = add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(first["yd"], ref_style) if show_reference else None)
         save_figure(fig, output_dir / filename)
 
@@ -627,7 +630,8 @@ def build_figures(
             plotted.append((data[key], style))
         style_axes(ax, "时间 (s)", ylabel_map[name])
         ax.set_xlim(0.0, duration)
-        ax.legend(loc="best", frameon=True, edgecolor="black")
+        leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
+        leg.get_frame().set_linewidth(0.8)
         inset = add_zoom_inset(ax, t, plotted, zoom_map[name], ref_series=(first["yd"], ref_style) if show_reference else None)
     save_figure(fig, output_dir / "ch2_damping_overview")
 

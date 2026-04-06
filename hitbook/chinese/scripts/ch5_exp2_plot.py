@@ -22,9 +22,9 @@ DAMPINGS_RIGHT = {
     'sine': [('1', '1.000'), ('0.707', '0.707'), ('0.625', '0.625')],
 }
 STYLES = {
-    '1.000': dict(color='#1f77b4', linestyle='-', linewidth=2.0),
-    '0.707': dict(color='#d62728', linestyle='--', linewidth=2.0),
-    '0.625': dict(color='#2ca02c', linestyle='-.', linewidth=2.0),
+    '1.000': dict(color='#0000FF', linestyle='-', linewidth=2.0),
+    '0.707': dict(color='#FF0000', linestyle='--', linewidth=2.0),
+    '0.625': dict(color='#00CC00', linestyle='-.', linewidth=2.0),
 }
 LABELS = {'roll': 'Roll angle (deg)', 'pitch': 'Pitch angle (deg)', 'yaw': 'Yaw angle (deg)'}
 WINDOWS = {
@@ -37,15 +37,35 @@ WINDOWS = {
 }
 
 plt.rcParams.update({
-    'font.family': 'serif',
-    'font.serif': ['Times New Roman', 'TeX Gyre Termes', 'DejaVu Serif'],
+    'font.family': 'Noto Serif CJK JP',
     'mathtext.fontset': 'stix',
     'axes.linewidth': 1.0,
     'axes.labelsize': 20,
     'xtick.labelsize': 15,
     'ytick.labelsize': 15,
     'legend.fontsize': 9,
+    'grid.linewidth': 0.8,
 })
+
+
+def experimental_sine_reference(axis, t):
+    if axis == 'yaw':
+        return 3.0 + 3.0 * np.sin(0.1 * t)
+    if axis == 'pitch':
+        return 2.5 + 2.5 * np.sin(0.2 * t)
+    if axis == 'roll':
+        return 2.0 + 2.0 * np.sin(0.2 * t)
+    raise ValueError(axis)
+
+
+def reference_label(axis):
+    if axis == 'yaw':
+        return r'$y_d=3+3\sin(0.1t)$'
+    if axis == 'pitch':
+        return r'$y_d=2.5+2.5\sin(0.2t)$'
+    if axis == 'roll':
+        return r'$y_d=2+2\sin(0.2t)$'
+    raise ValueError(axis)
 
 
 def load_column(mode: str, side: str, axis: str):
@@ -62,16 +82,16 @@ def load_column(mode: str, side: str, axis: str):
                 time = np.loadtxt(tp, delimiter=',')
                 time = time - time[0]
             else:
-                time = np.arange(arr.shape[0]) * 0.001
+                time = np.arange(arr.shape[0]) * 0.002
         traces[label] = np.rad2deg(arr)
     return time, traces
 
 
-def make_reference(mode: str, t, traces):
+def make_reference(mode: str, axis: str, t, traces):
     if mode == 'const':
         target = np.mean([y[-200:].mean() for y in traces.values()])
         return np.full_like(t, target)
-    return np.mean(np.vstack([traces[k] for k in sorted(traces.keys(), reverse=True)]), axis=0)
+    return experimental_sine_reference(axis, t)
 
 
 def region_bounds(t, traces, window):
@@ -86,7 +106,7 @@ def region_bounds(t, traces, window):
 
 def plot_single(mode: str, side: str, axis: str):
     t, traces = load_column(mode, side, axis)
-    y_ref = make_reference(mode, t, traces)
+    y_ref = make_reference(mode, axis, t, traces)
     fig, ax = plt.subplots(figsize=(6.1, 3.7), dpi=220)
     ax.plot(t, y_ref, color='black', linestyle='-', linewidth=2.0, label=r'$y_d$')
     for label in ['1.000', '0.707', '0.625']:
@@ -98,21 +118,28 @@ def plot_single(mode: str, side: str, axis: str):
     ax.set_ylim(ymin - 0.08 * span, ymax + 0.08 * span)
     ax.set_xlabel('Time (s)')
     ax.set_ylabel(LABELS[axis])
-    ax.grid(True, alpha=0.28)
-    ax.legend(loc='best', fontsize=8, frameon=True)
+    ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
+    ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
+    leg = ax.legend(loc='lower right', frameon=True, fancybox=False, edgecolor='0.35')
+    leg.get_frame().set_linewidth(0.8)
+    ax.text(0.03, 0.95, reference_label(axis), transform=ax.transAxes, va='top', ha='left',
+            bbox=dict(boxstyle='square,pad=0.20', fc='white', ec='0.35', lw=0.8), fontsize=10)
 
     tx, ty, tw, th = region_bounds(t, traces, WINDOWS[(mode, axis)])
-    rect = Rectangle((tx, ty), tw, th, fill=False, ec='black', lw=1.2)
+    rect = Rectangle((tx, ty), tw, th, fill=False, ec='0.2', lw=1.0)
     ax.add_patch(rect)
 
-    axins = ax.inset_axes([0.08, 0.28, 0.56, 0.44])
+    axins = ax.inset_axes([0.10, 0.12, 0.55, 0.45])
     axins.plot(t, y_ref, color='black', linestyle='-', linewidth=1.6)
     for label in ['1.000', '0.707', '0.625']:
         axins.plot(t, traces[label], **STYLES[label])
     axins.set_xlim(tx, tx + tw)
     axins.set_ylim(ty, ty + th)
-    axins.grid(True, alpha=0.22)
-    ax.indicate_inset_zoom(axins, edgecolor='black', alpha=0.9)
+    axins.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
+    axins.tick_params(direction='in', labelsize=8, top=True, right=True)
+    for spine in axins.spines.values():
+        spine.set_linewidth(1.0)
+    ax.indicate_inset_zoom(axins, edgecolor='0.2', alpha=0.9)
 
     out = OUT_DIR / f'ch5_exp2_{mode}_{axis}_{side}.png'
     fig.tight_layout()

@@ -10,8 +10,7 @@ OUT = Path('hitbook/chinese/figures/ch5_sbc_example')
 OUT.mkdir(parents=True, exist_ok=True)
 
 plt.rcParams.update({
-    'font.family': 'serif',
-    'font.serif': ['Times New Roman', 'TeX Gyre Termes', 'DejaVu Serif'],
+    'font.family': 'Noto Serif CJK JP',
     'mathtext.fontset': 'stix',
     'axes.linewidth': 1.0,
     'axes.labelsize': 20,
