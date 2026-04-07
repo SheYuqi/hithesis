@@ -48,6 +48,11 @@ plt.rcParams.update({
 })
 
 
+def save_dual(fig, out_path: Path):
+    fig.savefig(out_path.with_suffix('.png'), bbox_inches='tight')
+    fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
+
+
 def experimental_sine_reference(axis, t):
     if axis == 'yaw':
         return 3.0 + 3.0 * np.sin(0.1 * t)
@@ -161,9 +166,9 @@ def plot_single(mode: str, side: str, axis: str):
         spine.set_linewidth(1.0)
     ax.indicate_inset_zoom(axins, edgecolor='0.2', alpha=0.9)
 
-    out = OUT_DIR / f'ch5_exp2_{mode}_{axis}_{side}.png'
+    out = OUT_DIR / f'ch5_exp2_{mode}_{axis}_{side}'
     fig.tight_layout()
-    fig.savefig(out, bbox_inches='tight')
+    save_dual(fig, out)
     plt.close(fig)
 
 

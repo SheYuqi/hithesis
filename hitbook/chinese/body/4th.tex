@@ -46,10 +46,100 @@ z_i=x_i-\alpha_{i-1},\qquad i=1,2,\ldots,n,
 其中 $u_{\max}>0$ 为已知幅值上界。
 在本文中，$u_{\max}$ 取值由平台安全运行范围给定，属于工程保护约束。
 
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[>=stealth, line width=0.9pt, font=\small]
+    \draw[->] (-2.8,0) -- (2.8,0) node[below] {$u_c$};
+    \draw[->] (0,-2.3) -- (0,2.3) node[left] {$u=\mathrm{sat}(u_c)$};
+
+    \draw[dashed] (-1.6,0) -- (-1.6,-1.6);
+    \draw[dashed] (1.6,0) -- (1.6,1.6);
+    \draw[dashed] (0,1.6) -- (1.6,1.6);
+    \draw[dashed] (0,-1.6) -- (-1.6,-1.6);
+
+    \draw[thick] (-2.5,-1.6) -- (-1.6,-1.6);
+    \draw[thick] (-1.6,-1.6) -- (1.6,1.6);
+    \draw[thick] (1.6,1.6) -- (2.5,1.6);
+
+    \node[left] at (0,1.6) {$u_{\max}$};
+    \node[right] at (0,-1.6) {$-u_{\max}$};
+    \node[below] at (1.6,0) {$u_{\max}$};
+    \node[above] at (-1.6,0) {$-u_{\max}$};
+    \node[below right] at (2.15,1.6) {$u=u_{\max}$};
+    \node[above left] at (-2.15,-1.6) {$u=-u_{\max}$};
+    \node[above right] at (0.4,0.22) {$u=u_c$};
+  \end{tikzpicture}
+  \caption{幅值饱和函数 $\mathrm{sat}(u_c)$ 示意图}
+  \label{fig:ch4_sat_curve}
+\end{figure}
+
 定义饱和导致的输入失配
 \begin{equation}\label{eq:ch5_du_def}
   \Delta_u \triangleq u-u_c = \mathrm{sat}(u_c)-u_c.
 \end{equation}
+
+采用如下动态抗饱和补偿结构
+\begin{equation}\label{eq:ch5_aw_basic}
+  \left\{
+  \begin{aligned}
+    \dot \xi &= -\lambda \xi + \Delta_u,\qquad \lambda>0,\\
+    u_{\mathrm{aw}} &= -k_{\mathrm{aw}}\xi,\qquad k_{\mathrm{aw}}>0,\\
+    u_c &= u_c^\star + u_{\mathrm{aw}}
+         = u_c^\star - k_{\mathrm{aw}}\xi,
+  \end{aligned}
+  \right.
+\end{equation}
+其中 $u_c^\star$ 表示未考虑输入饱和时的名义控制输入，$\xi$ 为抗饱和辅助状态。
+
+上述动态抗饱和结构仅作用于实际输入通道，与前级虚拟控制器的递推阶次无关。对于本章后续一般 $n$ 阶严格反馈系统设计，其作用对象为最后一级实际输入；当滚转通道退化为二阶验证模型时，可直接采用同样的结构。这里保留最基础的动态抗饱和形式：以饱和失配 $\Delta_u$ 直接驱动辅助状态 $\xi$，再由补偿项 $u_{\mathrm{aw}}=-k_{\mathrm{aw}}\xi$ 对期望输入进行修正。
+
+为了进一步说明该结构为何能够缓和输入饱和对闭环系统的破坏，取辅助状态李雅普诺夫函数
+\begin{equation}\label{eq:ch5_Vxi}
+  V_\xi\triangleq \frac{1}{2}\xi^2.
+\end{equation}
+由式 \eqref{eq:ch5_aw_basic} 可得
+\begin{equation}\label{eq:ch5_Vxidot}
+  \dot V_\xi
+  =-\lambda \xi^2+\xi\Delta_u
+  \le -\frac{\lambda}{2}\xi^2+\frac{1}{2\lambda}\Delta_u^2.
+\end{equation}
+式 \eqref{eq:ch5_Vxidot} 表明：当未触发饱和时 $\Delta_u=0$，辅助状态 $\xi$ 将按指数规律衰减到零；当饱和失配存在但有界时，$\xi$ 仍保持有界，不会在补偿通道中产生无界积累。
+
+\begin{lemma}\label{lem:ch5_aw1}
+若饱和失配满足 $|\Delta_u(t)|\le \bar\Delta_u$，则由式 \eqref{eq:ch5_aw_basic} 所定义的辅助状态与抗饱和补偿项满足
+\begin{equation}\label{eq:ch5_xi_sol}
+  \xi(t)=e^{-\lambda t}\xi(0)+\int_0^t e^{-\lambda (t-\tau)}\Delta_u(\tau)\,d\tau,
+\end{equation}
+从而有
+\begin{equation}\label{eq:xi_bound}
+  |\xi(t)|
+  \le e^{-\lambda t}|\xi(0)|
+  +\frac{1}{\lambda}\bigl(1-e^{-\lambda t}\bigr)\bar\Delta_u,
+\end{equation}
+\begin{equation}\label{eq:ch5_uaw_bound}
+  |u_{\mathrm{aw}}(t)|
+  \le k_{\mathrm{aw}}e^{-\lambda t}|\xi(0)|
+  +\frac{k_{\mathrm{aw}}}{\lambda}\bigl(1-e^{-\lambda t}\bigr)\bar\Delta_u.
+\end{equation}
+特别地，
+\[
+  \limsup_{t\to\infty}|\xi(t)| \le \frac{1}{\lambda}\bar\Delta_u,\qquad
+  \limsup_{t\to\infty}|u_{\mathrm{aw}}(t)| \le \frac{k_{\mathrm{aw}}}{\lambda}\bar\Delta_u.
+\]
+\end{lemma}
+\begin{proof}
+由式 \eqref{eq:ch5_aw_basic} 中关于 $\xi$ 的一阶线性动态作常数变易可直接得到式 \eqref{eq:ch5_xi_sol}。再结合 $|\Delta_u(t)|\le \bar\Delta_u$ 可得
+\[
+  |\xi(t)|
+  \le e^{-\lambda t}|\xi(0)|
+  +\int_0^t e^{-\lambda (t-\tau)}|\Delta_u(\tau)|\,d\tau
+  \le e^{-\lambda t}|\xi(0)|
+  +\bar\Delta_u\int_0^t e^{-\lambda (t-\tau)}\,d\tau,
+\]
+由此得到式 \eqref{eq:xi_bound}。再利用 $|u_{\mathrm{aw}}|=k_{\mathrm{aw}}|\xi|$ 即可得到式 \eqref{eq:ch5_uaw_bound}，引理得证。
+\end{proof}
+
+由引理~\ref{lem:ch5_aw1}可见，抗饱和补偿并不是直接静态抵消 $\Delta_u$，而是先通过稳定一阶动态对饱和失配进行整形，再由补偿项 $u_{\mathrm{aw}}$ 将这部分整形后的信息反馈到期望输入中。这样，当系统未触发饱和时，$\Delta_u=0$ 且 $\xi\to 0$，补偿通道自动退出；当系统进入饱和区时，补偿项只对有界失配作平滑响应，避免将饱和误差直接作为突变项注入递推闭环，从而减弱输入受限对后续误差动力学的破坏。其中，$\lambda$ 决定辅助状态对饱和失配的衰减速度，$k_{\mathrm{aw}}$ 决定补偿反馈强度。
 
 在递推设计过程中，将各通道中的未知非线性、外部扰动以及虚拟控制器导数近似误差统一并入等效不确定项 $\Delta_i$，并假设存在正常数 $\bar\Delta_i$ 使得
 \begin{equation}\label{eq:ch5_delta}
@@ -151,22 +241,38 @@ u_c^\star=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-\xi_{n-1,2}
 \[
 u=\mathrm{sat}(u_c),
 \]
-因而即使先设计出名义输入 $u_c^\star$，最终进入执行器的仍是期望输入 $u_c$ 经过饱和映射后的结果。按照前文定义，此时输入失配统一记为
-\[
-\Delta_u=u-u_c=\mathrm{sat}(u_c)-u_c,
-\]
-该失配会直接破坏第3章中由二阶指令滤波抗扰结构所形成的理想滑模到达动态。为此，定义辅助抗饱和动态
+由于抗饱和补偿仅作用于最后一级实际输入通道，因此在一般 $n$ 阶严格反馈系统中仍沿用式 \eqref{eq:ch5_aw_basic} 所给结构。于是末级辅助动态与补偿项分别取
 \begin{equation}\label{eq:ch5_xi_dyn}
-  \dot \xi = -\lambda \xi + b_n\Delta_u,\qquad \lambda>0,
+  \dot \xi = -\lambda \xi + \Delta_u,\qquad \lambda>0,
 \end{equation}
-并在名义末端控制器基础上加入抗饱和补偿项
 \begin{equation}\label{eq:ch5_uaw}
-  u_{\mathrm{aw}}=-\frac{1}{b_n}k_{\mathrm{aw}}\xi,\qquad k_{\mathrm{aw}}>0.
+  u_{\mathrm{aw}}=-k_{\mathrm{aw}}\xi,\qquad k_{\mathrm{aw}}>0,
 \end{equation}
 于是最终期望控制输入取为
 \begin{equation}\label{eq:ch5_uc_struct}
   u_c = u_c^\star + u_{\mathrm{aw}}.
 \end{equation}
+\noindent
+即
+\[
+u_c=u_c^\star-k_{\mathrm{aw}}\xi.
+\]
+由式 \eqref{eq:ch5_du_def} 可得
+\[
+\Delta_u
+=
+\mathrm{sat}\!\left(u_c^\star-k_{\mathrm{aw}}\xi\right)
+-\left(u_c^\star-k_{\mathrm{aw}}\xi\right),
+\]
+也就是说，本章与前文保持完全一致：抗饱和补偿始终通过“$u_c^\star \rightarrow u_c \rightarrow \Delta_u \rightarrow \xi$”这一链路作用于末级输入通道。
+
+在此基础上，由于末级实际输入从名义设计中的 $b_nu_c^\star$ 变为 $b_nu_c+b_n\Delta_u$，因此滑模通道中的新增项统一表现为 $-b_nk_{\mathrm{aw}}\xi+b_n\Delta_u$，即
+\begin{equation}\label{eq:ch5_sdot_aw}
+  \dot s
+  =-\varepsilon\,\mathrm{sgn}(s)+\Delta_s-b_nk_{\mathrm{aw}}\xi+b_n\Delta_u.
+\end{equation}
+式 \eqref{eq:ch5_sdot_aw} 表明，本章后续稳定性分析所使用的抗饱和项与式 \eqref{eq:ch5_aw_basic} 中给出的统一动态补偿结构完全一致；当后续考虑二阶滚转通道仿真与实验时，只需令 $n=2$ 且取 $b_n=b_{\phi}$，即可得到对应的二阶实现形式。
+
 将 \eqref{eq:ch5_uc_nominal} 与 \eqref{eq:ch5_uaw} 合并，可得
 \begin{equation}\label{eq:ch5_final}
 \begin{aligned}
@@ -176,9 +282,9 @@ u=\mathrm{sat}(u_c),
 \alpha_i^0&=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+h_i-\xi_{i-1,2}\right),\quad i=4,\ldots,n-2,\\
 \alpha_{n-1}^0&=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+h_{n-1}-\xi_{n-2,2}\right),\\
 u_c&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-\xi_{n-1,2}
-+\varepsilon\,\mathrm{sgn}(s)+k_{\mathrm{aw}}\xi\right),\\
++\varepsilon\,\mathrm{sgn}(s)\right)-k_{\mathrm{aw}}\xi,\\
 u&=\mathrm{sat}(u_c),\\
-\dot\xi&=-\lambda\xi+b_n\Delta_u.
+\dot\xi&=-\lambda\xi+\Delta_u.
 \end{aligned}
 \end{equation}
 
@@ -193,21 +299,21 @@ u&=\mathrm{sat}(u_c),\\
   \dot z_{n-1} &= -\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2}+\tilde\Delta_{n-1},\\
   \dot z_n &= -c_{n-1}b_{n-1}z_n-b_{n-1}z_{n-1}
              -\varepsilon\,\mathrm{sgn}(s)
-             -k_{\mathrm{aw}}\xi+b_n\Delta_u+\tilde\Delta_n,
+             -b_nk_{\mathrm{aw}}\xi+b_n\Delta_u+\tilde\Delta_n,
 \end{aligned}
 \right.
 \end{equation}
 其中 $\tilde\Delta_i$ 表示由名义非线性拟合残差、外部扰动以及指令滤波误差共同形成的合成剩余项。于是由 \eqref{eq:ch5_s} 与 \eqref{eq:ch5_z_dyn} 可知，滑模变量满足
 \begin{equation}\label{eq:ch5_sdot_expand}
   \dot s
-  =-\varepsilon\mathrm{sgn}(s)-k_{\mathrm{aw}}\xi+\Delta_s+b_n\Delta_u,
+  =-\varepsilon\mathrm{sgn}(s)-b_nk_{\mathrm{aw}}\xi+\Delta_s+b_n\Delta_u,
 \end{equation}
 其中 $\Delta_s$ 为经递推补偿后投影到滑模面通道上的总剩余不确定项，可由各通道观测误差 $\tilde\Delta_i$ 线性组合得到，且存在常数 $\bar\Delta_s$ 使得
 \[
 |\Delta_s(t)|\le \bar\Delta_s.
 \]
 \noindent
-由此可见，第四章与前两章在结构上的一致性体现在：滑模面定义完全相同，虚拟控制器设计顺序完全相同，前两级仍负责构造预设阻尼比对应的主导二阶动态，其中 $k_1$ 用于第一层稳定化而 $(m_1,m_2)$ 决定主导阻尼结构；高阶通道仍通过递推消除耦合项。与第3章相比，本章仅在末端输入层额外引入抗饱和补偿项 $k_{\mathrm{aw}}\xi$ 与饱和失配 $\Delta_u$，从而构成“二阶指令滤波抗扰 + 抗饱和补偿”的统一结构。
+由此可见，第四章与前两章在结构上的一致性体现在：滑模面定义完全相同，虚拟控制器设计顺序完全相同，前两级仍负责构造预设阻尼比对应的主导二阶动态，其中 $k_1$ 用于第一层稳定化而 $(m_1,m_2)$ 决定主导阻尼结构；高阶通道仍通过递推消除耦合项。与第3章相比，本章仅在末端输入层额外引入基础抗饱和补偿项 $k_{\mathrm{aw}}\xi$ 与饱和失配 $\Delta_u$，从而构成“二阶指令滤波抗扰 + 抗饱和补偿”的统一结构。
 \section{系统稳定性分析}[System stability analysis]
 
 本节在第3章二阶指令滤波抗扰稳定性结论的基础上，对式 \eqref{eq:ch5_final} 所给控制律的闭环稳定性给出一致最终有界结论。证明思路与第3章保持一致，只是在高阶误差子系统和滑模变量动态中额外考虑饱和失配 $\Delta_u$ 及其诱导的抗饱和状态 $\xi$。
@@ -242,19 +348,12 @@ u&=\mathrm{sat}(u_c),\\
 \begin{equation}\label{eq:ch5_sdot_closed_new}
   \dot s
   = -\varepsilon\mathrm{sgn}(s)
-    -k_{\mathrm{aw}}\xi
+    -b_nk_{\mathrm{aw}}\xi
     + \Delta_s
     + b_n\,\Delta_u.
 \end{equation}
 
-首先分析辅助状态 $\xi$。由
-\[
-\dot \xi = -\lambda \xi + b_n\Delta_u,\qquad |\Delta_u(t)|\le \bar\Delta_u
-\]
-可知 $\xi$ 是一个受有界输入驱动的一阶稳定系统。由比较原理可得
-\begin{equation}\label{eq:xi_bound}
-  \limsup_{t\to\infty}|\xi(t)| \le \frac{|b_n|}{\lambda}\bar\Delta_u.
-\end{equation}
+首先分析辅助状态 $\xi$。由引理~\ref{lem:ch5_aw1} 及假设4.4可知，辅助状态与抗饱和补偿项均有界，且式 \eqref{eq:xi_bound} 成立。
 
 进一步定义滑模通道总扰动上界
 \begin{equation}\label{eq:Ds_bound}
@@ -262,7 +361,7 @@ u&=\mathrm{sat}(u_c),\\
 \end{equation}
 由于 \eqref{eq:ch5_Deltas_bound}、假设4.4 与 \eqref{eq:xi_bound} 成立，因此有
 \begin{equation}\label{eq:ch5_dist_bound}
-  \big|-k_{\mathrm{aw}}\xi+\Delta_s+b_n\Delta_u\big|\le \bar D_s.
+  \big|-b_nk_{\mathrm{aw}}\xi+\Delta_s+b_n\Delta_u\big|\le \bar D_s.
 \end{equation}
 
 选取滑模分析函数
@@ -274,8 +373,8 @@ u&=\mathrm{sat}(u_c),\\
 \begin{aligned}
   \dot V_s
   &= s\dot s\\
-  &= -\varepsilon|s| - k_{\mathrm{aw}}s\xi + s\Delta_s + b_n s\Delta_u\\
-  &\le -\varepsilon|s| + |s|\big(k_{\mathrm{aw}}|\xi| + |\Delta_s| + |b_n||\Delta_u|\big)\\
+  &= -\varepsilon|s| - b_nk_{\mathrm{aw}}s\xi + s\Delta_s + b_n s\Delta_u\\
+  &\le -\varepsilon|s| + |s|\big(|b_n|k_{\mathrm{aw}}|\xi| + |\Delta_s| + |b_n||\Delta_u|\big)\\
   &\le -(\varepsilon-\bar D_s)|s|.
 \end{aligned}
 \end{equation}
@@ -298,7 +397,7 @@ u&=\mathrm{sat}(u_c),\\
      -\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}^2
      -c_{n-1}b_{n-1}z_n^2 \\
   &\quad -\varepsilon|z_n|
-     -k_{\mathrm{aw}}z_n\xi
+     -b_nk_{\mathrm{aw}}z_n\xi
      +b_nz_n\Delta_u
      +\sum_{i=3}^{n}z_i\tilde\Delta_i.
 \end{aligned}
@@ -341,14 +440,14 @@ m_1>0,\ m_2>0,\ \lambda>0,\ k_{\mathrm{aw}}>0,
 \]
 则闭环信号 $s,\xi,z_1,\ldots,z_n,q$ 一致最终有界。其中
 \[
-\limsup_{t\to\infty}|\xi(t)| \le \frac{|b_n|}{\lambda}\bar\Delta_u,
+  \limsup_{t\to\infty}|\xi(t)| \le \frac{1}{\lambda}\bar\Delta_u,
 \]
 \[
 \dot V_s \le -(\varepsilon-\bar D_s)|s|.
 \]
 \end{theorem}
 \begin{proof}
-由 \eqref{eq:ch5_xi_dyn} 与假设4.4可得 \eqref{eq:xi_bound}。再由 \eqref{eq:ch5_Deltas_bound}、假设4.4及 \eqref{eq:xi_bound} 可得 \eqref{eq:ch5_dist_bound}。对 \eqref{eq:ch5_V_new} 求导得到 \eqref{eq:ch5_Vdot_expand_new}，从而得到 \eqref{eq:Vdot_final}。由于 $\varepsilon>\bar D_s$，可知 $s$ 一致最终有界。
+由引理~\ref{lem:ch5_aw1} 与假设4.4可得 \eqref{eq:xi_bound}。再由 \eqref{eq:ch5_Deltas_bound}、假设4.4及 \eqref{eq:xi_bound} 可得 \eqref{eq:ch5_dist_bound}。对 \eqref{eq:ch5_V_new} 求导得到 \eqref{eq:ch5_Vdot_expand_new}，从而得到 \eqref{eq:Vdot_final}。由于 $\varepsilon>\bar D_s$，可知 $s$ 一致最终有界。
 
 另一方面，由 \eqref{eq:ch5_Vhdot} 结合 Young 不等式可得 \eqref{eq:ch5_Vh_bound}。由于 $\tilde\Delta_i$、$\xi$ 与 $\Delta_u$ 均有界，且定理中的各系数条件保证 $a_0>0$，故高阶误差子系统 $z_3,\ldots,z_n$ 一致最终有界。再由 \eqref{eq:ch5_z12} 可知，前两级误差通道在有界输入驱动下保持一致最终有界。最后由滑模面定义 \eqref{eq:ch5_s} 可知 $q$ 可由 $s,z_1,\ldots,z_n$ 线性表示，因此 $q$ 也一致最终有界。于是闭环信号 $s,\xi,z_1,\ldots,z_n,q$ 全部一致最终有界，定理得证。
 \end{proof}
@@ -418,22 +517,22 @@ u_c=u_c^\star.
 
 有抗饱和补偿时，
 \begin{equation}\label{eq:ch5_sim_aw}
-u_c=u_c^\star-\frac{1}{b_{\phi}}k_{\mathrm{aw}}\xi,\qquad
-\dot\xi=-\lambda\xi+b_{\phi}\Delta_u.
+u_c=u_c^\star-k_{\mathrm{aw}}\xi,\qquad
+\dot\xi=-\lambda\xi+\Delta_u.
 \end{equation}
 由式\eqref{eq:ch5_sim_sat}--\eqref{eq:ch5_sim_aw} 可见，输入受限引入的核心误差量可写为
 \begin{equation}\label{eq:ch4_delta_u}
-\Delta_u=u-\mathrm{sat}(u_c),
+\Delta_u=u-u_c=\mathrm{sat}(u_c)-u_c,
 \end{equation}
 其中 $\Delta_u$ 描述了期望控制输入与实际饱和输入之间的偏差。若不加入抗饱和补偿，则该偏差只能作为附加失配直接作用于闭环系统；而加入辅助动态后，
 \begin{equation}\label{eq:ch4_xi_dyn_mech}
-\dot\xi=-\lambda\xi+b_{\phi}\Delta_u,
+\dot\xi=-\lambda\xi+\Delta_u,
 \end{equation}
 补偿状态 $\xi$ 便能够对饱和误差进行动态积累与衰减，并进一步通过
 \begin{equation}\label{eq:ch4_uc_mech}
-u_c=u_c^\star-\frac{1}{b_{\phi}}k_{\mathrm{aw}}\xi
+u_c=u_c^\star-k_{\mathrm{aw}}\xi
 \end{equation}
-反馈到实际控制律中。式\eqref{eq:ch4_xi_dyn_mech}--\eqref{eq:ch4_uc_mech} 说明，抗饱和补偿有效的关键并不在于“消除饱和”，而在于把原本直接破坏递推结构的 $\Delta_u$ 显式引入辅助动态，使控制器能够根据当前受限程度主动修正后续控制动作。这样一来，饱和误差不再完全以未建模失配的形式传播，而是通过 $\xi$ 通道被部分吸收和再分配，因此输出超调、恢复拖尾以及阻尼比分层模糊等现象都会得到一定程度缓解。
+反馈到实际控制律中。式\eqref{eq:ch4_xi_dyn_mech}--\eqref{eq:ch4_uc_mech} 说明，抗饱和补偿有效的关键并不在于“消除饱和”，而在于把原本直接破坏递推结构的 $\Delta_u$ 显式引入辅助动态，使控制器能够根据当前受限程度主动修正后续控制动作。这样一来，饱和误差不再完全以未建模失配的形式传播，而是通过 $\xi$ 通道被部分吸收和再分配，因此输出超调、恢复减缓以及阻尼比分层模糊等现象都会得到一定程度缓解。
 
 其中饱和上限 $u_{\max}$ 由执行机构安全边界给定，并通过手动限幅构造激烈工况下的输入受限场景；为使抗饱和补偿效果能够被清晰观察，本节统一取 $u_{\max}=0.14$。为与第2章、第3章保持一致，本章仿真同样固定第一层稳定化增益 $k_1=5.0$。与第3章一致，二阶指令滤波器既用于替代虚拟控制显式求导，又把滤波误差与名义拟合残差统一并入抗扰分析。图中左侧子图表示无抗饱和补偿结果，右侧子图表示加入抗饱和补偿后的结果，颜色用于区分不同阻尼比参数。评价指标统一采用超调量、调节时间、稳态误差、输入峰值及饱和持续时间。
 
@@ -473,13 +572,13 @@ y_{d1}=5^\circ.
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_noaw_response.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_noaw_response.pdf}
   \chFourFigCaption{fig:ch4_step_noaw_response}{常值信号 $y_{d1}$ 无抗饱和补偿的跟踪输出}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_aw_response.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_aw_response.pdf}
   \chFourFigCaption{fig:ch4_step_aw_response}{常值信号 $y_{d1}$ 有抗饱和补偿的跟踪输出}
 \end{minipage}
 
@@ -488,13 +587,13 @@ y_{d1}=5^\circ.
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_noaw_error.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_noaw_error.pdf}
   \chFourFigCaption{fig:ch4_step_noaw_error}{常值信号 $y_{d1}$ 无抗饱和补偿的跟踪误差}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_aw_error.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_aw_error.pdf}
   \chFourFigCaption{fig:ch4_step_aw_error}{常值信号 $y_{d1}$ 有抗饱和补偿的跟踪误差}
 \end{minipage}
 
@@ -503,13 +602,13 @@ y_{d1}=5^\circ.
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_noaw_control.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_noaw_control.pdf}
   \chFourFigCaption{fig:ch4_step_noaw_control}{常值信号 $y_{d1}$ 无抗饱和补偿的控制输入}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_aw_control.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_step_aw_control.pdf}
   \chFourFigCaption{fig:ch4_step_aw_control}{常值信号 $y_{d1}$ 有抗饱和补偿的控制输入}
 \end{minipage}
 
@@ -527,13 +626,13 @@ y_{d2}=5^\circ\sin(0.2t).
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_noaw_response.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_noaw_response.pdf}
   \chFourFigCaption{fig:ch4_sine_noaw_response}{时变信号 $y_{d2}$ 无抗饱和补偿的跟踪输出}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_response.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_response.pdf}
   \chFourFigCaption{fig:ch4_sine_aw_response}{时变信号 $y_{d2}$ 有抗饱和补偿的跟踪输出}
 \end{minipage}
 
@@ -542,13 +641,13 @@ y_{d2}=5^\circ\sin(0.2t).
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_noaw_error.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_noaw_error.pdf}
   \chFourFigCaption{fig:ch4_sine_noaw_error}{时变信号 $y_{d2}$ 无抗饱和补偿的跟踪误差}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_error.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_error.pdf}
   \chFourFigCaption{fig:ch4_sine_aw_error}{时变信号 $y_{d2}$ 有抗饱和补偿的跟踪误差}
 \end{minipage}
 
@@ -557,13 +656,13 @@ y_{d2}=5^\circ\sin(0.2t).
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_noaw_control.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_noaw_control.pdf}
   \chFourFigCaption{fig:ch4_sine_noaw_control}{时变信号 $y_{d2}$ 无抗饱和补偿的控制输入}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_control.png}
+  \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_control.pdf}
   \chFourFigCaption{fig:ch4_sine_aw_control}{时变信号 $y_{d2}$ 有抗饱和补偿的控制输入}
 \end{minipage}
 

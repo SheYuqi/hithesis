@@ -19,6 +19,11 @@ plt.rcParams.update({
     'legend.fontsize': 9,
 })
 
+
+def save_dual(fig, out_path: Path):
+    fig.savefig(out_path.with_suffix('.png'), bbox_inches='tight')
+    fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
+
 t = np.loadtxt(ROOT / 'time.csv', delimiter=',')
 y = np.rad2deg(np.loadtxt(ROOT / 'pitch.csv', delimiter=','))
 ref = float(np.mean(y[-500:].mean())) if np.ndim(y[-500:].mean()) else float(np.mean(y[-500:]))
@@ -69,5 +74,5 @@ for spine in axins.spines.values():
     spine.set_linewidth(1.0)
 mark_inset(ax, axins, loc1=2, loc2=4, fc='none', ec='0.2', lw=1.0)
 fig.tight_layout()
-fig.savefig(OUT / 'ch5_sbc_pitch_example.png', bbox_inches='tight')
+save_dual(fig, OUT / 'ch5_sbc_pitch_example')
 plt.close(fig)

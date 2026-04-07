@@ -31,6 +31,11 @@ plt.rcParams.update({
 })
 
 
+def save_dual(fig, out_path: Path):
+    fig.savefig(out_path.with_suffix('.png'), bbox_inches='tight')
+    fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
+
+
 def experimental_sine_reference(axis, t):
     if axis == 'yaw':
         return 3.0 + 3.0 * np.sin(0.1 * t)
@@ -101,5 +106,5 @@ for axis in ['pitch', 'roll', 'yaw']:
 
     mark_inset(ax, axins, loc1=2, loc2=4, fc='none', ec='0.2', lw=1.0)
     fig.tight_layout()
-    fig.savefig(OUT_DIR / f'ch5_ann_sine_{axis}.png', bbox_inches='tight')
+    save_dual(fig, OUT_DIR / f'ch5_ann_sine_{axis}')
     plt.close(fig)

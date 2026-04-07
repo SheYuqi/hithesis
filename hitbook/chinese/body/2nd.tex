@@ -4,7 +4,7 @@
 
 \section{引言}[Introduction]
 
-针对具有严格反馈结构的确定性非线性系统，标准反步控制法通过递归构造虚拟控制量与李雅普诺夫函数，能够实现稳定控制。面向含未知不确定项与外部扰动的实际对象，滑模反步方法进一步提升了系统抗干扰能力，但传统设计仍主要关注“稳定或收敛”，对阻尼比等动态性能指标的显式预设能力相对不足。基于这一问题，本章在研究系统稳定性的同时，将阻尼比作为核心动态指标纳入控制器设计，面向一类严格反馈形式的不确定非线性系统构建预设阻尼比滑模反步控制方法。首先，将阻尼比的讨论从阶跃响应扩展到时变参考跟踪场景，并给出相应定义与计算表达；随后利用经典二阶系统阻尼比的特征，建立二阶类李雅普诺夫稳定性判据。该判据表明，当相应二阶不等式成立时，系统输出能够以近似预设的阻尼比稳定跟踪目标信号，并可据此形成参数设置规则。考虑到 四旋翼悬浮机平台存在较强的未建模非线性、通道耦合、参数摄动以及执行机构非理想因素，若仅依赖固定模型与大增益滑模项，为覆盖这些不确定性往往需要提高切换强度，从而在离散采样和执行器带宽受限条件下更容易引起控制输入振荡。为此，本章在预设阻尼比滑模反步框架中引入普通径向基神经网络，对系统主要未知非线性进行在线逼近，并将神经网络逼近残差与外部扰动统一交由滑模鲁棒项处理。通过这种“神经网络名义补偿 + 滑模鲁棒抑制”的结构，可在保持闭环稳定性的同时降低对大切换增益的依赖。进一步地，本文通过有限差分近似虚拟控制导数，构造满足二阶类李雅普诺夫条件的闭环误差系统，并在理论上证明跟踪误差最终有界且具备与阻尼比设定一致的瞬态特性，最后完成闭环稳定性分析。为验证所提方法的有效性，针对 四旋翼悬浮机平台姿态系统开展两组仿真实验，分别展示对固定姿态信号和时变姿态信号的跟踪效果，给出了符合参数规则的三种阻尼比实现，实验结果验证了该控制方法的有效性。
+针对具有严格反馈结构的确定性非线性系统，标准反步控制法通过递归构造虚拟控制量与李雅普诺夫函数，能够实现稳定控制。面向含未知不确定项与外部扰动的实际对象，滑模反步方法进一步提升了系统抗干扰能力，但传统设计仍主要关注系统的稳定或收敛，对阻尼比等动态性能指标的显式预设能力相对不足。基于这一问题，本章在研究系统稳定性的同时，将阻尼比作为核心动态指标纳入控制器设计，面向一类严格反馈形式的不确定非线性系统构建预设阻尼比滑模反步控制方法。首先，将阻尼比的讨论从阶跃响应扩展到时变参考跟踪场景，并给出相应定义与计算表达；随后利用经典二阶系统阻尼比的特征，建立二阶类李雅普诺夫稳定性判据。该判据表明，当相应二阶不等式成立时，系统输出能够以近似预设的阻尼比稳定跟踪目标信号，并可据此形成参数设置规则。考虑到 四旋翼悬浮机平台存在较强的未建模非线性、通道耦合、参数摄动以及执行机构非理想因素，若仅依赖固定模型与大增益滑模项，为覆盖这些不确定性往往需要提高切换强度，从而在离散采样和执行器带宽受限条件下更容易引起控制输入振荡。为此，本章在预设阻尼比滑模反步框架中引入普通径向基神经网络，对系统主要未知非线性进行在线逼近，并将神经网络逼近残差与外部扰动统一交由滑模鲁棒项处理。通过这种神经网络补偿 + 滑模鲁棒抑制的结构，可在保持闭环稳定性的同时降低对大切换增益的依赖。进一步地，本文通过有限差分近似虚拟控制导数，构造满足二阶类李雅普诺夫条件的闭环误差系统，并在理论上证明跟踪误差最终有界且具备与阻尼比设定一致的瞬态特性，最后完成闭环稳定性分析。为验证所提方法的有效性，针对 四旋翼悬浮机平台姿态系统开展两组仿真实验，分别展示对固定姿态信号和时变姿态信号的跟踪效果，给出了符合参数规则的三种阻尼比实现，实验结果验证了该控制方法的有效性。
 
 \section{系统描述及预备知识}[System description and preliminaries]
 
@@ -48,7 +48,7 @@ $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
  对于 $i=1,2,\ldots,n$，$f_i$ 和 $\dot f_i$ 为连续有界函数。
 \end{assumption}
 
-上述假设的作用是保证误差系统的存在唯一性与后续微分不等式推导成立。需要说明的是，这里仅要求未知项有界与连续，并不要求其精确模型已知，因此仍符合实际工程对象“结构已知、参数与扰动未知”的常见设定。
+上述假设的作用是保证误差系统的存在唯一性与后续微分不等式推导成立。需要说明的是，这里仅要求未知项有界与连续，并不要求其精确模型已知，因此仍符合实际工程对象结构已知、参数与扰动未知的常见设定。
 
 在工程实现中，$d_i$ 往往并非单一外部扰动，而是多种因素叠加后的等效项，例如摩擦变化、执行机构死区、采样误差、通信延迟引起的等效失配等。将这些因素统一并入 $d_i$ 或 $\Delta$ 处理，可以避免模型细节过度复杂化，同时保留稳定性分析所需的关键界信息。这也是本章采用“等效扰动统一建模”方式的原因。
 
@@ -118,7 +118,7 @@ $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
     \node[align=center] at (4.6,-2.0) {基函数向量\\$S_i(\bar x_i)$};
 
     \node[sum] (sum) at (8.2,0.5) {$\sum$};
-    \node[align=center] at (8.5,-0.45) {$W_i^{\mathrm T}S_i(\bar x_i)$};
+    \node[align=center] at (9.0,-0.45) {$W_i^{\mathrm T}S_i(\bar x_i)$};
 
     \node[block] (fhat) at (11.5,0.5) {$\hat f_i(\bar x_i)$};
     \node[updateblock] (update) at (8.2,-3.25) {权值更新律\\$\dot W_i=\Gamma_i z_{2,i}S_i(\bar x_i)-\sigma_i\Gamma_i W_i$};
@@ -188,7 +188,7 @@ $\zeta$ 是阻尼比，$\omega_n$ 是系统的固有频率。
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.85\textwidth]{ch2_zeta_step_response.png}
+  \includegraphics[width=0.85\textwidth]{ch2_zeta_step_response.pdf}
   \caption{自然频率 $\omega_n=4\,\mathrm{rad/s}$ 时不同阻尼比下标准二阶系统阶跃响应}
   \label{fig:ch2_zeta_step_response}
 \end{figure}
@@ -379,14 +379,14 @@ $\dot{\hat e}_1(0)=\dot{\check e}_1(0)=\dot e_1(0)=x_2(0)-\dot y_d=0$。
   \centering
   \begin{minipage}[t]{0.49\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{ch2_remark22_caseA.png}
+    \includegraphics[width=\textwidth]{ch2_remark22_caseA.pdf}
     \caption{参数组 A（$m_2=3,m_1=2.25,\zeta_d=1,\zeta_{\mathrm{meas}}\approx1$）下 $\hat e_1,e_1,\check e_1$ 的响应}
     \label{fig:ch2_remark22_caseA}
   \end{minipage}
   \hfill
   \begin{minipage}[t]{0.49\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{ch2_remark22_caseB.png}
+    \includegraphics[width=\textwidth]{ch2_remark22_caseB.pdf}
     \caption{参数组 B（$m_2=2,m_1=2,\zeta_d\approx0.707,\zeta_{\mathrm{meas}}\approx0.707$）下 $\hat e_1,e_1,\check e_1$ 的响应}
     \label{fig:ch2_remark22_caseB}
   \end{minipage}
@@ -762,13 +762,13 @@ m_2=2\alpha,\qquad
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch2_sim/ch2_step_response.png}
+  \includegraphics[width=\textwidth]{ch2_sim/ch2_step_response.pdf}
   \chTwoFigCaption{fig:ch2_step_response}{跟踪常值信号 $y_{d1}$ 的跟踪响应}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch2_sim/ch2_step_error.png}
+  \includegraphics[width=\textwidth]{ch2_sim/ch2_step_error.pdf}
   \chTwoFigCaption{fig:ch2_step_error}{跟踪常值信号 $y_{d1}$ 的跟踪误差}
 \end{minipage}
 
@@ -777,13 +777,13 @@ m_2=2\alpha,\qquad
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch2_sim/ch2_step_control.png}
+  \includegraphics[width=\textwidth]{ch2_sim/ch2_step_control.pdf}
   \chTwoFigCaption{fig:ch2_step_control}{跟踪常值信号 $y_{d1}$ 的控制输入}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch2_sim/ch2_sine_response.png}
+  \includegraphics[width=\textwidth]{ch2_sim/ch2_sine_response.pdf}
   \chTwoFigCaption{fig:ch2_sine_response}{跟踪时变信号 $y_{d2}$ 的跟踪响应}
 \end{minipage}
 
@@ -792,13 +792,13 @@ m_2=2\alpha,\qquad
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch2_sim/ch2_sine_error.png}
+  \includegraphics[width=\textwidth]{ch2_sim/ch2_sine_error.pdf}
   \chTwoFigCaption{fig:ch2_sine_error}{跟踪时变信号 $y_{d2}$ 的跟踪误差}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{ch2_sim/ch2_sine_control.png}
+  \includegraphics[width=\textwidth]{ch2_sim/ch2_sine_control.pdf}
   \chTwoFigCaption{fig:ch2_sine_control}{跟踪时变信号 $y_{d2}$ 的控制输入}
 \end{minipage}
 

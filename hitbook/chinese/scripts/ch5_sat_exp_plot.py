@@ -36,6 +36,11 @@ plt.rcParams.update({
 })
 
 
+def save_dual(fig, out_path: Path):
+    fig.savefig(out_path.with_suffix('.png'), bbox_inches='tight')
+    fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
+
+
 SAT_LEVEL = 0.5
 SAT_TOL = 0.03
 
@@ -314,9 +319,9 @@ def plot_single(mode: str, axis: str, variant: str):
         add_focus_box_and_inset(ax, t, traces, focus_window, yref=y_ref, styles=styles, y_bounds=y_bounds, inset_rect=inset_rect)
 
     mode_tag = 'const' if mode == 'constant_sat' else 'sine'
-    out = OUT_DIR / f'ch5_{mode_tag}_{axis}_{variant}.png'
+    out = OUT_DIR / f'ch5_{mode_tag}_{axis}_{variant}'
     fig.tight_layout()
-    fig.savefig(out, bbox_inches='tight')
+    save_dual(fig, out)
     plt.close(fig)
     return out
 
@@ -363,9 +368,9 @@ def plot_control(mode: str, axis: str, variant: str):
         add_focus_box_and_inset(ax, custom_t, traces, focus_window, yref=None, styles=styles, include_sat_lines=True, inset_rect=inset_rect)
 
     mode_tag = 'const' if mode == 'constant_sat' else 'sine'
-    out = OUT_DIR / f'ch5_{mode_tag}_{axis}_u_{variant}.png'
+    out = OUT_DIR / f'ch5_{mode_tag}_{axis}_u_{variant}'
     fig.tight_layout()
-    fig.savefig(out, bbox_inches='tight')
+    save_dual(fig, out)
     plt.close(fig)
     return out
 
