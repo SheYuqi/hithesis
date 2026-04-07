@@ -25,7 +25,7 @@ dist
 *.fdb_latexmk
 *.fls
 *.doc
-*.pdf
+
 !empty-resolution.pdf
 *.toe
 *.xdv
