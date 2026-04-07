@@ -17,6 +17,7 @@ DT = 0.002
 DAMPINGS = [('1', '1.000'), ('0.707', '0.707'), ('0.625', '0.625')]
 COLORS = {'1': '#0000FF', '0.707': '#FF0000', '0.625': '#00CC00'}
 LABELS = {'roll': 'Roll angle (deg)', 'pitch': 'Pitch angle (deg)', 'yaw': 'Yaw angle (deg)'}
+ERROR_LABELS = {'roll': 'Roll error (deg)', 'pitch': 'Pitch error (deg)', 'yaw': 'Yaw error (deg)'}
 U_LABELS = {'roll': 'Roll control input (V)', 'pitch': 'Pitch control input (V)', 'yaw': 'Yaw control input (V)'}
 FOCUS_OVERRIDES = {
     ('constant_sat', 'pitch', 'output'): {'window': (0.0, 10.8), 'y_bounds': (2.7, 5.4), 'inset_rect': [0.10, 0.16, 0.42, 0.28]},
@@ -37,7 +38,6 @@ plt.rcParams.update({
 
 
 def save_dual(fig, out_path: Path):
-    fig.savefig(out_path.with_suffix('.png'), bbox_inches='tight')
     fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
 
 
@@ -202,6 +202,22 @@ def paired_output_ylim(mode: str, axis: str):
     ymax = max(float(y.max()) for y in all_series)
     span = max(ymax - ymin, 1e-3)
     return ymin - 0.08 * span, ymax + 0.08 * span
+
+
+def paired_error_ylim(mode: str, axis: str):
+    all_series = []
+    for variant in ['base', 'sat']:
+        t, traces = load_axis(mode, variant, axis)
+        if mode == 'constant_sat':
+            y_ref = experimental_constant_reference(axis, t)
+        else:
+            y_ref = experimental_sine_reference(axis, t)
+        for y in traces.values():
+            all_series.append(y - y_ref)
+    ymin = min(float(y.min()) for y in all_series)
+    ymax = max(float(y.max()) for y in all_series)
+    span = max(ymax - ymin, 1e-3)
+    return ymin - 0.10 * span, ymax + 0.10 * span
 
 
 def paired_control_ylim(mode: str, axis: str):
@@ -375,11 +391,44 @@ def plot_control(mode: str, axis: str, variant: str):
     return out
 
 
+def plot_error(mode: str, axis: str, variant: str):
+    t, traces = load_axis(mode, variant, axis)
+    if mode == 'constant_sat':
+        y_ref = experimental_constant_reference(axis, t)
+    else:
+        y_ref = experimental_sine_reference(axis, t)
+    fig, ax = plt.subplots(figsize=(6.1, 2.8), dpi=220)
+    styles = {
+        '1': dict(color=COLORS['1'], linestyle='-', linewidth=2.0),
+        '0.707': dict(color=COLORS['0.707'], linestyle='--', linewidth=2.0),
+        '0.625': dict(color=COLORS['0.625'], linestyle='-.', linewidth=2.0),
+    }
+    ax.axhline(0.0, color='black', linestyle='-', linewidth=1.6)
+    for zeta_key, zeta_label in DAMPINGS:
+        ax.plot(t, traces[zeta_key] - y_ref, label=fr'$\zeta={zeta_label}$', **styles[zeta_key])
+    ax.set_xlim(0.0, t[-1])
+    ylow, yhigh = paired_error_ylim(mode, axis)
+    ax.set_ylim(ylow, yhigh)
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel(ERROR_LABELS[axis])
+    ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
+    ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
+    leg = ax.legend(loc='lower right', frameon=True, fancybox=False, edgecolor='0.35')
+    leg.get_frame().set_linewidth(0.8)
+    mode_tag = 'const' if mode == 'constant_sat' else 'sine'
+    out = OUT_DIR / f'ch5_{mode_tag}_{axis}_error_{variant}'
+    fig.tight_layout()
+    save_dual(fig, out)
+    plt.close(fig)
+    return out
+
+
 def main():
     for mode in ['constant_sat', 'sine_sat']:
         for axis in ['roll', 'pitch', 'yaw']:
             for variant in ['base', 'sat']:
                 plot_single(mode, axis, variant)
+                plot_error(mode, axis, variant)
                 plot_control(mode, axis, variant)
 
 

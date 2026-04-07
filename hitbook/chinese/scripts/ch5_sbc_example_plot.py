@@ -21,7 +21,6 @@ plt.rcParams.update({
 
 
 def save_dual(fig, out_path: Path):
-    fig.savefig(out_path.with_suffix('.png'), bbox_inches='tight')
     fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
 
 t = np.loadtxt(ROOT / 'time.csv', delimiter=',')

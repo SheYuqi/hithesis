@@ -22,7 +22,7 @@
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{figures/ch5_ref/ch5_hover_hardware_hd.png}
+  \includegraphics[width=0.88\textwidth]{figures/ch5_ref/ch5_hover_hardware_hd.pdf}
   \caption{四旋翼悬浮机控制系统的实验装置}
   \label{fig:ch5_hover_hardware}
 \end{figure}
@@ -47,7 +47,7 @@
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.74\textwidth]{figures/ch5_ref/ch5_hover_platform_hd.png}
+  \includegraphics[width=0.74\textwidth]{figures/ch5_ref/ch5_hover_platform_hd.pdf}
   \caption{四旋翼悬浮机实验平台}
   \label{fig:ch5_hover_platform}
 \end{figure}
@@ -183,13 +183,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_pitch.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_pitch.pdf}
     \caption{纯 SBC+$\zeta$ 方法下俯仰通道常值参考跟踪结果}
     \label{fig:ch5_sbc_const_pitch}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_pitch.png}
+    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_pitch.pdf}
     \caption{神经网络方法下俯仰通道常值参考跟踪结果}
     \label{fig:ch5_ann_const_pitch}
   \end{minipage}
@@ -199,13 +199,29 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_roll.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_pitch_error.pdf}
+    \caption{纯 SBC+$\zeta$ 方法下俯仰通道常值参考跟踪误差}
+    \label{fig:ch5_sbc_const_pitch_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_pitch_error.pdf}
+    \caption{神经网络方法下俯仰通道常值参考跟踪误差}
+    \label{fig:ch5_ann_const_pitch_error}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_roll.pdf}
     \caption{纯 SBC+$\zeta$ 方法下滚转通道常值参考跟踪结果}
     \label{fig:ch5_sbc_const_roll}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_roll.png}
+    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_roll.pdf}
     \caption{神经网络方法下滚转通道常值参考跟踪结果}
     \label{fig:ch5_ann_const_roll}
   \end{minipage}
@@ -215,15 +231,47 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_yaw.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_roll_error.pdf}
+    \caption{纯 SBC+$\zeta$ 方法下滚转通道常值参考跟踪误差}
+    \label{fig:ch5_sbc_const_roll_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_roll_error.pdf}
+    \caption{神经网络方法下滚转通道常值参考跟踪误差}
+    \label{fig:ch5_ann_const_roll_error}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_yaw.pdf}
     \caption{纯 SBC+$\zeta$ 方法下偏航通道常值参考跟踪结果}
     \label{fig:ch5_sbc_const_yaw}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_yaw.png}
+    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_yaw.pdf}
     \caption{神经网络方法下偏航通道常值参考跟踪结果}
     \label{fig:ch5_ann_const_yaw}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_const/ch5_sbc_const_yaw_error.pdf}
+    \caption{纯 SBC+$\zeta$ 方法下偏航通道常值参考跟踪误差}
+    \label{fig:ch5_sbc_const_yaw_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_const/ch5_ann_const_yaw_error.pdf}
+    \caption{神经网络方法下偏航通道常值参考跟踪误差}
+    \label{fig:ch5_ann_const_yaw_error}
   \end{minipage}
 \end{figure}
 \FloatBarrier
@@ -236,13 +284,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_pitch.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_pitch.pdf}
     \caption{纯 SBC+$\zeta$ 方法下俯仰通道时变参考跟踪结果}
     \label{fig:ch5_sbc_sine_pitch}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_pitch.png}
+    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_pitch.pdf}
     \caption{神经网络方法下俯仰通道时变参考跟踪结果}
     \label{fig:ch5_ann_sine_pitch}
   \end{minipage}
@@ -252,13 +300,29 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_roll.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_pitch_error.pdf}
+    \caption{纯 SBC+$\zeta$ 方法下俯仰通道时变参考跟踪误差}
+    \label{fig:ch5_sbc_sine_pitch_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_pitch_error.pdf}
+    \caption{神经网络方法下俯仰通道时变参考跟踪误差}
+    \label{fig:ch5_ann_sine_pitch_error}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_roll.pdf}
     \caption{纯 SBC+$\zeta$ 方法下滚转通道时变参考跟踪结果}
     \label{fig:ch5_sbc_sine_roll}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_roll.png}
+    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_roll.pdf}
     \caption{神经网络方法下滚转通道时变参考跟踪结果}
     \label{fig:ch5_ann_sine_roll}
   \end{minipage}
@@ -268,20 +332,142 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_yaw.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_roll_error.pdf}
+    \caption{纯 SBC+$\zeta$ 方法下滚转通道时变参考跟踪误差}
+    \label{fig:ch5_sbc_sine_roll_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_roll_error.pdf}
+    \caption{神经网络方法下滚转通道时变参考跟踪误差}
+    \label{fig:ch5_ann_sine_roll_error}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_yaw.pdf}
     \caption{纯 SBC+$\zeta$ 方法下偏航通道时变参考跟踪结果}
     \label{fig:ch5_sbc_sine_yaw}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_yaw.png}
+    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_yaw.pdf}
     \caption{神经网络方法下偏航通道时变参考跟踪结果}
     \label{fig:ch5_ann_sine_yaw}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sbc_sine/ch5_sbc_sine_yaw_error.pdf}
+    \caption{纯 SBC+$\zeta$ 方法下偏航通道时变参考跟踪误差}
+    \label{fig:ch5_sbc_sine_yaw_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_ann_sine/ch5_ann_sine_yaw_error.pdf}
+    \caption{神经网络方法下偏航通道时变参考跟踪误差}
+    \label{fig:ch5_ann_sine_yaw_error}
   \end{minipage}
 \end{figure}
 \FloatBarrier
 
 综合实验1可以进一步看出，神经网络补偿在实物平台上的意义并不只是降低抖振幅度，更重要的是恢复了“阻尼比参数与输出形态之间的直观对应关系”。对于纯 SBC+$\zeta$ 结构而言，平台中的摩擦、死区、耦合和未建模非线性会在小幅姿态调节阶段被不断放大，从而使不同阻尼比带来的动态差异被高频波动部分掩盖；而在神经网络补偿后，主要未知非线性被转化为可拟合的名义项，剩余部分再由鲁棒结构统一处理，因而三组阻尼比在上升速度、峰值高低以及时变跟踪的相位滞后方面均表现出更清晰的分层规律。也就是说，实验1验证的不是“神经网络本身优于反步控制”这一泛化结论，而是说明在四旋翼悬浮机强非线性实物平台上，只有在未知主导非线性得到适当拟合之后，预设阻尼比设计思想才能稳定且直观地呈现出来。
+
+\newcommand{\metricbest}[1]{%
+  \tikz[baseline=(X.base)]\node[
+    draw=red!70!black,
+    densely dashed,
+    line width=0.45pt,
+    inner xsep=2pt,
+    inner ysep=0.8pt
+  ] (X) {\strut #1};%
+}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{实验1常值参考误差统计结果}
+  \label{tab:ch5_exp1_const_error_metrics}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ccccc}
+    \toprule
+    通道 & $\zeta$ & 方法 & RMSE (deg) & IAE (deg$\cdot$s) \\
+    \midrule
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.625} & SBC & 1.049 & 56.989 \\
+                          &                        & NN  & \metricbest{0.302} & \metricbest{6.519} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.707} & SBC & 1.099 & 60.746 \\
+                          &                        & NN  & \metricbest{0.295} & \metricbest{4.674} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{1.000} & SBC & 1.192 & 63.712 \\
+                          &                        & NN  & \metricbest{0.357} & \metricbest{7.520} \\
+    \midrule
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.625} & SBC & 0.687 & 20.205 \\
+                          &                        & NN  & \metricbest{0.436} & \metricbest{8.005} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.707} & SBC & 0.678 & 19.591 \\
+                          &                        & NN  & \metricbest{0.460} & \metricbest{5.249} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{1.000} & SBC & 0.703 & 19.028 \\
+                          &                        & NN  & \metricbest{0.426} & \metricbest{6.873} \\
+    \midrule
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.625} & SBC & \metricbest{0.367} & \metricbest{4.993} \\
+                          &                        & NN  & 0.566 & 12.832 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.707} & SBC & \metricbest{0.388} & 6.974 \\
+                          &                        & NN  & 0.398 & \metricbest{5.775} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{1.000} & SBC & \metricbest{0.430} & \metricbest{11.913} \\
+                          &                        & NN  & 0.716 & 17.966 \\
+    \bottomrule
+  \end{tabular*}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{实验1时变参考误差统计结果}
+  \label{tab:ch5_exp1_sine_error_metrics}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}cccccc}
+    \toprule
+    通道 & $\zeta$ & 方法 & RMSE (deg) & IAE (deg$\cdot$s) & 相位滞后 (s) \\
+    \midrule
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.625} & SBC & 0.450 & 20.484 & 0.271 \\
+                          &                        & NN  & \metricbest{0.148} & \metricbest{4.351} & \metricbest{0.081} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.707} & SBC & 0.330 & 15.275 & 0.245 \\
+                          &                        & NN  & \metricbest{0.140} & \metricbest{3.616} & \metricbest{0.104} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{1.000} & SBC & 0.433 & 19.352 & 0.270 \\
+                          &                        & NN  & \metricbest{0.216} & \metricbest{7.417} & \metricbest{0.215} \\
+    \midrule
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.625} & SBC & 0.668 & 31.361 & 1.184 \\
+                          &                        & NN  & \metricbest{0.323} & \metricbest{11.711} & \metricbest{0.438} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.707} & SBC & 0.688 & 33.302 & 1.452 \\
+                          &                        & NN  & \metricbest{0.337} & \metricbest{12.753} & \metricbest{0.415} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{1.000} & SBC & 0.875 & 45.836 & 2.189 \\
+                          &                        & NN  & \metricbest{0.338} & \metricbest{13.812} & \metricbest{0.513} \\
+    \midrule
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.625} & SBC & 0.218 & 8.983 & 0.638 \\
+                          &                        & NN  & \metricbest{0.191} & \metricbest{6.137} & \metricbest{0.483} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.707} & SBC & 0.240 & 10.042 & \metricbest{0.652} \\
+                          &                        & NN  & \metricbest{0.227} & \metricbest{9.139} & 0.759 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{1.000} & SBC & 0.445 & 23.146 & 1.970 \\
+                          &                        & NN  & \metricbest{0.285} & \metricbest{12.016} & \metricbest{1.075} \\
+    \bottomrule
+  \end{tabular*}
+\end{table}
 
 为便于对 四旋翼悬浮机平台三轴实验中的参数设置与预设阻尼比实现效果进行统一说明，表\ref{tab:ch5_exp1_sigma} 给出了实验1采用的典型参数组及对应指标。
 
@@ -330,13 +516,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_roll_left.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_roll_left.pdf}
     \caption{常值参考下滚转通道无抗扰补偿响应}
     \label{fig:ch5_exp2_const_roll_left}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_roll_right.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_roll_right.pdf}
     \caption{常值参考下滚转通道抗扰补偿响应}
     \label{fig:ch5_exp2_const_roll_right}
   \end{minipage}
@@ -346,13 +532,29 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_pitch_left.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_roll_left_error.pdf}
+    \caption{常值参考下滚转通道无抗扰补偿误差}
+    \label{fig:ch5_exp2_const_roll_left_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_roll_right_error.pdf}
+    \caption{常值参考下滚转通道抗扰补偿误差}
+    \label{fig:ch5_exp2_const_roll_right_error}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_pitch_left.pdf}
     \caption{常值参考下俯仰通道无抗扰补偿响应}
     \label{fig:ch5_exp2_const_pitch_left}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_pitch_right.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_pitch_right.pdf}
     \caption{常值参考下俯仰通道抗扰补偿响应}
     \label{fig:ch5_exp2_const_pitch_right}
   \end{minipage}
@@ -362,15 +564,47 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_yaw_left.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_pitch_left_error.pdf}
+    \caption{常值参考下俯仰通道无抗扰补偿误差}
+    \label{fig:ch5_exp2_const_pitch_left_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_pitch_right_error.pdf}
+    \caption{常值参考下俯仰通道抗扰补偿误差}
+    \label{fig:ch5_exp2_const_pitch_right_error}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_yaw_left.pdf}
     \caption{常值参考下偏航通道无抗扰补偿响应}
     \label{fig:ch5_exp2_const_yaw_left}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_yaw_right.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_yaw_right.pdf}
     \caption{常值参考下偏航通道抗扰补偿响应}
     \label{fig:ch5_exp2_const_yaw_right}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_yaw_left_error.pdf}
+    \caption{常值参考下偏航通道无抗扰补偿误差}
+    \label{fig:ch5_exp2_const_yaw_left_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_const_yaw_right_error.pdf}
+    \caption{常值参考下偏航通道抗扰补偿误差}
+    \label{fig:ch5_exp2_const_yaw_right_error}
   \end{minipage}
 \end{figure}
 
@@ -383,13 +617,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_roll_left.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_roll_left.pdf}
     \caption{时变参考下滚转通道无抗扰补偿响应}
     \label{fig:ch5_exp2_sine_roll_left}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_roll_right.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_roll_right.pdf}
     \caption{时变参考下滚转通道抗扰补偿响应}
     \label{fig:ch5_exp2_sine_roll_right}
   \end{minipage}
@@ -399,13 +633,29 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_pitch_left.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_roll_left_error.pdf}
+    \caption{时变参考下滚转通道无抗扰补偿误差}
+    \label{fig:ch5_exp2_sine_roll_left_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_roll_right_error.pdf}
+    \caption{时变参考下滚转通道抗扰补偿误差}
+    \label{fig:ch5_exp2_sine_roll_right_error}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_pitch_left.pdf}
     \caption{时变参考下俯仰通道无抗扰补偿响应}
     \label{fig:ch5_exp2_sine_pitch_left}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_pitch_right.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_pitch_right.pdf}
     \caption{时变参考下俯仰通道抗扰补偿响应}
     \label{fig:ch5_exp2_sine_pitch_right}
   \end{minipage}
@@ -415,21 +665,133 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_yaw_left.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_pitch_left_error.pdf}
+    \caption{时变参考下俯仰通道无抗扰补偿误差}
+    \label{fig:ch5_exp2_sine_pitch_left_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_pitch_right_error.pdf}
+    \caption{时变参考下俯仰通道抗扰补偿误差}
+    \label{fig:ch5_exp2_sine_pitch_right_error}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_yaw_left.pdf}
     \caption{时变参考下偏航通道无抗扰补偿响应}
     \label{fig:ch5_exp2_sine_yaw_left}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_yaw_right.png}
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_yaw_right.pdf}
     \caption{时变参考下偏航通道抗扰补偿响应}
     \label{fig:ch5_exp2_sine_yaw_right}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_yaw_left_error.pdf}
+    \caption{时变参考下偏航通道无抗扰补偿误差}
+    \label{fig:ch5_exp2_sine_yaw_left_error}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_exp2/ch5_exp2_sine_yaw_right_error.pdf}
+    \caption{时变参考下偏航通道抗扰补偿误差}
+    \label{fig:ch5_exp2_sine_yaw_right_error}
   \end{minipage}
 \end{figure}
 
 \FloatBarrier
 \par
 实验2的结果还反映出一个与第3章理论相一致的重要现象：二阶指令滤波抗扰结构的优势主要体现在“受扰后的恢复品质”，而不是简单追求更大的瞬时控制动作。无抗扰补偿时，外界扰动更容易在导数近似通道和姿态响应中形成局部放大，表现为输出偏离加大、局部波动更明显、重新回到参考轨迹所需时间更长；加入二阶指令滤波抗扰机制后，滤波器对虚拟控制导数的平滑近似削弱了高频扰动的直接传播，而滑模鲁棒项则对剩余广义扰动进行补偿，因此三轴姿态响应都呈现出“偏离幅度减小、恢复过程更连续”的共同特征。进一步说，实验2更强调的是抗扰机理的有效性：在相同阻尼比设计下，二阶指令滤波抗扰方法使系统受扰后的恢复更快、更平滑，从而说明第3章提出的结构能够在不破坏主导阻尼规律的前提下改善实物平台的抗扰性能。
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{实验2常值参考误差统计结果}
+  \label{tab:ch5_exp2_const_error_metrics}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ccccc}
+    \toprule
+    通道 & $\zeta$ & 方法 & RMSE (deg) & IAE (deg$\cdot$s) \\
+    \midrule
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{1.000} & No-AD & \metricbest{0.295} & \metricbest{4.674} \\
+                          &                        & AD  & 0.619 & 9.444 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.707} & No-AD & \metricbest{0.295} & \metricbest{5.252} \\
+                          &                        & AD  & 0.442 & 5.919 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.625} & No-AD & \metricbest{0.260} & 7.109 \\
+                          &                        & AD  & 0.417 & \metricbest{5.433} \\
+    \midrule
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{1.000} & No-AD & \metricbest{0.460} & \metricbest{5.249} \\
+                          &                        & AD  & 0.750 & 11.773 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.707} & No-AD & \metricbest{0.467} & 7.413 \\
+                          &                        & AD  & 0.580 & \metricbest{7.397} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.625} & No-AD & \metricbest{0.414} & 8.895 \\
+                          &                        & AD  & 0.532 & \metricbest{6.612} \\
+    \midrule
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{1.000} & No-AD & \metricbest{0.398} & \metricbest{5.775} \\
+                          &                        & AD  & 0.884 & 13.453 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.707} & No-AD & \metricbest{0.399} & \metricbest{6.020} \\
+                          &                        & AD  & 0.694 & 8.863 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.625} & No-AD & \metricbest{0.545} & 12.456 \\
+                          &                        & AD  & 0.641 & \metricbest{7.965} \\
+    \bottomrule
+  \end{tabular*}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{实验2时变参考误差统计结果}
+  \label{tab:ch5_exp2_sine_error_metrics}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}cccccc}
+    \toprule
+    通道 & $\zeta$ & 方法 & RMSE (deg) & IAE (deg$\cdot$s) & 相位滞后 (s) \\
+    \midrule
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{1.000} & No-AD & \metricbest{0.275} & 12.193 & \metricbest{0.096} \\
+                          &                        & AD  & 0.301 & \metricbest{5.737} & 0.372 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.707} & No-AD & \metricbest{0.123} & \metricbest{3.614} & \metricbest{0.070} \\
+                          &                        & AD  & 0.231 & 3.761 & 0.221 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.625} & No-AD & \metricbest{0.127} & 5.130 & 0.108 \\
+                          &                        & AD  & 0.179 & \metricbest{2.438} & \metricbest{0.097} \\
+    \midrule
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{1.000} & No-AD & \metricbest{0.347} & 14.251 & 0.470 \\
+                          &                        & AD  & 0.381 & \metricbest{7.337} & \metricbest{0.434} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.707} & No-AD & 0.333 & 12.821 & 0.516 \\
+                          &                        & AD  & \metricbest{0.292} & \metricbest{4.316} & \metricbest{0.226} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.625} & No-AD & 0.356 & 14.081 & 0.503 \\
+                          &                        & AD  & \metricbest{0.220} & \metricbest{2.796} & \metricbest{0.104} \\
+    \midrule
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{1.000} & No-AD & \metricbest{0.288} & 12.198 & 1.037 \\
+                          &                        & AD  & 0.450 & \metricbest{8.138} & \metricbest{0.760} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.707} & No-AD & \metricbest{0.222} & 8.075 & 0.645 \\
+                          &                        & AD  & 0.353 & \metricbest{5.653} & \metricbest{0.400} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.625} & No-AD & \metricbest{0.222} & 8.222 & 0.626 \\
+                          &                        & AD  & 0.327 & \metricbest{4.845} & \metricbest{0.330} \\
+    \bottomrule
+  \end{tabular*}
+\end{table}
 \begin{table}[htbp]
   \centering
   \caption{实验2三轴预设阻尼比控制参数及实现效果}
@@ -479,13 +841,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_base.pdf}
     \caption{常值参考下滚转通道无抗饱和补偿响应}
     \label{fig:ch5_const_roll_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_sat.pdf}
     \caption{常值参考下滚转通道抗饱和补偿响应}
     \label{fig:ch5_const_roll_sat}
   \end{minipage}
@@ -495,13 +857,29 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_u_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_error_base.pdf}
+    \caption{常值参考下滚转通道无抗饱和补偿误差}
+    \label{fig:ch5_const_roll_error_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_error_sat.pdf}
+    \caption{常值参考下滚转通道抗饱和补偿误差}
+    \label{fig:ch5_const_roll_error_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_u_base.pdf}
     \caption{常值参考下滚转通道无抗饱和补偿控制输入}
     \label{fig:ch5_const_roll_u_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_u_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_roll_u_sat.pdf}
     \caption{常值参考下滚转通道抗饱和补偿控制输入}
     \label{fig:ch5_const_roll_u_sat}
   \end{minipage}
@@ -511,13 +889,29 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_error_base.pdf}
+    \caption{常值参考下俯仰通道无抗饱和补偿误差}
+    \label{fig:ch5_const_pitch_error_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_error_sat.pdf}
+    \caption{常值参考下俯仰通道抗饱和补偿误差}
+    \label{fig:ch5_const_pitch_error_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_base.pdf}
     \caption{常值参考下俯仰通道无抗饱和补偿响应}
     \label{fig:ch5_const_pitch_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_sat.pdf}
     \caption{常值参考下俯仰通道抗饱和补偿响应}
     \label{fig:ch5_const_pitch_sat}
   \end{minipage}
@@ -527,13 +921,29 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_u_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_error_base.pdf}
+    \caption{常值参考下偏航通道无抗饱和补偿误差}
+    \label{fig:ch5_const_yaw_error_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_error_sat.pdf}
+    \caption{常值参考下偏航通道抗饱和补偿误差}
+    \label{fig:ch5_const_yaw_error_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_u_base.pdf}
     \caption{常值参考下俯仰通道无抗饱和补偿控制输入}
     \label{fig:ch5_const_pitch_u_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_u_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_pitch_u_sat.pdf}
     \caption{常值参考下俯仰通道抗饱和补偿控制输入}
     \label{fig:ch5_const_pitch_u_sat}
   \end{minipage}
@@ -543,13 +953,29 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_error_base.pdf}
+    \caption{时变参考下滚转通道无抗饱和补偿误差}
+    \label{fig:ch5_sine_roll_error_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_error_sat.pdf}
+    \caption{时变参考下滚转通道抗饱和补偿误差}
+    \label{fig:ch5_sine_roll_error_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_base.pdf}
     \caption{常值参考下偏航通道无抗饱和补偿响应}
     \label{fig:ch5_const_yaw_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_sat.pdf}
     \caption{常值参考下偏航通道抗饱和补偿响应}
     \label{fig:ch5_const_yaw_sat}
   \end{minipage}
@@ -559,15 +985,47 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_u_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_error_base.pdf}
+    \caption{时变参考下俯仰通道无抗饱和补偿误差}
+    \label{fig:ch5_sine_pitch_error_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_error_sat.pdf}
+    \caption{时变参考下俯仰通道抗饱和补偿误差}
+    \label{fig:ch5_sine_pitch_error_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_u_base.pdf}
     \caption{常值参考下偏航通道无抗饱和补偿控制输入}
     \label{fig:ch5_const_yaw_u_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_u_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_const_yaw_u_sat.pdf}
     \caption{常值参考下偏航通道抗饱和补偿控制输入}
     \label{fig:ch5_const_yaw_u_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_error_base.pdf}
+    \caption{时变参考下偏航通道无抗饱和补偿误差}
+    \label{fig:ch5_sine_yaw_error_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_error_sat.pdf}
+    \caption{时变参考下偏航通道抗饱和补偿误差}
+    \label{fig:ch5_sine_yaw_error_sat}
   \end{minipage}
 \end{figure}
 
@@ -580,13 +1038,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_base.pdf}
     \caption{时变参考下滚转通道无抗饱和补偿响应}
     \label{fig:ch5_sine_roll_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_sat.pdf}
     \caption{时变参考下滚转通道抗饱和补偿响应}
     \label{fig:ch5_sine_roll_sat}
   \end{minipage}
@@ -596,13 +1054,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_u_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_u_base.pdf}
     \caption{时变参考下滚转通道无抗饱和补偿控制输入}
     \label{fig:ch5_sine_roll_u_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_u_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_u_sat.pdf}
     \caption{时变参考下滚转通道抗饱和补偿控制输入}
     \label{fig:ch5_sine_roll_u_sat}
   \end{minipage}
@@ -612,13 +1070,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_base.pdf}
     \caption{时变参考下俯仰通道无抗饱和补偿响应}
     \label{fig:ch5_sine_pitch_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_sat.pdf}
     \caption{时变参考下俯仰通道抗饱和补偿响应}
     \label{fig:ch5_sine_pitch_sat}
   \end{minipage}
@@ -628,13 +1086,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_u_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_u_base.pdf}
     \caption{时变参考下俯仰通道无抗饱和补偿控制输入}
     \label{fig:ch5_sine_pitch_u_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_u_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_u_sat.pdf}
     \caption{时变参考下俯仰通道抗饱和补偿控制输入}
     \label{fig:ch5_sine_pitch_u_sat}
   \end{minipage}
@@ -644,13 +1102,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_base.pdf}
     \caption{时变参考下偏航通道无抗饱和补偿响应}
     \label{fig:ch5_sine_yaw_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_sat.pdf}
     \caption{时变参考下偏航通道抗饱和补偿响应}
     \label{fig:ch5_sine_yaw_sat}
   \end{minipage}
@@ -660,13 +1118,13 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_u_base.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_u_base.pdf}
     \caption{时变参考下偏航通道无抗饱和补偿控制输入}
     \label{fig:ch5_sine_yaw_u_base}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_u_sat.png}
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_u_sat.pdf}
     \caption{时变参考下偏航通道抗饱和补偿控制输入}
     \label{fig:ch5_sine_yaw_u_sat}
   \end{minipage}
@@ -709,6 +1167,86 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
       & -- & $5.0$ & $21.875$ & $27.322$ & $1225.000$ & $43.750$ & $0.625$ & $0.5$ \\
     \bottomrule
   \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{实验3常值参考误差统计结果}
+  \label{tab:ch5_exp3_const_error_metrics}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ccccc}
+    \toprule
+    通道 & $\zeta$ & 方法 & RMSE (deg) & IAE (deg$\cdot$s) \\
+    \midrule
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{1.000} & No-AW & 0.637 & 15.526 \\
+                          &                        & AW  & \metricbest{0.595} & \metricbest{9.536} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.707} & No-AW & 0.508 & 14.264 \\
+                          &                        & AW  & \metricbest{0.458} & \metricbest{5.953} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.625} & No-AW & 0.423 & 9.714 \\
+                          &                        & AW  & \metricbest{0.421} & \metricbest{5.208} \\
+    \midrule
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{1.000} & No-AW & 0.786 & 22.694 \\
+                          &                        & AW  & \metricbest{0.740} & \metricbest{11.602} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.707} & No-AW & 0.577 & 8.214 \\
+                          &                        & AW  & \metricbest{0.573} & \metricbest{7.403} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.625} & No-AW & \metricbest{0.488} & 7.391 \\
+                          &                        & AW  & 0.530 & \metricbest{6.625} \\
+    \midrule
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{1.000} & No-AW & 1.072 & 21.667 \\
+                          &                        & AW  & \metricbest{0.894} & \metricbest{13.441} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.707} & No-AW & 0.708 & 14.993 \\
+                          &                        & AW  & \metricbest{0.694} & \metricbest{9.234} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.625} & No-AW & 0.695 & 21.032 \\
+                          &                        & AW  & \metricbest{0.641} & \metricbest{7.567} \\
+    \bottomrule
+  \end{tabular*}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{实验3时变参考误差统计结果}
+  \label{tab:ch5_exp3_sine_error_metrics}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}cccccc}
+    \toprule
+    通道 & $\zeta$ & 方法 & RMSE (deg) & IAE (deg$\cdot$s) & 相位滞后 (s) \\
+    \midrule
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{1.000} & No-AW & \metricbest{0.300} & \metricbest{5.230} & \metricbest{0.357} \\
+                          &                        & AW  & 0.304 & 5.519 & 0.364 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.707} & No-AW & \metricbest{0.194} & \metricbest{2.821} & \metricbest{0.152} \\
+                          &                        & AW  & 0.233 & 3.442 & 0.214 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Roll} & \multirow{2}{*}{0.625} & No-AW & \metricbest{0.215} & \metricbest{3.119} & 0.162 \\
+                          &                        & AW  & 0.216 & 3.382 & \metricbest{0.158} \\
+    \midrule
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{1.000} & No-AW & 0.403 & 9.439 & \metricbest{0.382} \\
+                          &                        & AW  & \metricbest{0.377} & \metricbest{7.273} & 0.393 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.707} & No-AW & 0.311 & 6.351 & \metricbest{0.183} \\
+                          &                        & AW  & \metricbest{0.291} & \metricbest{4.360} & 0.223 \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Pitch} & \multirow{2}{*}{0.625} & No-AW & 0.287 & 6.361 & \metricbest{0.165} \\
+                          &                        & AW  & \metricbest{0.270} & \metricbest{3.962} & 0.174 \\
+    \midrule
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{1.000} & No-AW & 0.942 & 41.644 & 3.274 \\
+                          &                        & AW  & \metricbest{0.457} & \metricbest{8.552} & \metricbest{0.879} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.707} & No-AW & 1.160 & 50.869 & 2.935 \\
+                          &                        & AW  & \metricbest{0.352} & \metricbest{5.256} & \metricbest{0.453} \\
+    \addlinespace[0.15em]
+    \multirow{2}{*}{Yaw} & \multirow{2}{*}{0.625} & No-AW & 0.825 & 35.759 & 2.399 \\
+                          &                        & AW  & \metricbest{0.323} & \metricbest{4.085} & \metricbest{0.342} \\
+    \bottomrule
+  \end{tabular*}
 \end{table}
 
 综合实验3可以看出，抗饱和补偿并不是让系统“完全不受饱和影响”，而是在执行器限幅不可避免的前提下，尽量减轻饱和对原有阻尼比整定规律的破坏。无抗饱和补偿时，控制器内部仍按未受限输入进行递推设计，实际输入与期望输入之间的差值会转化为附加失配，表现为超调增大、恢复减缓、控制输入在饱和边界附近停留时间更长；引入抗饱和补偿后，这部分失配通过辅助状态被显式反馈到控制律中，使控制输入更早地朝脱离饱和区的方向调整，因此相应的姿态输出通常呈现出更平滑的恢复过程和更小的局部波动。需要强调的是，实验3更适合作为第4章抗饱和机理的工程验证：其重点不在于严格定量复现理论阻尼比数值，而在于说明在输入受限条件下，抗饱和补偿确实能够减轻限幅对原有阻尼规律的破坏，并使不同阻尼比对应的动态层次仍具有一定可观察性。

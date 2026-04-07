@@ -27,6 +27,7 @@ STYLES = {
     '0.625': dict(color='#00CC00', linestyle='-.', linewidth=2.0),
 }
 LABELS = {'roll': 'Roll angle (deg)', 'pitch': 'Pitch angle (deg)', 'yaw': 'Yaw angle (deg)'}
+ERROR_LABELS = {'roll': 'Roll error (deg)', 'pitch': 'Pitch error (deg)', 'yaw': 'Yaw error (deg)'}
 WINDOWS = {
     ('const', 'roll'): (10.0, 18.0),
     ('const', 'pitch'): (10.0, 18.0),
@@ -49,7 +50,6 @@ plt.rcParams.update({
 
 
 def save_dual(fig, out_path: Path):
-    fig.savefig(out_path.with_suffix('.png'), bbox_inches='tight')
     fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
 
 
@@ -121,6 +121,19 @@ def paired_ylim(mode: str, axis: str):
     return ymin - 0.08 * span, ymax + 0.08 * span
 
 
+def paired_error_ylim(mode: str, axis: str):
+    all_series = []
+    for side in ['left', 'right']:
+        t, traces = load_column(mode, side, axis)
+        y_ref = make_reference(mode, axis, t, traces)
+        for y in traces.values():
+            all_series.append(y - y_ref)
+    ymin = min(float(y.min()) for y in all_series)
+    ymax = max(float(y.max()) for y in all_series)
+    span = max(ymax - ymin, 1e-3)
+    return ymin - 0.10 * span, ymax + 0.10 * span
+
+
 def region_bounds(t, traces, window):
     t0, t1 = window
     mask = (t >= t0) & (t <= t1)
@@ -172,11 +185,34 @@ def plot_single(mode: str, side: str, axis: str):
     plt.close(fig)
 
 
+def plot_error(mode: str, side: str, axis: str):
+    t, traces = load_column(mode, side, axis)
+    y_ref = make_reference(mode, axis, t, traces)
+    fig, ax = plt.subplots(figsize=(6.1, 2.8), dpi=220)
+    ax.axhline(0.0, color='black', linestyle='-', linewidth=1.6)
+    for label in ['1.000', '0.707', '0.625']:
+        ax.plot(t, traces[label] - y_ref, label=fr'$\zeta={label}$', **STYLES[label])
+    ax.set_xlim(0.0, float(t[-1]))
+    ylow, yhigh = paired_error_ylim(mode, axis)
+    ax.set_ylim(ylow, yhigh)
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel(ERROR_LABELS[axis])
+    ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
+    ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
+    leg = ax.legend(loc='lower right', frameon=True, fancybox=False, edgecolor='0.35')
+    leg.get_frame().set_linewidth(0.8)
+    out = OUT_DIR / f'ch5_exp2_{mode}_{axis}_{side}_error'
+    fig.tight_layout()
+    save_dual(fig, out)
+    plt.close(fig)
+
+
 def main():
     for mode in ['const', 'sine']:
         for axis in ['roll', 'pitch', 'yaw']:
             for side in ['left', 'right']:
                 plot_single(mode, side, axis)
+                plot_error(mode, side, axis)
 
 
 if __name__ == '__main__':

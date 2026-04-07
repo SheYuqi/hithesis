@@ -475,7 +475,6 @@ def style_axes(ax: plt.Axes, xlabel: str, ylabel: str) -> None:
 
 
 def save_figure(fig: plt.Figure, basepath: Path) -> None:
-    fig.savefig(basepath.with_suffix(".png"), dpi=300, bbox_inches="tight")
     fig.savefig(basepath.with_suffix(".pdf"), bbox_inches="tight")
     plt.close(fig)
 

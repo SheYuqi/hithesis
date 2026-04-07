@@ -17,6 +17,7 @@ ANN_STYLES = {
     '0.625': dict(color=COLORS['0.625'], linestyle='-.', linewidth=2.0),
 }
 YLABELS = {'roll': 'Roll angle (deg)', 'pitch': 'Pitch angle (deg)', 'yaw': 'Yaw angle (deg)'}
+ERROR_YLABELS = {'roll': 'Roll error (deg)', 'pitch': 'Pitch error (deg)', 'yaw': 'Yaw error (deg)'}
 XLIM = (0.0, 60.0)
 ZOOM = {'pitch': (0.0, 1.2), 'roll': (0.0, 1.0), 'yaw': (0.0, 2.2)}
 
@@ -32,7 +33,6 @@ plt.rcParams.update({
 
 
 def save_dual(fig, out_path: Path):
-    fig.savefig(out_path.with_suffix('.png'), bbox_inches='tight')
     fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
 
 for axis in ['pitch', 'roll', 'yaw']:
@@ -85,4 +85,24 @@ for axis in ['pitch', 'roll', 'yaw']:
     mark_inset(ax, axins, loc1=2, loc2=4, fc='none', ec='0.2', lw=1.0)
     fig.tight_layout()
     save_dual(fig, OUT_DIR / f'ch5_ann_const_{axis}')
+    plt.close(fig)
+
+    err = {label: ann[label] - ref for label in ann}
+    fig, ax = plt.subplots(figsize=(6.1, 2.8), dpi=220)
+    ax.axhline(0.0, color='black', linestyle='-', linewidth=1.6)
+    for label in ['1.000', '0.707', '0.625']:
+        ax.plot(t, err[label], label=fr'$\zeta={label}$', **ANN_STYLES[label])
+    ax.set_xlim(*XLIM)
+    vals = np.concatenate([err[k][mask] for k in err])
+    ymin, ymax = float(vals.min()), float(vals.max())
+    span = max(ymax - ymin, 1e-3)
+    ax.set_ylim(ymin - 0.10 * span, ymax + 0.10 * span)
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel(ERROR_YLABELS[axis])
+    ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
+    ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
+    leg = ax.legend(loc='lower right', frameon=True, fancybox=False, edgecolor='0.35')
+    leg.get_frame().set_linewidth(0.8)
+    fig.tight_layout()
+    save_dual(fig, OUT_DIR / f'ch5_ann_const_{axis}_error')
     plt.close(fig)
