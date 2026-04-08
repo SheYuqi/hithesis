@@ -179,10 +179,11 @@ z_i=x_i-\alpha_{i-1},\qquad i=1,2,\ldots,n,
 \end{equation}
 其中 $O_i(\Delta t)$ 为有限差分近似带来的截断误差。与第2章一致，该项与名义建模误差 $\delta_i$ 统一并入各通道剩余不确定项。
 
-为与第3章保持一致，将系统中的复合不确定项记为
+为与第3章保持一致，将系统中的复合剩余不确定项记为
 \[
-\Delta_i=h_i(x_i)+\delta_i,\qquad i=1,2,\ldots,n,
+\Delta_i=\delta_i+O_i(\Delta t),\qquad i=1,2,\ldots,n,
 \]
+即仅将名义建模残差与有限差分近似误差并入 $\Delta_i$，而已知光滑名义项 $h_i(\bar x_i)$ 仍显式保留在控制器设计中，
 并记 $r_d=\dot y_d$。将误差系统写为紧凑形式
 \begin{equation}\label{eq:ch5_step_compact}
   \dot z=\varpi(z)+B(z)\nu(t)+D(z)w(t),

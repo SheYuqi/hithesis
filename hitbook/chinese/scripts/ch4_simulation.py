@@ -232,12 +232,12 @@ def build_figures(output_dir: Path, duration: float = SINE_PERIOD, dt: float = 0
     plot_family("ch4_step_noaw_control", step_noaw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
     plot_family("ch4_step_aw_control", step_aw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
 
-    plot_family("ch4_sine_noaw_response", sine_noaw, "y", "跟踪输出", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_aw_response", sine_aw, "y", "跟踪输出", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_noaw_error", sine_noaw, "e", "跟踪误差", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_aw_error", sine_aw, "e", "跟踪误差", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_noaw_control", sine_noaw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_aw_control", sine_aw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_noaw_response", sine_noaw, "y", "跟踪输出", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_aw_response", sine_aw, "y", "跟踪输出", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_noaw_error", sine_noaw, "e", "跟踪误差", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_aw_error", sine_aw, "e", "跟踪误差", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_noaw_control", sine_noaw, "u", "控制输入", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_aw_control", sine_aw, "u", "控制输入", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
 
 
 def main() -> None:
