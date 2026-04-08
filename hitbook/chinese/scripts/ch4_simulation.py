@@ -14,6 +14,8 @@ from ch2_simulation import (
     B_GAIN,
     K1_GAIN,
     DampingCase,
+    SIM_FIGSIZE,
+    SINE_PERIOD,
     add_zoom_inset,
     basis_vector,
     configure_matplotlib,
@@ -37,7 +39,7 @@ ROBUST_GAIN = 0.04
 SAT_WIDTH = 0.18
 U_MAX = 0.14
 AW_LAMBDA = 12.0
-AW_GAIN = -50.0
+AW_GAIN = -6.0
 
 
 def sat(x: float) -> float:
@@ -56,7 +58,7 @@ def simulate_saturation_case(
     zeta: float,
     omega_n: float,
     reference: Callable[[float], Tuple[float, float, float]],
-    duration: float = 5.0,
+    duration: float = SINE_PERIOD,
     dt: float = 0.001,
     anti_windup: bool = True,
 ) -> Dict[str, np.ndarray]:
@@ -170,8 +172,10 @@ def plot_family(
     ylabel: str,
     zoom_xlim: Tuple[float, float],
     output_dir: Path,
+    y_strategy: str = "full",
+    focus_quantile: float = 0.70,
 ) -> None:
-    fig, ax = plt.subplots(figsize=(6.4, 3.9), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=SIM_FIGSIZE, constrained_layout=True)
     cases = [
         DampingCase(1.000, "#0000FF", "-", r"$\zeta = 1.000$"),
         DampingCase(1.0 / math.sqrt(2.0), "#FF0000", "--", r"$\zeta = 0.707$"),
@@ -190,14 +194,22 @@ def plot_family(
         ax.plot(t, result_map[case.zeta][key], **style)
         plotted.append((result_map[case.zeta][key], style))
     style_axes(ax, "时间 (s)", ylabel)
-    ax.set_xlim(0.0, 5.0)
+    ax.set_xlim(0.0, float(t[-1]))
     leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
     leg.get_frame().set_linewidth(0.8)
-    add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(next(iter(result_map.values()))["yd"], ref_style) if key == "y" else None)
+    add_zoom_inset(
+        ax,
+        t,
+        plotted,
+        zoom_xlim,
+        ref_series=(next(iter(result_map.values()))["yd"], ref_style) if key == "y" else None,
+        y_strategy=y_strategy,
+        focus_quantile=focus_quantile,
+    )
     save_figure(fig, output_dir / filename)
 
 
-def build_figures(output_dir: Path, duration: float = 5.0, dt: float = 0.001, omega_n: float = 35.0) -> None:
+def build_figures(output_dir: Path, duration: float = SINE_PERIOD, dt: float = 0.001, omega_n: float = 35.0) -> None:
     configure_matplotlib()
     output_dir.mkdir(parents=True, exist_ok=True)
     cases = [
@@ -213,25 +225,25 @@ def build_figures(output_dir: Path, duration: float = 5.0, dt: float = 0.001, om
 
     make_summary_table(cases, omega_n, step_noaw, step_aw, sine_noaw, sine_aw, output_dir)
 
-    plot_family("ch4_step_noaw_response", step_noaw, "y", "跟踪输出", (0.50, 0.95), output_dir)
-    plot_family("ch4_step_aw_response", step_aw, "y", "跟踪输出", (0.50, 0.95), output_dir)
-    plot_family("ch4_step_noaw_error", step_noaw, "e", "跟踪误差", (0.50, 0.95), output_dir)
-    plot_family("ch4_step_aw_error", step_aw, "e", "跟踪误差", (0.50, 0.95), output_dir)
-    plot_family("ch4_step_noaw_control", step_noaw, "u", "控制输入", (0.50, 0.95), output_dir)
-    plot_family("ch4_step_aw_control", step_aw, "u", "控制输入", (0.50, 0.95), output_dir)
+    plot_family("ch4_step_noaw_response", step_noaw, "y", "跟踪输出", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_step_aw_response", step_aw, "y", "跟踪输出", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_step_noaw_error", step_noaw, "e", "跟踪误差", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_step_aw_error", step_aw, "e", "跟踪误差", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_step_noaw_control", step_noaw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_step_aw_control", step_aw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
 
-    plot_family("ch4_sine_noaw_response", sine_noaw, "y", "跟踪输出", (0.50, 1.00), output_dir)
-    plot_family("ch4_sine_aw_response", sine_aw, "y", "跟踪输出", (0.50, 1.00), output_dir)
-    plot_family("ch4_sine_noaw_error", sine_noaw, "e", "跟踪误差", (0.50, 1.00), output_dir)
-    plot_family("ch4_sine_aw_error", sine_aw, "e", "跟踪误差", (0.50, 1.00), output_dir)
-    plot_family("ch4_sine_noaw_control", sine_noaw, "u", "控制输入", (0.50, 1.00), output_dir)
-    plot_family("ch4_sine_aw_control", sine_aw, "u", "控制输入", (0.50, 1.00), output_dir)
+    plot_family("ch4_sine_noaw_response", sine_noaw, "y", "跟踪输出", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_aw_response", sine_aw, "y", "跟踪输出", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_noaw_error", sine_noaw, "e", "跟踪误差", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_aw_error", sine_aw, "e", "跟踪误差", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_noaw_control", sine_noaw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_aw_control", sine_aw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Chapter 4 simulation figures.")
     parser.add_argument("--output-dir", type=Path, default=FIG_DIR)
-    parser.add_argument("--duration", type=float, default=5.0)
+    parser.add_argument("--duration", type=float, default=SINE_PERIOD)
     parser.add_argument("--dt", type=float, default=0.001)
     parser.add_argument("--omega-n", type=float, default=35.0)
     args = parser.parse_args()

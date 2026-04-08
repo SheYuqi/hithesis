@@ -14,6 +14,8 @@ from ch2_simulation import (
     B_GAIN,
     K1_GAIN,
     DampingCase,
+    SIM_FIGSIZE,
+    SINE_PERIOD,
     add_zoom_inset,
     basis_vector,
     configure_matplotlib,
@@ -55,7 +57,7 @@ def simulate_nn_case(
     zeta: float,
     omega_n: float,
     reference: Callable[[float], Tuple[float, float, float]],
-    duration: float = 5.0,
+    duration: float = SINE_PERIOD,
     dt: float = 0.001,
     gamma: float = 0.006,
     sigma_mod: float = 0.045,
@@ -124,7 +126,7 @@ def simulate_cf_case(
     zeta: float,
     omega_n: float,
     reference: Callable[[float], Tuple[float, float, float]],
-    duration: float = 5.0,
+    duration: float = SINE_PERIOD,
     dt: float = 0.001,
 ) -> Dict[str, np.ndarray]:
     times = np.arange(0.0, duration + dt, dt)
@@ -273,7 +275,7 @@ def plot_family(
     zoom_xlim: Tuple[float, float],
     output_dir: Path,
 ) -> None:
-    fig, ax = plt.subplots(figsize=(6.4, 3.9), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=SIM_FIGSIZE, constrained_layout=True)
     cases = [
         DampingCase(1.000, "#0000FF", "-", r"$\zeta = 1.000$"),
         DampingCase(1.0 / math.sqrt(2.0), "#FF0000", "--", r"$\zeta = 0.707$"),
@@ -295,14 +297,35 @@ def plot_family(
         ax.plot(t, result_map[case.zeta][key], **style)
         plotted.append((result_map[case.zeta][key], style))
     style_axes(ax, "时间 (s)", ylabel)
-    ax.set_xlim(0.0, 5.0)
+    ax.set_xlim(0.0, float(t[-1]))
     leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
     leg.get_frame().set_linewidth(0.8)
     add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(first["yd"], ref_style) if key == "y" else None)
     save_figure(fig, output_dir / filename)
 
 
-def build_figures(output_dir: Path, duration: float = 5.0, dt: float = 0.001, omega_n: float = 35.0) -> None:
+def plot_disturbance_profile(output_dir: Path, duration: float = SINE_PERIOD, dt: float = 0.001) -> None:
+    fig, ax = plt.subplots(figsize=SIM_FIGSIZE, constrained_layout=True)
+    t = np.arange(0.0, duration + dt, dt)
+    d = np.array([disturbance_profile(tt) for tt in t], dtype=float)
+    style = {"color": "#0000FF", "linestyle": "-", "linewidth": 2.0, "label": "外部扰动"}
+    ax.plot(t, d, **style)
+    style_axes(ax, "Time(sec)", "Disturbance")
+    label_font = {"fontsize": 20, "fontweight": "bold", "fontfamily": "Noto Serif CJK JP"}
+    ax.set_xlabel("Time(sec)", **label_font)
+    ax.set_ylabel("Disturbance", **label_font)
+    ax.set_xlim(0.0, duration)
+    ax.set_ylim(-900.0, 900.0)
+    ax.set_xticks(np.arange(0.0, duration + 1e-6, 5.0))
+    ax.set_yticks([-600.0, 0.0, 600.0])
+    ax.axvline(1.5, color="0.35", linestyle="--", linewidth=1.1, label="扰动注入时刻")
+    ax.text(1.5, 760.0, r"$t=1.5\,\mathrm{s}$", ha="center", va="bottom", fontsize=10, color="0.25")
+    leg = ax.legend(loc="upper right", frameon=True, fancybox=False, edgecolor="0.35")
+    leg.get_frame().set_linewidth(0.8)
+    save_figure(fig, output_dir / "ch3_disturbance_profile")
+
+
+def build_figures(output_dir: Path, duration: float = SINE_PERIOD, dt: float = 0.001, omega_n: float = 35.0) -> None:
     configure_matplotlib()
     output_dir.mkdir(parents=True, exist_ok=True)
     cases = [
@@ -317,26 +340,27 @@ def build_figures(output_dir: Path, duration: float = 5.0, dt: float = 0.001, om
     sine_cf = {case.zeta: simulate_cf_case(case.zeta, omega_n, sine_reference, duration, dt) for case in cases}
 
     make_summary_table(cases, omega_n, step_nn, step_cf, sine_nn, sine_cf, output_dir)
+    plot_disturbance_profile(output_dir, duration, dt)
 
-    plot_family("ch3_step_nn_response", step_nn, "y", "跟踪输出", (1.45, 2.05), output_dir)
-    plot_family("ch3_step_cf_response", step_cf, "y", "跟踪输出", (1.45, 2.05), output_dir)
-    plot_family("ch3_step_nn_error", step_nn, "e", "跟踪误差", (1.45, 2.05), output_dir)
-    plot_family("ch3_step_cf_error", step_cf, "e", "跟踪误差", (1.45, 2.05), output_dir)
-    plot_family("ch3_step_nn_control", step_nn, "u", "控制输入", (1.45, 2.05), output_dir)
-    plot_family("ch3_step_cf_control", step_cf, "u", "控制输入", (1.45, 2.05), output_dir)
+    plot_family("ch3_step_nn_response", step_nn, "y", "跟踪输出", (1.45, 3.00), output_dir)
+    plot_family("ch3_step_cf_response", step_cf, "y", "跟踪输出", (1.45, 3.00), output_dir)
+    plot_family("ch3_step_nn_error", step_nn, "e", "跟踪误差", (1.45, 3.00), output_dir)
+    plot_family("ch3_step_cf_error", step_cf, "e", "跟踪误差", (1.45, 3.00), output_dir)
+    plot_family("ch3_step_nn_control", step_nn, "u", "控制输入", (1.45, 3.00), output_dir)
+    plot_family("ch3_step_cf_control", step_cf, "u", "控制输入", (1.45, 3.00), output_dir)
 
-    plot_family("ch3_sine_nn_response", sine_nn, "y", "跟踪输出", (1.45, 2.05), output_dir)
-    plot_family("ch3_sine_cf_response", sine_cf, "y", "跟踪输出", (1.45, 2.05), output_dir)
-    plot_family("ch3_sine_nn_error", sine_nn, "e", "跟踪误差", (1.45, 2.05), output_dir)
-    plot_family("ch3_sine_cf_error", sine_cf, "e", "跟踪误差", (1.45, 2.05), output_dir)
-    plot_family("ch3_sine_nn_control", sine_nn, "u", "控制输入", (1.45, 2.05), output_dir)
-    plot_family("ch3_sine_cf_control", sine_cf, "u", "控制输入", (1.45, 2.05), output_dir)
+    plot_family("ch3_sine_nn_response", sine_nn, "y", "跟踪输出", (1.45, 3.00), output_dir)
+    plot_family("ch3_sine_cf_response", sine_cf, "y", "跟踪输出", (1.45, 3.00), output_dir)
+    plot_family("ch3_sine_nn_error", sine_nn, "e", "跟踪误差", (1.45, 3.00), output_dir)
+    plot_family("ch3_sine_cf_error", sine_cf, "e", "跟踪误差", (1.45, 3.00), output_dir)
+    plot_family("ch3_sine_nn_control", sine_nn, "u", "控制输入", (1.45, 3.00), output_dir)
+    plot_family("ch3_sine_cf_control", sine_cf, "u", "控制输入", (1.45, 3.00), output_dir)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Chapter 3 simulation figures.")
     parser.add_argument("--output-dir", type=Path, default=FIG_DIR)
-    parser.add_argument("--duration", type=float, default=5.0)
+    parser.add_argument("--duration", type=float, default=SINE_PERIOD)
     parser.add_argument("--dt", type=float, default=0.001)
     parser.add_argument("--omega-n", type=float, default=35.0)
     args = parser.parse_args()

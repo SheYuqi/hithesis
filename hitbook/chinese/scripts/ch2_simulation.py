@@ -29,6 +29,9 @@ FIG_DIR = ROOT / "hitbook" / "chinese" / "figures" / "ch2_sim"
 B_GAIN = 8000.0
 K1_GAIN = 5.0
 W_STAR = np.array([0.35, -0.28, 0.40, 0.08, 0.12, 0.05], dtype=float)
+SIM_FIGSIZE = (6.4, 3.5)
+SINE_OMEGA = 0.2
+SINE_PERIOD = 2.0 * math.pi / SINE_OMEGA
 
 
 @dataclass(frozen=True)
@@ -49,8 +52,8 @@ def configure_matplotlib() -> None:
             "axes.labelsize": 20,
             "axes.titlesize": 11,
             "legend.fontsize": 9,
-            "xtick.labelsize": 15,
-            "ytick.labelsize": 15,
+            "xtick.labelsize": 16,
+            "ytick.labelsize": 16,
             "axes.linewidth": 1.0,
             "grid.linewidth": 0.8,
         }
@@ -65,18 +68,13 @@ def step_reference(t: float, t0: float = 0.5, amplitude: float = 5.0) -> Tuple[f
 
 def sine_reference(
     t: float,
-    t0: float = 0.5,
-    offset: float = 5.0,
-    amplitude: float = 1.2,
-    freq_hz: float = 0.35,
+    offset: float = 2.5,
+    amplitude: float = 2.5,
+    omega: float = SINE_OMEGA,
 ) -> Tuple[float, float, float]:
-    if t < t0:
-        return 0.0, 0.0, 0.0
-    omega = 2.0 * math.pi * freq_hz
-    tau = t - t0
-    yd = offset + amplitude * math.sin(omega * tau)
-    yd_dot = amplitude * omega * math.cos(omega * tau)
-    yd_ddot = -amplitude * omega * omega * math.sin(omega * tau)
+    yd = offset + amplitude * math.sin(omega * t)
+    yd_dot = amplitude * omega * math.cos(omega * t)
+    yd_ddot = -amplitude * omega * omega * math.sin(omega * t)
     return yd, yd_dot, yd_ddot
 
 
@@ -97,7 +95,7 @@ def simulate_ideal_closed_loop(
     zeta: float,
     omega_n: float,
     reference: Callable[[float], Tuple[float, float, float]],
-    duration: float = 5.0,
+    duration: float = SINE_PERIOD,
     dt: float = 0.001,
 ) -> Dict[str, np.ndarray]:
     times = np.arange(0.0, duration + dt, dt)
@@ -174,7 +172,7 @@ def simulate_nn_closed_loop(
     zeta: float,
     omega_n: float,
     reference: Callable[[float], Tuple[float, float, float]],
-    duration: float = 5.0,
+    duration: float = SINE_PERIOD,
     dt: float = 0.001,
     gamma: float = 0.04,
     sigma_mod: float = 0.01,
@@ -251,7 +249,7 @@ def simulate_nn_closed_loop(
 
 def simulate_standard_backstepping_nn(
     reference: Callable[[float], Tuple[float, float, float]],
-    duration: float = 5.0,
+    duration: float = SINE_PERIOD,
     dt: float = 0.001,
     k1: float = 25.0,
     k2: float = 25.0,
@@ -415,14 +413,9 @@ def add_zoom_inset(
     xlim: Tuple[float, float],
     ylabel: str | None = None,
     ref_series: Tuple[np.ndarray, Dict[str, object]] | None = None,
+    y_strategy: str = "full",
+    focus_quantile: float = 0.90,
 ) -> plt.Axes:
-    inset = inset_axes(ax, width="55%", height="45%", loc="center left", borderpad=1.6)
-    if ref_series is not None:
-        inset.plot(t, ref_series[0], **ref_series[1])
-    for values, style in series:
-        inset.plot(t, values, **style)
-    inset.set_xlim(*xlim)
-
     mask = (t >= xlim[0]) & (t <= xlim[1])
     stacked = []
     if ref_series is not None:
@@ -431,23 +424,94 @@ def add_zoom_inset(
         stacked.append(values[mask])
     y_min = min(np.min(values) for values in stacked)
     y_max = max(np.max(values) for values in stacked)
-    pad = 0.08 * max(1e-6, y_max - y_min)
+    if y_strategy == "upper_band":
+        merged = np.concatenate(stacked)
+        q_low = float(np.quantile(merged, focus_quantile))
+        y_min = max(y_min, q_low)
+    pad = 0.05 * max(1e-6, y_max - y_min)
+
+    x_axis_min, x_axis_max = ax.get_xlim()
+    y_axis_min, y_axis_max = ax.get_ylim()
+    x_zoom_min = (xlim[0] - x_axis_min) / max(1e-9, x_axis_max - x_axis_min)
+    x_zoom_max = (xlim[1] - x_axis_min) / max(1e-9, x_axis_max - x_axis_min)
+    y_zoom_min = (y_min - pad - y_axis_min) / max(1e-9, y_axis_max - y_axis_min)
+    y_zoom_max = (y_max + pad - y_axis_min) / max(1e-9, y_axis_max - y_axis_min)
+
+    candidate_boxes = [
+        (0.08, 0.52, 0.48, 0.40),
+        (0.08, 0.14, 0.48, 0.40),
+        (0.28, 0.30, 0.48, 0.40),
+        (0.50, 0.52, 0.42, 0.38),
+        (0.50, 0.28, 0.42, 0.38),
+    ]
+    sample_step = max(1, len(t) // 900)
+    x_sample = t[::sample_step]
+    x_norm = (x_sample - x_axis_min) / max(1e-9, x_axis_max - x_axis_min)
+    plotted_arrays = []
+    if ref_series is not None:
+        plotted_arrays.append(ref_series[0][::sample_step])
+    for values, _ in series:
+        plotted_arrays.append(values[::sample_step])
+
+    best_box = candidate_boxes[0]
+    best_score = float("inf")
+    for box in candidate_boxes:
+        bx, by, bw, bh = box
+        score = 0.0
+        for values in plotted_arrays:
+            y_norm = (values - y_axis_min) / max(1e-9, y_axis_max - y_axis_min)
+            inside = (x_norm >= bx) & (x_norm <= bx + bw) & (y_norm >= by) & (y_norm <= by + bh)
+            score += float(np.count_nonzero(inside))
+        overlap_x = max(0.0, min(bx + bw, x_zoom_max) - max(bx, x_zoom_min))
+        overlap_y = max(0.0, min(by + bh, y_zoom_max) - max(by, y_zoom_min))
+        score += 2500.0 * overlap_x * overlap_y
+        if bx > 0.45 and by < 0.25:
+            score += 500.0
+        if score < best_score:
+            best_score = score
+            best_box = box
+
+    inset = inset_axes(
+        ax,
+        width="100%",
+        height="100%",
+        loc="lower left",
+        bbox_to_anchor=best_box,
+        bbox_transform=ax.transAxes,
+        borderpad=0.0,
+    )
+    if ref_series is not None:
+        inset.plot(t, ref_series[0], **ref_series[1])
+    for values, style in series:
+        inset.plot(t, values, **style)
+    inset.set_xlim(*xlim)
     inset.set_ylim(y_min - pad, y_max + pad)
     inset.grid(True, linestyle=(0, (1.0, 5.0)), color="0.7", linewidth=0.8)
     inset.tick_params(direction="in", labelsize=8, top=True, right=True)
+    plt.setp(inset.get_xticklabels(), fontfamily="DejaVu Serif", fontweight="bold")
+    plt.setp(inset.get_yticklabels(), fontfamily="DejaVu Serif", fontweight="bold")
     if ylabel:
-        inset.set_ylabel(ylabel, fontsize=8)
-    inset.set_xlabel("时间 (s)", fontsize=8)
+        inset.set_ylabel(ylabel, fontsize=8, fontfamily="Noto Serif CJK JP", fontweight="bold")
+    inset.set_xlabel("时间 (s)", fontsize=8, fontfamily="Noto Serif CJK JP", fontweight="bold")
     for spine in inset.spines.values():
         spine.set_linewidth(1.0)
-    mark_inset(ax, inset, loc1=2, loc2=4, fc="none", ec="0.2", lw=1.0)
+    inset_side_right = best_box[0] >= 0.45
+    mark_inset(
+        ax,
+        inset,
+        loc1=1 if inset_side_right else 2,
+        loc2=4 if inset_side_right else 3,
+        fc="none",
+        ec="0.2",
+        lw=1.0,
+    )
     return inset
 
 
 def annotate_step_overshoot(ax: plt.Axes, result_map: Dict[float, Dict[str, np.ndarray]], cases: Iterable[DampingCase]) -> None:
     offsets = {
         1.000: (10, 8),
-        0.707: (-58, -10),
+        0.707: (-56, -10),
         0.625: (12, -14),
     }
     for case in cases:
@@ -468,10 +532,12 @@ def annotate_step_overshoot(ax: plt.Axes, result_map: Dict[float, Dict[str, np.n
 
 
 def style_axes(ax: plt.Axes, xlabel: str, ylabel: str) -> None:
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel, fontfamily="Noto Serif CJK JP", fontweight="bold")
+    ax.set_ylabel(ylabel, fontfamily="Noto Serif CJK JP", fontweight="bold")
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color="0.7", linewidth=0.8)
     ax.tick_params(direction="in", which="both", top=True, right=True, length=6, width=1.0)
+    plt.setp(ax.get_xticklabels(), fontfamily="DejaVu Serif", fontweight="bold")
+    plt.setp(ax.get_yticklabels(), fontfamily="DejaVu Serif", fontweight="bold")
 
 
 def save_figure(fig: plt.Figure, basepath: Path) -> None:
@@ -481,7 +547,7 @@ def save_figure(fig: plt.Figure, basepath: Path) -> None:
 
 def build_figures(
     output_dir: Path,
-    duration: float = 5.0,
+    duration: float = SINE_PERIOD,
     dt: float = 0.001,
     omega_n: float = 35.0,
     mode: str = "nn",
@@ -513,7 +579,7 @@ def build_figures(
         for case in cases
     }
     ref_style = {"color": "black", "linewidth": 2.0, "label": r"参考信号 $y_d$"}
-    bs_style = {"color": "#4d4d4d", "linestyle": ":", "linewidth": 2.0, "label": "BS"}
+    bs_style = {"color": "#4d4d4d", "linestyle": ":", "linewidth": 2.0, "label": r"SBC+$\zeta$"}
 
     panels = [
         (
@@ -521,7 +587,7 @@ def build_figures(
             step_results,
             "y",
             "跟踪输出",
-            (0.50, 0.72),
+            (0.56, 0.82),  #更改框选范围
             "跟踪常值信号的跟踪响应",
         ),
         (
@@ -529,7 +595,7 @@ def build_figures(
             step_results,
             "e",
             "跟踪误差",
-            (0.50, 0.72),
+            (0.56, 0.82),
             "跟踪常值信号的跟踪误差",
         ),
         (
@@ -537,7 +603,7 @@ def build_figures(
             step_results,
             "u",
             "控制输入",
-            (0.50, 0.72),
+            (0.56, 0.82),
             "跟踪常值信号的控制输入",
         ),
         (
@@ -545,7 +611,7 @@ def build_figures(
             sine_results,
             "y",
             "跟踪输出",
-            (0.50, 0.65),
+            (0.07, 0.22),
             "跟踪变值信号的跟踪响应",
         ),
         (
@@ -553,7 +619,7 @@ def build_figures(
             sine_results,
             "e",
             "跟踪误差",
-            (0.50, 0.65),
+            (0.07, 0.22),
             "跟踪变值信号的跟踪误差",
         ),
         (
@@ -561,13 +627,13 @@ def build_figures(
             sine_results,
             "u",
             "控制输入",
-            (0.50, 0.65),
+            (0.07, 0.22),
             "跟踪变值信号的控制输入",
         ),
     ]
 
     for filename, result_map, key, ylabel, zoom_xlim, title in panels:
-        fig, ax = plt.subplots(figsize=(6.4, 3.9), constrained_layout=True)
+        fig, ax = plt.subplots(figsize=SIM_FIGSIZE, constrained_layout=True)
         first = next(iter(result_map.values()))
         t = first["t"]
         show_reference = key == "y"
@@ -643,7 +709,7 @@ def main() -> None:
         default=FIG_DIR,
         help="Directory for generated figures and CSV summary.",
     )
-    parser.add_argument("--duration", type=float, default=5.0, help="Simulation duration in seconds.")
+    parser.add_argument("--duration", type=float, default=SINE_PERIOD, help="Simulation duration in seconds.")
     parser.add_argument("--dt", type=float, default=0.001, help="Simulation time step.")
     parser.add_argument("--omega-n", type=float, default=35.0, help="Natural frequency used to build m1 and m2.")
     parser.add_argument(
