@@ -34,12 +34,12 @@ import matplotlib.pyplot as plt
 FIG_DIR = ROOT / "hitbook" / "chinese" / "figures" / "ch4_sim"
 W_CF = np.array([0.35, -0.28, 0.40, 0.08, 0.12, 0.05], dtype=float)
 FILTER_ZETA = 0.90
-FILTER_WN = 80.0
+FILTER_WN = 110.0
 ROBUST_GAIN = 0.04
 SAT_WIDTH = 0.18
 U_MAX = 0.14
-AW_LAMBDA = 12.0
-AW_GAIN = -6.0
+AW_LAMBDA = 24.0
+AW_GAIN = -2.0
 
 
 def sat(x: float) -> float:
@@ -175,7 +175,7 @@ def plot_family(
     y_strategy: str = "full",
     focus_quantile: float = 0.70,
 ) -> None:
-    fig, ax = plt.subplots(figsize=SIM_FIGSIZE, constrained_layout=True)
+    fig, ax = plt.subplots(figsize=SIM_FIGSIZE)
     cases = [
         DampingCase(1.000, "#0000FF", "-", r"$\zeta = 1.000$"),
         DampingCase(1.0 / math.sqrt(2.0), "#FF0000", "--", r"$\zeta = 0.707$"),
@@ -206,6 +206,7 @@ def plot_family(
         y_strategy=y_strategy,
         focus_quantile=focus_quantile,
     )
+    fig.subplots_adjust(left=0.115, right=0.985, bottom=0.11, top=0.985)
     save_figure(fig, output_dir / filename)
 
 
@@ -232,12 +233,12 @@ def build_figures(output_dir: Path, duration: float = SINE_PERIOD, dt: float = 0
     plot_family("ch4_step_noaw_control", step_noaw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
     plot_family("ch4_step_aw_control", step_aw, "u", "控制输入", (0.48, 0.75), output_dir, y_strategy="upper_band", focus_quantile=0.05)
 
-    plot_family("ch4_sine_noaw_response", sine_noaw, "y", "跟踪输出", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_aw_response", sine_aw, "y", "跟踪输出", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_noaw_error", sine_noaw, "e", "跟踪误差", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_aw_error", sine_aw, "e", "跟踪误差", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_noaw_control", sine_noaw, "u", "控制输入", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
-    plot_family("ch4_sine_aw_control", sine_aw, "u", "控制输入", (0.05, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_noaw_response", sine_noaw, "y", "跟踪输出", (0.0, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_aw_response", sine_aw, "y", "跟踪输出", (0.0, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_noaw_error", sine_noaw, "e", "跟踪误差", (0.0, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_aw_error", sine_aw, "e", "跟踪误差", (0.0, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_noaw_control", sine_noaw, "u", "控制输入", (0.0, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
+    plot_family("ch4_sine_aw_control", sine_aw, "u", "控制输入", (0.0, 0.5), output_dir, y_strategy="upper_band", focus_quantile=0.05)
 
 
 def main() -> None:

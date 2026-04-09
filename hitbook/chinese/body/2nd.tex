@@ -29,7 +29,7 @@ $b_i\neq 0$ 为已知（或已知符号且有下界）的控制增益常数；$f
 $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
 
 严格反馈结构是反步控制的典型适用对象。通过逐层设计虚拟控制量并构造误差变量，可递推得到稳定的闭环结构。
-然而，当 $f_i(\cdot)$ 与 $d_i$ 不可精确获知时，必须引入鲁棒项（例如滑模项、自适应项或观测/补偿项）以抵消不确定性影响。
+然而，当 $f_i(\cdot)$ 与 $d_i$ 不可精确获知时，必须引入鲁棒项（例如神经网络项、自适应项或观测/补偿项）以抵消不确定性影响。
 
 
 % 尽管式\eqref{eq:sf_system}覆盖高阶系统，本文的“预设阻尼比”指标主要面向二阶主导动态。
@@ -194,12 +194,12 @@ $\zeta$ 是阻尼比，$\omega_n$ 是系统的固有频率。
 \end{figure}
 
 \begin{remark}\label{rem:ch2_zeta}
-图~\ref{fig:ch2_zeta_step_response} 展示了当自然频率 $\omega_n=4\,\mathrm{rad/s}$ 时，二阶系统\eqref{eq:ch2_std_2nd} 在不同阻尼比 $\zeta$ 条件下的输出 $y$ 的阶跃响应曲线。需要特别指出的是：1）当 $0<\zeta<1$ 时，系统呈现欠阻尼响应特性；2）当 $\zeta=1$ 时，系统呈现临界阻尼响应特性；3）当 $\zeta>1$ 时，系统呈现过阻尼响应特性。从图中可以明显看出，阻尼比 $\zeta$ 对系统响应的超调量和上升时间具有显著影响。
+图~\ref{fig:ch2_zeta_step_response} 展示了当自然频率 $\omega_n=4\,\mathrm{rad/s}$ 时，二阶系统\eqref{eq:ch2_std_2nd} 在不同阻尼比 $\zeta$ 条件下的输出 $y$ 的阶跃响应曲线。需要特别指出的是：1）当 $0<\zeta<1$ 时，系统呈现欠阻尼响应特性；2）当 $\zeta=1$ 时，系统呈现临界阻尼响应特性；3）当 $\zeta>1$ 时，系统呈现过阻尼响应特性。由图可知，阻尼比 $\zeta$ 对系统响应的超调量和上升时间具有显著影响。
 \end{remark}
 
 需要强调的是，阻尼比在这里承担的是响应形状参数的角色，而不是单独的最优性指标。较大的阻尼比通常对应较小超调与较弱振荡，但可能牺牲响应速度；较小阻尼比通常能提升初始响应速度，但可能带来更明显峰值。论文中的预设阻尼比方法，本质是在可证明稳定前提下给出这种折中关系的可控化表达。
 
-从指标设计角度看，阻尼比定义的优势在于它天然连接时域直观与参数空间。工程上常见的超调过大、收敛太慢等描述，都可以映射为对 $\zeta_d$ 与 $\omega_{n,d}$ 的联合约束。该映射一旦建立，控制器整定就可以从尝试转变为通过计算得出结果，显著提升参数迁移与复现实验效率。
+从指标设计角度看，阻尼比定义的优势在于它天然连接时域响应特征与参数空间。工程上常见的超调过大、收敛太慢等描述，都可以映射为对 $\zeta_d$ 与 $\omega_{n,d}$ 的联合约束。该映射一旦建立，控制器整定就可以从尝试转变为通过计算得出结果，显著提升参数迁移与复现实验效率。
 
 
 
@@ -418,7 +418,7 @@ $\zeta_d=\frac{m_2}{2\sqrt{m_1}}=\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}\approx0.
   s=z_n+\sum_{i=1}^{n-1}c_i z_i.
 \end{equation}
 
-不同于标准的滑模反步法的设计，预设阻尼比滑模反步控制器在第一层误差动态中保留 $k_1$ 调节项，并通过积分项实现对阻尼比的调节。若低阶误差满足 $\dot z_1=-k_1z_1+z_2$，则预设阻尼比滑模反步控制器中设计滑模面形式如下：
+不同于标准的滑模反步法的设计，预设阻尼比滑模反步控制器在第一层误差动态中保留 $k_1$ 调节项，并通过积分项实现对阻尼比的调节。若低阶误差满足 $\dot z_1=-k_1z_1+b_1z_2$，则预设阻尼比滑模反步控制器中设计滑模面形式如下：
 \begin{equation}\label{eq:ch3_sm_mid}
   s=z_n+\sum_{i=3}^{n-1}c_i z_i+c_2\left(z_2+(m_2-k_1)z_1+m_1\int_0^t z_1(\tau)d\tau\right).
 \end{equation}
@@ -450,11 +450,9 @@ y&=x_1,
 \end{equation}
 这样，$h_i(\bar x_i)$ 用于补偿神经网络当前估计到的主要非线性，$\tilde W_i^{\mathrm T}S_i(\bar x_i)$ 刻画权值估计误差，$r_i(\bar x_i)$ 和 $d_i(t)$ 分别表示最优逼近残差与外部扰动，三者共同构成后续稳定性分析中的剩余项。
 
-由于第一通道增益 $b_1$ 已知，且仅影响低阶误差子系统的尺度而不改变递推结构，以下对第一通道作单位增益归一化处理，即取 $b_1=1$。在该约定下，低阶主导误差子系统可直接写成标准二阶形式。
-
-设 $\alpha_i$ 为滑模反步控制中的虚拟控制器，$z_i=x_i-\alpha_{i-1}$ 为状态量和虚拟控制器的误差。为使第一层误差满足 $\dot z_1=-k_1z_1+z_2$，取
+设 $\alpha_i$ 为滑模反步控制中的虚拟控制器，$z_i=x_i-\alpha_{i-1}$ 为状态量和虚拟控制器的误差。保留第一通道增益 $b_1$ 后，为使第一层误差满足 $\dot z_1=-k_1z_1+b_1z_2$，取
 \[
-\alpha_1=-(k_1z_1+h_1-r_d),
+	\alpha_1=-\frac{1}{b_1}(k_1z_1+h_1-\dot y_d),
 \]
 其中 $k_1>0$ 为第一层误差反馈增益。此时再设计预设阻尼比滑模面如下：
 \begin{equation}\label{eq:ch3_sm_mid2}
@@ -469,8 +467,8 @@ y&=x_1,
 设计虚拟控制器形式如下：
 \begin{equation}\label{eq:ch3_alpha_mid}
 \begin{aligned}
-\alpha_1&=-(k_1z_1+h_1-r_d),\\
-\alpha_2&=-\frac{1}{b_2}\Big((m_2-k_1)z_2+\big[m_1-k_1(m_2-k_1)\big]z_1+h_2-d\alpha_1\Big),\\
+	\alpha_1&=-\frac{1}{b_1}(k_1z_1+h_1-\dot y_d),\\
+	\alpha_2&=-\frac{1}{b_2}\Big((m_2-k_1)z_2+\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+h_2-d\alpha_1\Big),\\
 \alpha_3&=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+h_3-d\alpha_2\right),\\
 \alpha_i&=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+h_i-d\alpha_{i-1}\right),\\
 \alpha_{n-1}&=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+h_{n-1}-d\alpha_{n-2}\right),\\
@@ -502,8 +500,8 @@ u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-d\alpha_{n-1}+\varep
 \begin{equation}\label{eq:ch3_zdot_stab}
 \left\{
 \begin{aligned}
-\dot z_1&=-k_1z_1+z_2,\\
-\dot z_2&=-(m_2-k_1)z_2-\big[m_1-k_1(m_2-k_1)\big]z_1+b_2z_3,\\
+	\dot z_1&=-k_1z_1+b_1z_2,\\
+	\dot z_2&=-(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+b_2z_3,\\
 \dot z_3&=-\frac{c_2b_2-c_4b_3}{c_3}z_3+b_3z_4,\\
 \dot z_i&=-\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_iz_{i+1}-b_{i-1}z_{i-1},\quad i=4,5,\ldots,n-2,\\
 \dot z_{n-1}&=-\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2},\\
@@ -612,8 +610,8 @@ u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-d\alpha_{n-1}+\varep
 \begin{equation}\label{eq:ch3_zdot_mid}
 \left\{
 \begin{aligned}
-\dot z_1&=-k_1z_1+z_2,\\
-\dot z_2&=-(m_2-k_1)z_2-\big[m_1-k_1(m_2-k_1)\big]z_1+b_2z_3+\Xi_2,\\
+	\dot z_1&=-k_1z_1+b_1z_2,\\
+	\dot z_2&=-(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+b_2z_3+\Xi_2,\\
 \dot z_3&=-k_3 z_3+b_3z_4+\Xi_3,\\
 \dot z_i&=-k_i z_i+b_iz_{i+1}-b_{i-1}z_{i-1}+\Xi_i,\quad i=4,5,\ldots,n-2,\\
 \dot z_{n-1}&=-k_{n-1}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2}+\Xi_{n-1},\\
@@ -655,24 +653,24 @@ V_n(t)\le \left(V_n(0)-\frac{b_0}{a_0}\right)e^{-a_0t}+\frac{b_0}{a_0},\quad t\g
 \end{equation}
 从而 $z_3,\ldots,z_n$ 一致最终有界。
 
-再由\eqref{eq:ch3_zdot_mid}前两式，对 $\dot z_1=-k_1z_1+z_2$ 两边求导，并结合
+再由\eqref{eq:ch3_zdot_mid}前两式，对 $\dot z_1=-k_1z_1+b_1z_2$ 两边求导，并结合
 \[
-z_2=\dot z_1+k_1z_1
+	z_2=\frac{\dot z_1+k_1z_1}{b_1}
 \]
 代入 $\dot z_2$，可得
 \begin{equation}\label{eq:ch3_v2_eq_mid}
-\ddot z_1+m_2\dot z_1+m_1z_1=b_2z_3+\Xi_2.
+	\ddot z_1+m_2\dot z_1+m_1z_1=b_1b_2z_3+b_1\Xi_2.
 \end{equation}
 可见，引入 $k_1$ 后，第一层误差动态被显式稳定化，但在低阶误差方程联立整理后，闭环主导项仍可化为 $\ddot z_1+m_2\dot z_1+m_1z_1$ 的标准二阶形式。因此，系统的主导阻尼特性仍由参数 $m_1,m_2$ 决定，而 $k_1$ 主要影响中间递推过程与低阶误差的收敛速度。这也是本章在第一层保留 $k_1$ 后仍能进行阻尼比设计的关键原因。
 结合\eqref{eq:ch3_s_bound_mid}与 $|\Xi_2|\le\bar\Xi_2$ 有
 \begin{equation}\label{eq:ch3_lyap_ineq_mid}
-\left|\ddot z_1+m_2\dot z_1+m_1z_1\right|
-\le |b_2|\,|z_3|+\bar\Xi_2
-\le \delta,
+	\left|\ddot z_1+m_2\dot z_1+m_1z_1\right|
+	\le |b_1b_2|\,|z_3|+|b_1|\,\bar\Xi_2
+	\le \delta,
 \end{equation}
 其中可取
 \[
-\delta=|b_2|\sqrt{2\max\left\{V_n(0),\frac{b_0}{a_0}\right\}}+\bar\Xi_2.
+	\delta=|b_1b_2|\sqrt{2\max\left\{V_n(0),\frac{b_0}{a_0}\right\}}+|b_1|\bar\Xi_2.
 \]
 因此\eqref{eq:ch3_lyap_ineq_mid}与引理~\ref{lem:ch2_lemma2}中的二阶类李雅普诺夫不等式同构，可得系统跟踪误差最终有界。
 
@@ -753,12 +751,12 @@ m_2=2\alpha,\qquad
   \end{tabular}
 \end{table}
 
-由表\ref{tab:ch2_sigma_param}可以看出，在两组目标信号下，仿真辨识得到的 $\zeta_{\mathrm{sim}}$ 与目标阻尼比 $\zeta_d$ 均保持较好一致性。其中，$\zeta_d=1.000$ 时两类响应均接近临界阻尼；当 $\zeta_d=0.707$ 时，由于取 $\alpha=\beta$，所得阻尼比与标准欠阻尼情形一致，且在 $y_{d1}$ 与 $y_{d2}$ 下反算得到的 $\zeta_{\mathrm{sim}}$ 分别为 $0.713$ 和 $0.721$；当 $\zeta_d=0.625$ 时，对应的 $\zeta_{\mathrm{sim}}$ 分别为 $0.632$ 和 $0.641$，与目标值偏差仍较小。上述结果说明，在第一层显式保留 $k_1$ 后，本章提出的参数映射关系在神经网络补偿闭环下仍具有较好的阻尼比可解释性。图\ref{fig:ch2_step_response}--图\ref{fig:ch2_sine_control}进一步给出了常值信号与时变信号下的跟踪响应、跟踪误差及控制输入曲线。
+由表\ref{tab:ch2_sigma_param}可知，在两组目标信号下，仿真辨识得到的 $\zeta_{\mathrm{sim}}$ 与目标阻尼比 $\zeta_d$ 均保持较好一致性。其中，$\zeta_d=1.000$ 时两类响应均接近临界阻尼；当 $\zeta_d=0.707$ 时，由于取 $\alpha=\beta$，所得阻尼比与标准欠阻尼情形一致，且在 $y_{d1}$ 与 $y_{d2}$ 下反算得到的 $\zeta_{\mathrm{sim}}$ 分别为 $0.713$ 和 $0.721$；当 $\zeta_d=0.625$ 时，对应的 $\zeta_{\mathrm{sim}}$ 分别为 $0.632$ 和 $0.641$，与目标值偏差仍较小。上述结果说明，在第一层显式保留 $k_1$ 后，本章提出的参数映射关系在神经网络补偿闭环下仍具有较好的阻尼比可解释性。图\ref{fig:ch2_step_response}--图\ref{fig:ch2_sine_control}进一步给出了常值信号与时变信号下的跟踪响应、跟踪误差及控制输入曲线。
 
 \newcommand{\chTwoFigCaption}[2]{%
   \refstepcounter{figure}\label{#1}%
   \addcontentsline{lof}{figure}{\protect\numberline{\thefigure}{#2}}%
-  \par\vspace{0.10em}\centering 图~\thefigure\quad #2\par
+  \par\vspace{-2.10em}\centering 图~\thefigure\quad #2\par
 }
 
 \noindent
@@ -805,10 +803,10 @@ m_2=2\alpha,\qquad
 \end{minipage}
 
 \noindent
-图中同时给出了滑模反步法基线曲线 SBC+$\zeta$，用于与所提出的预设阻尼比设计结果进行对比。从图\ref{fig:ch2_step_response}和图\ref{fig:ch2_step_error}可以看出，在常值参考输入下，不同阻尼比对应的响应曲线具有清晰的瞬态差异：SBC+$\zeta$ 曲线整体更平缓、更保守，基本不产生明显超调；$\zeta_d=1.0$ 时响应同样接近单调收敛，而 $\zeta_d=0.707$ 与 $\zeta_d=0.625$ 时则依次表现出更明显的峰值和更快的上升过程。图\ref{fig:ch2_step_control}表明，在阻尼比减小的同时，控制输入初始阶段的调节动作也相应增强，这与更激进的瞬态整形需求相一致。
+图中同时给出了滑模反步法基线曲线 SBC+$\zeta$，用于与所提出的预设阻尼比设计结果进行对比。由图\ref{fig:ch2_step_response}和图\ref{fig:ch2_step_error}可知，在常值参考输入下，不同阻尼比对应的响应曲线呈现出明确的瞬态差异：SBC+$\zeta$ 曲线整体较为平缓，基本不产生明显超调；$\zeta_d=1.0$ 时响应同样接近单调收敛，而 $\zeta_d=0.707$ 与 $\zeta_d=0.625$ 时则依次表现出更明显的峰值和更快的上升过程。图\ref{fig:ch2_step_control}表明，在阻尼比减小的同时，控制输入初始阶段的调节动作也相应增强，这与更激进的瞬态整形需求相一致。
 
 \noindent
-从图\ref{fig:ch2_sine_response}--图\ref{fig:ch2_sine_control}可以看出，在时变参考信号下，三组阻尼比参数与 SBC+$\zeta$ 基线均能够保持稳定跟踪。相比于 SBC+$\zeta$，所提出方法在较小阻尼比参数下对轨迹变化的跟随更积极，峰值略有抬升，但整体误差仍保持在较小范围内；神经网络补偿项有效抑制了未知非线性带来的稳态偏差，使得时变跟踪过程中不同阻尼比配置下的性能差异主要体现在瞬态形态而非失稳或持续振荡。由此可见，本章提出的方法不仅能够在常值跟踪中实现可解释的阻尼比整定，而且能够在时变跟踪任务下保持良好的动态品质与控制平滑性。
+由图\ref{fig:ch2_sine_response}--图\ref{fig:ch2_sine_control}可知，在时变参考信号下，三组阻尼比参数与 SBC+$\zeta$ 基线均能够保持稳定跟踪。相比于 SBC+$\zeta$，所提出方法在较小阻尼比参数下对轨迹变化的响应更为迅速，峰值略有抬升，但整体误差仍保持在较小范围内；神经网络补偿项有效抑制了未知非线性带来的稳态偏差，使得时变跟踪过程中不同阻尼比配置下的性能差异主要体现在瞬态形态而非失稳或持续振荡。由此表明，本章提出的方法不仅能够在常值跟踪中实现可解释的阻尼比整定，而且能够在时变跟踪任务下保持良好的动态品质与控制平滑性。
 \FloatBarrier
 \section{本章小结}[Summary]\label{sec:ch3_summary}
 

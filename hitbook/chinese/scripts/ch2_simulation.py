@@ -532,8 +532,8 @@ def annotate_step_overshoot(ax: plt.Axes, result_map: Dict[float, Dict[str, np.n
 
 
 def style_axes(ax: plt.Axes, xlabel: str, ylabel: str) -> None:
-    ax.set_xlabel(xlabel, fontfamily="Noto Serif CJK JP", fontweight="bold")
-    ax.set_ylabel(ylabel, fontfamily="Noto Serif CJK JP", fontweight="bold")
+    ax.set_xlabel(xlabel, fontfamily="Noto Serif CJK JP", fontweight="bold", labelpad=0.5)
+    ax.set_ylabel(ylabel, fontfamily="Noto Serif CJK JP", fontweight="bold", labelpad=0.5)
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color="0.7", linewidth=0.8)
     ax.tick_params(direction="in", which="both", top=True, right=True, length=6, width=1.0)
     plt.setp(ax.get_xticklabels(), fontfamily="DejaVu Serif", fontweight="bold")
@@ -541,7 +541,7 @@ def style_axes(ax: plt.Axes, xlabel: str, ylabel: str) -> None:
 
 
 def save_figure(fig: plt.Figure, basepath: Path) -> None:
-    fig.savefig(basepath.with_suffix(".pdf"), bbox_inches="tight")
+    fig.savefig(basepath.with_suffix(".pdf"), bbox_inches="tight", pad_inches=0.0)
     plt.close(fig)
 
 
@@ -633,7 +633,7 @@ def build_figures(
     ]
 
     for filename, result_map, key, ylabel, zoom_xlim, title in panels:
-        fig, ax = plt.subplots(figsize=SIM_FIGSIZE, constrained_layout=True)
+        fig, ax = plt.subplots(figsize=SIM_FIGSIZE)
         first = next(iter(result_map.values()))
         t = first["t"]
         show_reference = key == "y"
@@ -652,6 +652,7 @@ def build_figures(
         leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
         leg.get_frame().set_linewidth(0.8)
         inset = add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(first["yd"], ref_style) if show_reference else None)
+        fig.subplots_adjust(left=0.108, right=0.995, bottom=0.09, top=0.992)
         save_figure(fig, output_dir / filename)
 
     overview_order = [
@@ -675,7 +676,7 @@ def build_figures(
     ylabel_map = {item[0]: item[3] for item in panels}
     zoom_map = {item[0]: item[4] for item in panels}
 
-    fig, axes = plt.subplots(3, 2, figsize=(11.0, 12.0), constrained_layout=True)
+    fig, axes = plt.subplots(3, 2, figsize=(11.0, 12.0))
     axes = axes.reshape(3, 2)
     for ax, name in zip(axes.flat, overview_order):
         results = result_map_lookup[name]
@@ -698,6 +699,7 @@ def build_figures(
         leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
         leg.get_frame().set_linewidth(0.8)
         inset = add_zoom_inset(ax, t, plotted, zoom_map[name], ref_series=(first["yd"], ref_style) if show_reference else None)
+    fig.subplots_adjust(left=0.07, right=0.995, bottom=0.05, top=0.995, hspace=0.26, wspace=0.16)
     save_figure(fig, output_dir / "ch2_damping_overview")
 
 

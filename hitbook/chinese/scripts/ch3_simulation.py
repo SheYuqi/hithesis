@@ -143,11 +143,9 @@ def simulate_cf_case(
         alpha10 = ref_dot - K1_GAIN * z1
         z2 = x2 - xi1
         s = z2 + (m2 - K1_GAIN) * z1
-        h_est = float(np.dot(W_NOM, basis_vector(x1, x2)))
         u = -(
             (m2 - K1_GAIN) * z2
             + (m1 - K1_GAIN * (m2 - K1_GAIN)) * z1
-            + h_est
             - xi2
             + ROBUST_GAIN * sat(s / SAT_WIDTH)
         ) / B_GAIN
@@ -164,11 +162,9 @@ def simulate_cf_case(
         z1 = x1 - ref
         z2 = x2 - xi1
         s = z2 + (m2 - K1_GAIN) * z1
-        h_est = float(np.dot(W_NOM, basis_vector(x1, x2)))
         control[idx] = -(
             (m2 - K1_GAIN) * z2
             + (m1 - K1_GAIN * (m2 - K1_GAIN)) * z1
-            + h_est
             - xi2
             + ROBUST_GAIN * sat(s / SAT_WIDTH)
         ) / B_GAIN
@@ -180,11 +176,9 @@ def simulate_cf_case(
     z1 = x1 - ref
     z2 = x2 - xi1
     s = z2 + (m2 - K1_GAIN) * z1
-    h_est = float(np.dot(W_NOM, basis_vector(x1, x2)))
     control[-1] = -(
         (m2 - K1_GAIN) * z2
         + (m1 - K1_GAIN * (m2 - K1_GAIN)) * z1
-        + h_est
         - xi2
         + ROBUST_GAIN * sat(s / SAT_WIDTH)
     ) / B_GAIN
@@ -275,7 +269,7 @@ def plot_family(
     zoom_xlim: Tuple[float, float],
     output_dir: Path,
 ) -> None:
-    fig, ax = plt.subplots(figsize=SIM_FIGSIZE, constrained_layout=True)
+    fig, ax = plt.subplots(figsize=SIM_FIGSIZE)
     cases = [
         DampingCase(1.000, "#0000FF", "-", r"$\zeta = 1.000$"),
         DampingCase(1.0 / math.sqrt(2.0), "#FF0000", "--", r"$\zeta = 0.707$"),
@@ -301,11 +295,12 @@ def plot_family(
     leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
     leg.get_frame().set_linewidth(0.8)
     add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(first["yd"], ref_style) if key == "y" else None)
+    fig.subplots_adjust(left=0.115, right=0.985, bottom=0.11, top=0.985)
     save_figure(fig, output_dir / filename)
 
 
 def plot_disturbance_profile(output_dir: Path, duration: float = SINE_PERIOD, dt: float = 0.001) -> None:
-    fig, ax = plt.subplots(figsize=SIM_FIGSIZE, constrained_layout=True)
+    fig, ax = plt.subplots(figsize=SIM_FIGSIZE)
     t = np.arange(0.0, duration + dt, dt)
     d = np.array([disturbance_profile(tt) for tt in t], dtype=float)
     style = {"color": "#0000FF", "linestyle": "-", "linewidth": 2.0, "label": "外部扰动"}
@@ -322,6 +317,7 @@ def plot_disturbance_profile(output_dir: Path, duration: float = SINE_PERIOD, dt
     ax.text(1.5, 760.0, r"$t=1.5\,\mathrm{s}$", ha="center", va="bottom", fontsize=10, color="0.25")
     leg = ax.legend(loc="upper right", frameon=True, fancybox=False, edgecolor="0.35")
     leg.get_frame().set_linewidth(0.8)
+    fig.subplots_adjust(left=0.115, right=0.985, bottom=0.11, top=0.985)
     save_figure(fig, output_dir / "ch3_disturbance_profile")
 
 
