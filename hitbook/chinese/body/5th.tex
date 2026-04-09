@@ -785,21 +785,6 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \end{minipage}
 \end{figure}
 
-\begin{figure}[htbp]
-  \centering
-  \begin{minipage}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_error_base.pdf}
-    \caption{时变参考下滚转通道无抗饱和补偿误差}
-    \label{fig:ch5_sine_roll_error_base}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_error_sat.pdf}
-    \caption{时变参考下滚转通道抗饱和补偿误差}
-    \label{fig:ch5_sine_roll_error_sat}
-  \end{minipage}
-\end{figure}
 
 \begin{figure}[htbp]
   \centering
@@ -817,21 +802,7 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \end{minipage}
 \end{figure}
 
-\begin{figure}[htbp]
-  \centering
-  \begin{minipage}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_error_base.pdf}
-    \caption{时变参考下俯仰通道无抗饱和补偿误差}
-    \label{fig:ch5_sine_pitch_error_base}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_error_sat.pdf}
-    \caption{时变参考下俯仰通道抗饱和补偿误差}
-    \label{fig:ch5_sine_pitch_error_sat}
-  \end{minipage}
-\end{figure}
+
 
 \begin{figure}[htbp]
   \centering
@@ -849,26 +820,16 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \end{minipage}
 \end{figure}
 
-\begin{figure}[htbp]
-  \centering
-  \begin{minipage}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_error_base.pdf}
-    \caption{时变参考下偏航通道无抗饱和补偿误差}
-    \label{fig:ch5_sine_yaw_error_base}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_error_sat.pdf}
-    \caption{时变参考下偏航通道抗饱和补偿误差}
-    \label{fig:ch5_sine_yaw_error_sat}
-  \end{minipage}
-\end{figure}
 
 \FloatBarrier
 \subsubsection{时变参考实验}
 
 时变参考实验用于进一步考察输入受限条件下控制器对连续变化姿态命令的跟踪能力。图\ref{fig:ch5_sine_roll_base}--图\ref{fig:ch5_sine_yaw_sat} 给出了三轴在时变参考输入下的实测输出结果。与常值参考实验相比，时变工况更容易放大饱和引起的幅值失真与局部偏差；由图可见，加入抗饱和补偿后，三轴曲线在方框标示区域内的偏离程度整体减小，说明该补偿机制对动态跟踪场景同样有效。
+
+\begingroup
+\setlength{\floatsep}{4bp}
+\setlength{\textfloatsep}{4bp}
+\setlength{\intextsep}{4bp}
 
 \begin{figure}[htbp]
   \centering
@@ -883,6 +844,22 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
     \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_sat.pdf}
     \caption{时变参考下滚转通道抗饱和补偿响应}
     \label{fig:ch5_sine_roll_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_error_base.pdf}
+    \caption{时变参考下滚转通道无抗饱和补偿误差}
+    \label{fig:ch5_sine_roll_error_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_roll_error_sat.pdf}
+    \caption{时变参考下滚转通道抗饱和补偿误差}
+    \label{fig:ch5_sine_roll_error_sat}
   \end{minipage}
 \end{figure}
 
@@ -922,6 +899,22 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_error_base.pdf}
+    \caption{时变参考下俯仰通道无抗饱和补偿误差}
+    \label{fig:ch5_sine_pitch_error_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_error_sat.pdf}
+    \caption{时变参考下俯仰通道抗饱和补偿误差}
+    \label{fig:ch5_sine_pitch_error_sat}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
     \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_pitch_u_base.pdf}
     \caption{时变参考下俯仰通道无抗饱和补偿控制输入}
     \label{fig:ch5_sine_pitch_u_base}
@@ -954,6 +947,23 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
   \centering
   \begin{minipage}[t]{0.48\textwidth}
     \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_error_base.pdf}
+    \caption{时变参考下偏航通道无抗饱和补偿误差}
+    \label{fig:ch5_sine_yaw_error_base}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_error_sat.pdf}
+    \caption{时变参考下偏航通道抗饱和补偿误差}
+    \label{fig:ch5_sine_yaw_error_sat}
+  \end{minipage}
+\end{figure}
+
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
     \includegraphics[width=\textwidth]{figures/ch5_sat_exp/ch5_sine_yaw_u_base.pdf}
     \caption{时变参考下偏航通道无抗饱和补偿控制输入}
     \label{fig:ch5_sine_yaw_u_base}
@@ -967,6 +977,7 @@ u_i &= \mathrm{sat}(u_{c,i}),\\
 \end{figure}
 
 \FloatBarrier
+\endgroup
 
 表\ref{tab:ch5_exp3_param} 给出了实验3所采用的典型参数设置。其中，三组阻尼比参数沿用前文设计结果，常值与时变参考实验共用同一组主导动态参数；输入饱和边界统一取 $u_{\max}=0.5\ \mathrm{V}$，以保证在不破坏平台安全运行的前提下能够稳定触发受限工况，从而对比抗饱和补偿前后的响应差异。表中 $\hat{\zeta}^{\mathrm{No\text{-}AW}}$ 与 $\hat{\zeta}^{\mathrm{AW}}$ 分别表示常值参考下无抗饱和补偿与抗饱和补偿工况的反算阻尼比；时变参考工况以短横线表示。
 
