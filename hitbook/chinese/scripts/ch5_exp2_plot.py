@@ -26,8 +26,8 @@ STYLES = {
     '0.707': dict(color='#FF0000', linestyle='--', linewidth=2.0),
     '0.625': dict(color='#00CC00', linestyle='-.', linewidth=2.0),
 }
-LABELS = {'roll': 'Roll angle (deg)', 'pitch': 'Pitch angle (deg)', 'yaw': 'Yaw angle (deg)'}
-ERROR_LABELS = {'roll': 'Roll error (deg)', 'pitch': 'Pitch error (deg)', 'yaw': 'Yaw error (deg)'}
+LABELS = {'roll': '滚转角 (deg)', 'pitch': '俯仰角 (deg)', 'yaw': '偏航角 (deg)'}
+ERROR_LABELS = {'roll': '滚转误差 (deg)', 'pitch': '俯仰误差 (deg)', 'yaw': '偏航误差 (deg)'}
 WINDOWS = {
     ('const', 'roll'): (10.0, 18.0),
     ('const', 'pitch'): (10.0, 18.0),
@@ -38,13 +38,16 @@ WINDOWS = {
 }
 
 plt.rcParams.update({
-    'font.family': 'Noto Serif CJK JP',
+    'font.family': 'serif',
+    'font.serif': ['AR PL UMing CN', 'Noto Serif CJK JP', 'Noto Serif CJK SC', 'DejaVu Serif'],
     'mathtext.fontset': 'stix',
+    'axes.unicode_minus': False,
     'axes.linewidth': 1.0,
-    'axes.labelsize': 20,
-    'xtick.labelsize': 15,
-    'ytick.labelsize': 15,
-    'legend.fontsize': 9,
+    'font.size': 12,
+    'axes.labelsize': 12,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    'legend.fontsize': 12,
     'grid.linewidth': 0.8,
 })
 
@@ -70,16 +73,6 @@ def experimental_constant_reference(axis, t):
         return np.full_like(t, 5.0)
     if axis == 'roll':
         return np.full_like(t, 4.0)
-    raise ValueError(axis)
-
-
-def reference_label(axis):
-    if axis == 'yaw':
-        return r'$y_d=3+3\sin(0.1t)$'
-    if axis == 'pitch':
-        return r'$y_d=2.5+2.5\sin(0.2t)$'
-    if axis == 'roll':
-        return r'$y_d=2+2\sin(0.2t)$'
     raise ValueError(axis)
 
 
@@ -154,15 +147,12 @@ def plot_single(mode: str, side: str, axis: str):
     ax.set_xlim(0.0, float(t[-1]))
     ylow, yhigh = paired_ylim(mode, axis)
     ax.set_ylim(ylow, yhigh)
-    ax.set_xlabel('Time (s)')
+    ax.set_xlabel('时间 (s)')
     ax.set_ylabel(LABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
     ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
     leg = ax.legend(loc='lower right', frameon=True, fancybox=False, edgecolor='0.35')
     leg.get_frame().set_linewidth(0.8)
-    ax.text(0.03, 0.95, reference_label(axis), transform=ax.transAxes, va='top', ha='left',
-            bbox=dict(boxstyle='square,pad=0.20', fc='white', ec='0.35', lw=0.8), fontsize=10)
-
     tx, ty, tw, th = region_bounds(t, traces, WINDOWS[(mode, axis)])
     rect = Rectangle((tx, ty), tw, th, fill=False, ec='0.2', lw=1.0)
     ax.add_patch(rect)
@@ -174,7 +164,7 @@ def plot_single(mode: str, side: str, axis: str):
     axins.set_xlim(tx, tx + tw)
     axins.set_ylim(ty, ty + th)
     axins.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
-    axins.tick_params(direction='in', labelsize=8, top=True, right=True)
+    axins.tick_params(direction='in', labelsize=12, top=True, right=True)
     for spine in axins.spines.values():
         spine.set_linewidth(1.0)
     ax.indicate_inset_zoom(axins, edgecolor='0.2', alpha=0.9)
@@ -195,7 +185,7 @@ def plot_error(mode: str, side: str, axis: str):
     ax.set_xlim(0.0, float(t[-1]))
     ylow, yhigh = paired_error_ylim(mode, axis)
     ax.set_ylim(ylow, yhigh)
-    ax.set_xlabel('Time (s)')
+    ax.set_xlabel('时间 (s)')
     ax.set_ylabel(ERROR_LABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
     ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)

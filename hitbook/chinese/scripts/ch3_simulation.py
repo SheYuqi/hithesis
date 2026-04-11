@@ -305,16 +305,16 @@ def plot_disturbance_profile(output_dir: Path, duration: float = SINE_PERIOD, dt
     d = np.array([disturbance_profile(tt) for tt in t], dtype=float)
     style = {"color": "#0000FF", "linestyle": "-", "linewidth": 2.0, "label": "外部扰动"}
     ax.plot(t, d, **style)
-    style_axes(ax, "Time(sec)", "Disturbance")
-    label_font = {"fontsize": 20, "fontweight": "bold", "fontfamily": "Noto Serif CJK JP"}
-    ax.set_xlabel("Time(sec)", **label_font)
-    ax.set_ylabel("Disturbance", **label_font)
+    style_axes(ax, "时间 (s)", "扰动")
+    label_font = {"fontsize": 12, "fontweight": "normal", "fontfamily": "serif"}
+    ax.set_xlabel("时间 (s)", **label_font)
+    ax.set_ylabel("扰动", **label_font)
     ax.set_xlim(0.0, duration)
     ax.set_ylim(-900.0, 900.0)
     ax.set_xticks(np.arange(0.0, duration + 1e-6, 5.0))
     ax.set_yticks([-600.0, 0.0, 600.0])
     ax.axvline(1.5, color="0.35", linestyle="--", linewidth=1.1, label="扰动注入时刻")
-    ax.text(1.5, 760.0, r"$t=1.5\,\mathrm{s}$", ha="center", va="bottom", fontsize=10, color="0.25")
+    ax.text(1.5, 760.0, r"$t=1.5\,\mathrm{s}$", ha="center", va="bottom", fontsize=12, color="0.25")
     leg = ax.legend(loc="upper right", frameon=True, fancybox=False, edgecolor="0.35")
     leg.get_frame().set_linewidth(0.8)
     fig.subplots_adjust(left=0.115, right=0.985, bottom=0.11, top=0.985)

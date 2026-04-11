@@ -10,13 +10,16 @@ OUT = Path('hitbook/chinese/figures/ch5_sbc_example')
 OUT.mkdir(parents=True, exist_ok=True)
 
 plt.rcParams.update({
-    'font.family': 'Noto Serif CJK JP',
+    'font.family': 'serif',
+    'font.serif': ['AR PL UMing CN', 'Noto Serif CJK JP', 'Noto Serif CJK SC', 'DejaVu Serif'],
     'mathtext.fontset': 'stix',
+    'axes.unicode_minus': False,
     'axes.linewidth': 1.0,
-    'axes.labelsize': 20,
-    'xtick.labelsize': 15,
-    'ytick.labelsize': 15,
-    'legend.fontsize': 9,
+    'font.size': 12,
+    'axes.labelsize': 12,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    'legend.fontsize': 12,
 })
 
 
@@ -54,8 +57,8 @@ vals = np.concatenate([y, yd])
 Ymin, Ymax = float(vals.min()), float(vals.max())
 Span = max(Ymax - Ymin, 1e-3)
 ax.set_ylim(Ymin - 0.08 * Span, Ymax + 0.08 * Span)
-ax.set_xlabel('Time (s)')
-ax.set_ylabel('Pitch angle (deg)')
+ax.set_xlabel('时间 (s)')
+ax.set_ylabel('俯仰角 (deg)')
 ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
 ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
 leg = ax.legend(loc='lower right', frameon=True, fancybox=False, edgecolor='0.35')
@@ -67,8 +70,8 @@ axins.plot(t, y, color='#d62728', linestyle='--', linewidth=1.8)
 axins.set_xlim(x1, x2)
 axins.set_ylim(y1, y2)
 axins.grid(True, alpha=0.25)
-axins.tick_params(direction='in', labelsize=8, top=True, right=True)
-axins.set_xlabel('Time (s)', fontsize=8)
+axins.tick_params(direction='in', labelsize=12, top=True, right=True)
+axins.set_xlabel('时间 (s)', fontsize=12)
 for spine in axins.spines.values():
     spine.set_linewidth(1.0)
 mark_inset(ax, axins, loc1=2, loc2=4, fc='none', ec='0.2', lw=1.0)

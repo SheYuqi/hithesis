@@ -32,6 +32,8 @@ W_STAR = np.array([0.35, -0.28, 0.40, 0.08, 0.12, 0.05], dtype=float)
 SIM_FIGSIZE = (6.4, 3.5)
 SINE_OMEGA = 0.2
 SINE_PERIOD = 2.0 * math.pi / SINE_OMEGA
+FIG_FONT_FAMILY = "serif"
+FIG_FONT_SIZE = 12
 
 
 @dataclass(frozen=True)
@@ -45,15 +47,16 @@ class DampingCase:
 def configure_matplotlib() -> None:
     plt.rcParams.update(
         {
-            "font.family": "Noto Serif CJK JP",
+            "font.family": FIG_FONT_FAMILY,
+            "font.serif": ["AR PL UMing CN", "Noto Serif CJK JP", "Noto Serif CJK SC", "DejaVu Serif"],
             "mathtext.fontset": "stix",
             "axes.unicode_minus": False,
-            "font.size": 10,
-            "axes.labelsize": 20,
-            "axes.titlesize": 11,
-            "legend.fontsize": 9,
-            "xtick.labelsize": 16,
-            "ytick.labelsize": 16,
+            "font.size": FIG_FONT_SIZE,
+            "axes.labelsize": FIG_FONT_SIZE,
+            "axes.titlesize": FIG_FONT_SIZE,
+            "legend.fontsize": FIG_FONT_SIZE,
+            "xtick.labelsize": FIG_FONT_SIZE,
+            "ytick.labelsize": FIG_FONT_SIZE,
             "axes.linewidth": 1.0,
             "grid.linewidth": 0.8,
         }
@@ -487,12 +490,12 @@ def add_zoom_inset(
     inset.set_xlim(*xlim)
     inset.set_ylim(y_min - pad, y_max + pad)
     inset.grid(True, linestyle=(0, (1.0, 5.0)), color="0.7", linewidth=0.8)
-    inset.tick_params(direction="in", labelsize=8, top=True, right=True)
+    inset.tick_params(direction="in", labelsize=FIG_FONT_SIZE, top=True, right=True)
     plt.setp(inset.get_xticklabels(), fontfamily="DejaVu Serif", fontweight="bold")
     plt.setp(inset.get_yticklabels(), fontfamily="DejaVu Serif", fontweight="bold")
     if ylabel:
-        inset.set_ylabel(ylabel, fontsize=8, fontfamily="Noto Serif CJK JP", fontweight="bold")
-    inset.set_xlabel("时间 (s)", fontsize=8, fontfamily="Noto Serif CJK JP", fontweight="bold")
+        inset.set_ylabel(ylabel, fontsize=FIG_FONT_SIZE, fontfamily=FIG_FONT_FAMILY, fontweight="normal")
+    inset.set_xlabel("时间 (s)", fontsize=FIG_FONT_SIZE, fontfamily=FIG_FONT_FAMILY, fontweight="normal")
     for spine in inset.spines.values():
         spine.set_linewidth(1.0)
     inset_side_right = best_box[0] >= 0.45
@@ -524,7 +527,7 @@ def annotate_step_overshoot(ax: plt.Axes, result_map: Dict[float, Dict[str, np.n
             xy=(peak_t, peak_y),
             xytext=(dx, dy),
             textcoords="offset points",
-            fontsize=8,
+            fontsize=FIG_FONT_SIZE,
             color=case.color,
             arrowprops={"arrowstyle": "->", "color": case.color, "lw": 0.8},
             bbox={"boxstyle": "round,pad=0.15", "facecolor": "white", "edgecolor": case.color, "linewidth": 0.6},
@@ -532,8 +535,8 @@ def annotate_step_overshoot(ax: plt.Axes, result_map: Dict[float, Dict[str, np.n
 
 
 def style_axes(ax: plt.Axes, xlabel: str, ylabel: str) -> None:
-    ax.set_xlabel(xlabel, fontfamily="Noto Serif CJK JP", fontweight="bold", labelpad=0.5)
-    ax.set_ylabel(ylabel, fontfamily="Noto Serif CJK JP", fontweight="bold", labelpad=0.5)
+    ax.set_xlabel(xlabel, fontfamily=FIG_FONT_FAMILY, fontweight="normal", labelpad=0.5)
+    ax.set_ylabel(ylabel, fontfamily=FIG_FONT_FAMILY, fontweight="normal", labelpad=0.5)
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color="0.7", linewidth=0.8)
     ax.tick_params(direction="in", which="both", top=True, right=True, length=6, width=1.0)
     plt.setp(ax.get_xticklabels(), fontfamily="DejaVu Serif", fontweight="bold")

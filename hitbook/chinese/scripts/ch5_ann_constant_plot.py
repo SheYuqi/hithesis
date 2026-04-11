@@ -16,19 +16,22 @@ ANN_STYLES = {
     '0.707': dict(color=COLORS['0.707'], linestyle='--', linewidth=2.0),
     '0.625': dict(color=COLORS['0.625'], linestyle='-.', linewidth=2.0),
 }
-YLABELS = {'roll': 'Roll angle (deg)', 'pitch': 'Pitch angle (deg)', 'yaw': 'Yaw angle (deg)'}
-ERROR_YLABELS = {'roll': 'Roll error (deg)', 'pitch': 'Pitch error (deg)', 'yaw': 'Yaw error (deg)'}
+YLABELS = {'roll': '滚转角 (deg)', 'pitch': '俯仰角 (deg)', 'yaw': '偏航角 (deg)'}
+ERROR_YLABELS = {'roll': '滚转误差 (deg)', 'pitch': '俯仰误差 (deg)', 'yaw': '偏航误差 (deg)'}
 XLIM = (0.0, 60.0)
 ZOOM = {'pitch': (0.0, 1.2), 'roll': (0.0, 1.0), 'yaw': (0.0, 2.2)}
 
 plt.rcParams.update({
-    'font.family': 'Noto Serif CJK JP',
+    'font.family': 'serif',
+    'font.serif': ['AR PL UMing CN', 'Noto Serif CJK JP', 'Noto Serif CJK SC', 'DejaVu Serif'],
     'mathtext.fontset': 'stix',
+    'axes.unicode_minus': False,
     'axes.linewidth': 1.0,
-    'axes.labelsize': 20,
-    'xtick.labelsize': 15,
-    'ytick.labelsize': 15,
-    'legend.fontsize': 9,
+    'font.size': 12,
+    'axes.labelsize': 12,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    'legend.fontsize': 12,
 })
 
 
@@ -56,7 +59,7 @@ for axis in ['pitch', 'roll', 'yaw']:
     ymin, ymax = float(vals.min()), float(vals.max())
     span = max(ymax - ymin, 1e-3)
     ax.set_ylim(ymin - 0.08 * span, ymax + 0.08 * span)
-    ax.set_xlabel('Time (s)')
+    ax.set_xlabel('时间 (s)')
     ax.set_ylabel(YLABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
     ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
@@ -77,8 +80,8 @@ for axis in ['pitch', 'roll', 'yaw']:
     axins.set_xlim(x1, x2)
     axins.set_ylim(y1, y2)
     axins.grid(True, alpha=0.25)
-    axins.tick_params(direction='in', labelsize=8, top=True, right=True)
-    axins.set_xlabel('Time (s)', fontsize=8)
+    axins.tick_params(direction='in', labelsize=12, top=True, right=True)
+    axins.set_xlabel('时间 (s)', fontsize=12)
     for spine in axins.spines.values():
         spine.set_linewidth(1.0)
 
@@ -97,7 +100,7 @@ for axis in ['pitch', 'roll', 'yaw']:
     ymin, ymax = float(vals.min()), float(vals.max())
     span = max(ymax - ymin, 1e-3)
     ax.set_ylim(ymin - 0.10 * span, ymax + 0.10 * span)
-    ax.set_xlabel('Time (s)')
+    ax.set_xlabel('时间 (s)')
     ax.set_ylabel(ERROR_YLABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
     ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)

@@ -16,9 +16,9 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 DT = 0.002
 DAMPINGS = [('1', '1.000'), ('0.707', '0.707'), ('0.625', '0.625')]
 COLORS = {'1': '#0000FF', '0.707': '#FF0000', '0.625': '#00CC00'}
-LABELS = {'roll': 'Roll angle (deg)', 'pitch': 'Pitch angle (deg)', 'yaw': 'Yaw angle (deg)'}
-ERROR_LABELS = {'roll': 'Roll error (deg)', 'pitch': 'Pitch error (deg)', 'yaw': 'Yaw error (deg)'}
-U_LABELS = {'roll': 'Roll control input (V)', 'pitch': 'Pitch control input (V)', 'yaw': 'Yaw control input (V)'}
+LABELS = {'roll': '滚转角 (deg)', 'pitch': '俯仰角 (deg)', 'yaw': '偏航角 (deg)'}
+ERROR_LABELS = {'roll': '滚转误差 (deg)', 'pitch': '俯仰误差 (deg)', 'yaw': '偏航误差 (deg)'}
+U_LABELS = {'roll': '滚转控制输入 (V)', 'pitch': '俯仰控制输入 (V)', 'yaw': '偏航控制输入 (V)'}
 FOCUS_OVERRIDES = {
     ('constant_sat', 'pitch', 'output'): {'window': (0.0, 10.8), 'y_bounds': (2.7, 5.4), 'inset_rect': [0.10, 0.16, 0.42, 0.28]},
     ('constant_sat', 'yaw', 'output'): {'window': (0.0, 12.0), 'y_bounds': (2.5, 6.5), 'inset_rect': [0.10, 0.16, 0.42, 0.28]},
@@ -26,13 +26,16 @@ FOCUS_OVERRIDES = {
 DEFAULT_INSET_RECT = [0.13, 0.08, 0.50, 0.40]
 
 plt.rcParams.update({
-    'font.family': 'Noto Serif CJK JP',
+    'font.family': 'serif',
+    'font.serif': ['AR PL UMing CN', 'Noto Serif CJK JP', 'Noto Serif CJK SC', 'DejaVu Serif'],
     'mathtext.fontset': 'stix',
+    'axes.unicode_minus': False,
     'axes.linewidth': 1.0,
-    'axes.labelsize': 20,
-    'xtick.labelsize': 15,
-    'ytick.labelsize': 15,
-    'legend.fontsize': 9,
+    'font.size': 12,
+    'axes.labelsize': 12,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    'legend.fontsize': 12,
     'grid.linewidth': 0.8,
 })
 
@@ -65,16 +68,6 @@ def experimental_constant_reference(axis, t):
     if axis == 'roll':
         return np.full_like(t, 4.0)
     raise ValueError(axis)
-
-def reference_label(axis):
-    if axis == 'yaw':
-        return r'$y_d=3+3\sin(0.1t)$'
-    if axis == 'pitch':
-        return r'$y_d=2.5+2.5\sin(0.2t)$'
-    if axis == 'roll':
-        return r'$y_d=2+2\sin(0.2t)$'
-    raise ValueError(axis)
-
 
 def load_axis(top: str, variant: str, axis: str):
     traces = {}
@@ -274,7 +267,7 @@ def add_focus_box_and_inset(ax, t_plot, traces, window, yref=None, styles=None, 
     axins.set_xlim(t0, t1)
     axins.set_ylim(yb0, yb1)
     axins.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
-    axins.tick_params(direction='in', labelsize=8, top=True, right=True)
+    axins.tick_params(direction='in', labelsize=12, top=True, right=True)
     for spine in axins.spines.values():
         spine.set_linewidth(1.0)
     mark_inset(ax, axins, loc1=2, loc2=4, fc='none', ec='0.2', lw=1.0)
@@ -313,15 +306,12 @@ def plot_single(mode: str, axis: str, variant: str):
     else:
         y_ref = experimental_sine_reference(axis, t)
         ax.plot(t, y_ref, color='black', linestyle='-', linewidth=2.0, label=r'$y_d$')
-        ax.text(0.03, 0.95, reference_label(axis), transform=ax.transAxes,
-                va='top', ha='left', fontsize=10,
-                bbox=dict(boxstyle='square,pad=0.20', fc='white', ec='0.35', lw=0.8))
     for zeta_key, zeta_label in DAMPINGS:
         ax.plot(t, traces[zeta_key], label=fr'$\zeta={zeta_label}$', **styles[zeta_key])
     ax.set_xlim(0.0, t[-1])
     ylow, yhigh = paired_output_ylim(mode, axis)
     ax.set_ylim(ylow, yhigh)
-    ax.set_xlabel('Time (s)')
+    ax.set_xlabel('时间 (s)')
     ax.set_ylabel(LABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
     ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
@@ -371,7 +361,7 @@ def plot_control(mode: str, axis: str, variant: str):
     else:
         ylow, yhigh = paired_control_ylim(mode, axis)
         ax.set_ylim(ylow, yhigh)
-    ax.set_xlabel('Time (s)')
+    ax.set_xlabel('时间 (s)')
     ax.set_ylabel(U_LABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
     ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
@@ -409,7 +399,7 @@ def plot_error(mode: str, axis: str, variant: str):
     ax.set_xlim(0.0, t[-1])
     ylow, yhigh = paired_error_ylim(mode, axis)
     ax.set_ylim(ylow, yhigh)
-    ax.set_xlabel('Time (s)')
+    ax.set_xlabel('时间 (s)')
     ax.set_ylabel(ERROR_LABELS[axis])
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color='0.7', linewidth=0.8)
     ax.tick_params(direction='in', length=6, width=1.0, top=True, right=True)
