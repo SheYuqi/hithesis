@@ -29,7 +29,7 @@ FIG_DIR = ROOT / "hitbook" / "chinese" / "figures" / "ch2_sim"
 B_GAIN = 8000.0
 K1_GAIN = 5.0
 W_STAR = np.array([0.35, -0.28, 0.40, 0.08, 0.12, 0.05], dtype=float)
-SIM_FIGSIZE = (6.4, 3.5)
+SIM_FIGSIZE = (6.1, 3.7)
 SINE_OMEGA = 0.2
 SINE_PERIOD = 2.0 * math.pi / SINE_OMEGA
 FIG_FONT_FAMILY = "serif"
@@ -544,7 +544,7 @@ def style_axes(ax: plt.Axes, xlabel: str, ylabel: str) -> None:
 
 
 def save_figure(fig: plt.Figure, basepath: Path) -> None:
-    fig.savefig(basepath.with_suffix(".pdf"), bbox_inches="tight", pad_inches=0.0)
+    fig.savefig(basepath.with_suffix(".pdf"))
     plt.close(fig)
 
 

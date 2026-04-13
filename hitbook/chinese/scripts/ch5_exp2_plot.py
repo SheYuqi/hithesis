@@ -31,7 +31,7 @@ ERROR_LABELS = {'roll': '滚转误差 (deg)', 'pitch': '俯仰误差 (deg)', 'ya
 WINDOWS = {
     ('const', 'roll'): (10.0, 18.0),
     ('const', 'pitch'): (10.0, 18.0),
-    ('const', 'yaw'): (10.0, 18.0),
+    ('const', 'yaw'): (26.0, 50.0),
     ('sine', 'roll'): (18.0, 26.0),
     ('sine', 'pitch'): (18.0, 26.0),
     ('sine', 'yaw'): (18.0, 26.0),
@@ -53,7 +53,7 @@ plt.rcParams.update({
 
 
 def save_dual(fig, out_path: Path):
-    fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
+    fig.savefig(out_path.with_suffix('.pdf'))
 
 
 def experimental_sine_reference(axis, t):
@@ -178,7 +178,7 @@ def plot_single(mode: str, side: str, axis: str):
 def plot_error(mode: str, side: str, axis: str):
     t, traces = load_column(mode, side, axis)
     y_ref = make_reference(mode, axis, t, traces)
-    fig, ax = plt.subplots(figsize=(6.1, 2.8), dpi=220)
+    fig, ax = plt.subplots(figsize=(6.1, 3.7), dpi=220)
     ax.axhline(0.0, color='black', linestyle='-', linewidth=1.6)
     for label in ['1.000', '0.707', '0.625']:
         ax.plot(t, traces[label] - y_ref, label=fr'$\zeta={label}$', **STYLES[label])

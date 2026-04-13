@@ -19,7 +19,7 @@ STYLES = {
 YLABELS = {'roll': '滚转角 (deg)', 'pitch': '俯仰角 (deg)', 'yaw': '偏航角 (deg)'}
 ERROR_YLABELS = {'roll': '滚转误差 (deg)', 'pitch': '俯仰误差 (deg)', 'yaw': '偏航误差 (deg)'}
 XLIM = (0.0, 60.0)
-ZOOM = {'pitch': (0.0, 1.2), 'roll': (0.0, 1.0), 'yaw': (0.0, 2.2)}
+ZOOM = {'pitch': (0.0, 1.5), 'roll':(0.0, 1.5), 'yaw': (0.3, 2.3)}
 ROLL_MAP = {'0.625': 'roll0.625', '0.707': 'roll0.707', '1': 'roll1'}
 
 plt.rcParams.update({
@@ -37,7 +37,7 @@ plt.rcParams.update({
 
 
 def save_dual(fig, out_path: Path):
-    fig.savefig(out_path.with_suffix('.pdf'), bbox_inches='tight')
+    fig.savefig(out_path.with_suffix('.pdf'))
 
 for axis in ['pitch', 'roll', 'yaw']:
     traces = {}
@@ -93,7 +93,7 @@ for axis in ['pitch', 'roll', 'yaw']:
     plt.close(fig)
 
     err = {label: traces[label] - ref for label in traces}
-    fig, ax = plt.subplots(figsize=(6.1, 2.8), dpi=220)
+    fig, ax = plt.subplots(figsize=(6.1, 3.7), dpi=220)
     ax.axhline(0.0, color='black', linestyle='-', linewidth=1.6)
     for label in ['1.000', '0.707', '0.625']:
         ax.plot(t, err[label], label=fr'$\zeta={label}$', **STYLES[label])

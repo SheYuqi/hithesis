@@ -18,7 +18,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ch2_simulation import configure_matplotlib, save_figure, style_axes
+from ch2_simulation import SIM_FIGSIZE, configure_matplotlib, save_figure, style_axes
 
 
 FIG_DIR = ROOT / "hitbook" / "chinese" / "figures"
@@ -53,7 +53,7 @@ def make_case_plot(name: str, m1: float, m2: float, zeta_text: str, out_name: st
     _, e_check = simulate_response(m1, m2, lambda _: -0.2)
 
     configure_matplotlib()
-    fig, ax = plt.subplots(figsize=(6.4, 3.5))
+    fig, ax = plt.subplots(figsize=SIM_FIGSIZE)
     ax.plot(t, e_hat, color="#FF6A6A", linestyle="--", linewidth=2.0, label=r"$\hat e_1$")
     ax.plot(t, e_main, color="#1F77B4", linestyle="-", linewidth=2.0, label=r"$e_1$")
     ax.plot(t, e_check, color="#66AA55", linestyle="-.", linewidth=2.0, label=r"$\check e_1$")

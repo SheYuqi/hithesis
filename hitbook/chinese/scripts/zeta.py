@@ -1,8 +1,8 @@
 import math
 
 # 手动输入
-peak = 0.11121 # 最大值
-target = 0.10471975512    # 比较基准值/稳态值
+peak =0.055941
+target = 0.054359877  # 比较基准值/稳态值
 
 # 计算超调量
 Mp = (peak - target) / target
