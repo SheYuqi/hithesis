@@ -11,7 +11,7 @@
   cstudentid={23S004010},
   cstudenttype={学术学位论文},
   cdate={2025年6月},
-  etitle={Backstepping Control With Predefined Damping Ratios: A Second-Order Lyapunov Method},
+  etitle={Research on Sliding-Mode Backstepping Control Methods With Predefined Damping Ratios for Nonlinear Systems},
   exueke={Engineering},
   esubject={Control Science and Engineering},
   eaffil={\emultiline[t]{School of Astronautics\\Harbin Institute of Technology}},
@@ -19,33 +19,27 @@
   esupervisor={Professor Xiaolong Zheng},
   edate={June, 2025},
   estudenttype={Master Thesis},
-  ckeywords={预设阻尼比, 滑模反步控制, 神经网络, 指令滤波抗扰, 抗饱和},
-  ekeywords={Predefined damping ratio, Sliding-mode backstepping, Second-order Lyapunov method, Neural-network compensation, Second-order command-filtered anti-disturbance, Anti-saturation control},
+  ckeywords={预设阻尼比, 滑模反步控制, 神经网络},
+  ekeywords={Predefined damping ratio, Sliding-mode backstepping, Second-order Lyapunov method, Neural-network compensation},
 }
 
 \begin{cabstract}
-针对不确定非线性系统瞬态性能难以直接设计的问题，本文以严格反馈系统为对象，在滑模反步框架下研究预设阻尼比控制方法。基于二阶类李雅普诺夫方法，将输出误差收敛过程约束为满足二阶微分不等式，使闭环主导动态能够由控制器参数直接塑形，从而将传统反步控制中难以显式整定的瞬态指标转化为可解释、可调节的阻尼比参数。
+针对非线性系统瞬态性能难以直接设计以及实物平台易受未知非线性、外界扰动和输入饱和影响的问题，本文以滑模反步法为框架，针对一类严格反馈不确定非线性系统提出了三种预设阻尼比改进方法，并进行了控制器设计、稳定性分析、数值仿真和实物实验验证。
 
-首先，针对一类严格反馈不确定非线性系统，建立二阶类李雅普诺夫稳定性判据及其参数选取规则，给出预设阻尼比滑模反步控制方法。通过设计积分滑模面、虚拟控制器和实际控制律，构造包含主导阻尼参数的闭环误差系统，使输出响应近似保持预设阻尼比对应的瞬态特性。针对实物平台主导未知非线性较强、纯鲁棒项难以兼顾抖振抑制与跟踪精度的问题，进一步引入神经网络在线逼近主要未知非线性，建立权值更新律与权值误差系统，提高对主导未知非线性成分的补偿能力。
+首先，引入二阶类李雅普诺夫稳定性判据，该判据证明若二阶李雅普诺夫不等式成立，则系统输出以近似预设的阻尼比稳定跟踪目标信号，并给出了预设阻尼比的控制器参数设置规则。基于该判据，提出预设阻尼比滑模反步控制方法，设计积分滑模面、虚拟控制函数，构造二阶李雅普诺夫不等式，使系统能够按照参数设置规则实现近似预设阻尼比。进一步，针对实物平台主导未知非线性较强的问题，引入神经网络估计主要未知非线性并实时补偿，并基于李雅普诺夫稳定性判据对闭环系统进行稳定性分析。数值仿真和平台实验表明，引入神经网络后，不同阻尼比对应的上升过程、峰值高低和恢复过程差异能够更加清晰地表现出来。
 
-针对神经网络在线调整速度受限以及扰动作用下动态恢复品质不足的问题，提出二阶指令滤波抗扰预设阻尼比滑模反步控制方法。通过构造二阶指令滤波器及其状态空间表达，将滤波误差、名义拟合残差与外部扰动统一并入广义扰动项，建立相应误差状态方程并给出误差上界分析，从而提高对复合不确定性的动态拟合能力，并改善受扰后的恢复品质。
+为提升系统的抗干扰能力和动态恢复品质，提出了基于二阶指令滤波的抗扰预设阻尼比滑模反步控制方法。该方法将高阶导数、非线性系统不确定性和外界扰动统一为广义扰动项，并利用二阶指令滤波器进行补偿。通过设计虚拟控制函数和控制输入，构造出二阶李雅普诺夫不等式，使系统能够按照参数设置规则实现近似预设阻尼比，并基于李雅普诺夫稳定性判据对闭环系统进行稳定性分析。数值仿真和平台实验表明，该方法在受扰后的恢复时间和波动抑制方面均优于未加抗扰补偿的情形。
 
-针对执行器幅值受限工况下输入饱和会破坏原有阻尼规律的问题，提出抗饱和预设阻尼比滑模反步控制扩展方法。通过在控制输入端引入抗饱和补偿动态，将饱和失配显式反馈到控制律中，抑制由输入受限引起的附加失配传播，从而减轻输入限幅对主导阻尼规律和跟踪性能的破坏。
+针对输入饱和会破坏系统跟踪性能的问题，提出了抗饱和预设阻尼比滑模反步控制方法。通过设计输入饱和辅助动态和抗饱和补偿项引入控制律进行补偿；通过设计虚拟控制函数和实际控制输入，构造出二阶李雅普诺夫不等式，使系统能够按照参数设置规则保持近似预设阻尼比，并基于李雅普诺夫稳定性判据对闭环系统进行稳定性分析。输入受限条件下的对比实验表明，该方法能够减弱输入饱和对系统动态过程的破坏，使系统在输入受限条件下仍保持一定的阻尼比特征。综合实验进一步验证了所提方法的可行性和有效性。
 
-最后，在四旋翼悬浮机平台上对所提三类方法进行了实验验证，完成了常值参考、时变参考、受扰工况和输入受限工况下的多组对比实验，并结合误差统计指标与实测数据反算阻尼比进行分析。结果表明：神经网络补偿后，预设阻尼比在强非线性实物平台上具有更好的可观察性；二阶指令滤波结构能够更快地对复合不确定性进行动态拟合并改善受扰恢复品质；抗饱和补偿能够减轻输入受限对主导阻尼规律的破坏，验证了所提方法的参数可解释性、工程可实现性和实物有效性。
-\vspace{-8bp}
 \end{cabstract}
 
 \begin{eabstract}
-This thesis investigates predefined-damping-ratio control for uncertain nonlinear systems in strict-feedback form within a sliding-mode backstepping framework. Guided by a second-order Lyapunov method, the convergence of the output error is constrained by a second-order differential inequality, so that the dominant closed-loop dynamics can be directly shaped by controller parameters. In this way, transient specifications that are difficult to tune explicitly in conventional backstepping design are converted into interpretable damping-ratio-based parameter design rules.
+This thesis addresses the difficulty of directly shaping transient performance for nonlinear systems and the influence of unknown nonlinearities, external disturbances, and input saturation on real platforms. Within a sliding-mode backstepping framework, three improved control methods with predefined damping ratios are proposed for a class of uncertain nonlinear strict-feedback systems, and their controller design, stability analysis, numerical simulation, and experimental validation are carried out.
 
-First, for a class of uncertain strict-feedback nonlinear systems, a second-order Lyapunov stability criterion together with its parameter selection rules is established, and a predefined-damping-ratio sliding-mode backstepping controller is developed. By designing an integral sliding surface, virtual control laws, and the actual control input, a closed-loop error system with prescribed dominant damping parameters is obtained. It is shown that all closed-loop signals are uniformly ultimately bounded in the presence of unmodeled dynamics and external disturbances, while the output response approximately preserves the transient characteristics associated with the desired damping ratio.
+First, a second-order Lyapunov-like stability criterion is introduced. It shows that if the corresponding second-order Lyapunov inequality holds, the system output can track the target signal with an approximately predefined damping ratio, and it also provides parameter selection rules for damping-ratio design. Based on this criterion, a predefined-damping-ratio sliding-mode backstepping control method is developed by designing an integral sliding surface, virtual control laws, and a second-order Lyapunov inequality. To deal with the strong dominant unknown nonlinearities on the real platform, a neural network is further introduced to estimate the major unknown nonlinearities online and compensate them in real time. Numerical simulations and platform experiments show that, after neural-network compensation is introduced, the differences among the rise process, peak magnitude, and recovery process corresponding to different damping ratios become more distinguishable.
 
-Second, to address the strong dominant unknown nonlinearities on the real platform, for which a purely robust term cannot simultaneously suppress chattering and maintain tracking accuracy, a neural-network-based predefined-damping-ratio sliding-mode backstepping method is proposed. A neural network is introduced to approximate the dominant unknown nonlinearities online, and the associated weight-update law and weight-error system are derived. The approximation residual is then incorporated into the robust term, thereby improving the compensation capability for the dominant unknown nonlinear components.
+Second, to improve disturbance rejection and dynamic recovery performance, a second-order command-filtered anti-disturbance predefined-damping-ratio sliding-mode backstepping method is proposed. In this method, higher-order derivatives, nonlinear-system uncertainties, and external disturbances are unified into a generalized disturbance term and compensated through a second-order command filter. By designing virtual control laws and the actual control input, a second-order Lyapunov inequality is constructed so that the system can achieve an approximately predefined damping ratio according to the parameter selection rules, and the closed-loop stability is analyzed based on the Lyapunov criterion. Numerical simulations and platform experiments show that this method outperforms the case without anti-disturbance compensation in terms of disturbance-recovery time and oscillation suppression.
 
-Third, to overcome the limited adjustment speed of online neural-network adaptation and the insufficient recovery quality under disturbances, a second-order command-filtered anti-disturbance predefined-damping-ratio sliding-mode backstepping method is proposed. By constructing a second-order command filter and its state-space representation, the filter error, nominal fitting residual, and external disturbance are unified into a generalized disturbance term, from which the corresponding error-state equations and error-bound analysis are established. In this way, the dynamic fitting capability for composite uncertainties is improved and the disturbance-recovery performance is enhanced.
-
-Finally, for actuator amplitude constraints that may destroy the originally designed damping behavior, an anti-saturation extension of the predefined-damping-ratio sliding-mode backstepping method is developed. An anti-saturation compensation dynamic is introduced so that the saturation-induced mismatch is explicitly fed back into the control law, thereby suppressing the additional performance degradation caused by input limitation.
-
-Finally, systematic experimental validation is carried out on a quadrotor hover platform. Multiple comparative experiments are completed under constant references, time-varying references, disturbed conditions, and input-constrained conditions, and the measured data are further analyzed using error statistics and inverse damping-ratio estimation. The results show that neural-network compensation improves the observability of predefined damping ratios on a strongly nonlinear real platform, the command-filtered structure enables faster dynamic fitting of composite uncertainties and better disturbance-recovery performance, and the anti-saturation compensation alleviates the destruction of the dominant damping law caused by input constraints. Overall, the proposed methods exhibit good parameter interpretability, engineering implementability, and experimental effectiveness.
+Third, to address the problem that input saturation may destroy the original damping law of the system, an anti-saturation predefined-damping-ratio sliding-mode backstepping method is proposed. By introducing auxiliary saturation dynamics and anti-saturation compensation terms into the control law, and by designing virtual control laws and the actual control input, a second-order Lyapunov inequality is established so that the system can maintain an approximately predefined damping ratio according to the parameter rules, while the closed-loop stability is analyzed based on the Lyapunov criterion. Comparative experiments under input-constrained conditions show that this method can alleviate the damage caused by input saturation to the system dynamic process and preserve certain damping-ratio characteristics under input limitation. Comprehensive experiments further verify the feasibility and effectiveness of the proposed methods.
 \end{eabstract}

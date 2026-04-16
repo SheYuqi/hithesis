@@ -1,10 +1,10 @@
 % !Mode:: "TeX:UTF-8"
 
-\chapter{输入饱和约束下的预设阻尼比滑模反步控制器设计与分析}
+\chapter{输入饱和约束下的预设阻尼比滑模反步控制}
 
 \section{引言}[Introduction]
 
-第2章建立了神经网络补偿基准控制框架，第3章进一步引入二阶指令滤波抗扰机制，通过对虚拟控制导数进行平滑近似，并将名义建模残差、外部扰动以及滤波误差统一并入广义扰动项，从而形成了较为完整的广义扰动描述与补偿结构。然而，第3章所解决的问题主要集中在广义扰动处理和虚拟控制导数实现上，并不涉及执行器输入幅值约束；在实际执行机构中，当控制律输出超过执行器上限时仍会发生饱和，进而破坏理想误差动力学并导致超调增大、收敛变慢甚至出现持续振荡。针对该问题，本章面向输入饱和约束场景，研究预设阻尼比滑模反步控制器的抗饱和设计与稳定性分析。
+第2章建立了神经网络补偿基准控制框架，第3章进一步引入二阶指令滤波抗扰机制，通过对虚拟控制导数进行平滑近似，并将高阶导数、非线性系统不确定性和外界扰动统一为广义扰动项，从而形成了较为完整的广义扰动描述与补偿结构。然而，第3章所解决的问题主要集中在广义扰动处理和虚拟控制导数实现上，并不涉及执行器输入幅值约束；在实际执行机构中，当控制律输出超过执行器上限时仍会发生饱和，进而破坏理想误差动力学并导致超调增大、收敛变慢甚至出现持续振荡。针对该问题，本章面向输入饱和约束场景，研究预设阻尼比滑模反步控制器的抗饱和设计与稳定性分析。
 
 需要说明的是，文中饱和上限由实验安全约束与执行机构额定能力共同确定，工程实现中通过手动限幅避免设备损坏。引入抗饱和补偿的目的并非仅针对常规工况，而是用于模拟并预防大幅指令、突加扰动等激烈工况下可能出现的输入受限问题，从而提高闭环系统在受限场景中的稳定裕度与恢复能力。
 
@@ -16,19 +16,12 @@
 
 \subsection{系统描述}[System description]
 
-考虑与前两章一致的 $n$ 阶严格反馈形式不确定非线性系统
-\begin{equation}\label{eq:ch5_sys}
-\left\{
-\begin{aligned}
-  \dot{x}_i &= b_i x_{i+1}+f_i(x_i)+d_i,\quad i=1,\ldots,n-1,\\
-  \dot{x}_n &= b_nu+f_n(x_n)+d_n,\\
-  y &= x_1,
-\end{aligned}
-\right.
-\end{equation}
-其中 $x_i\in\mathbb{R}$ 为系统状态，$u\in\mathbb{R}$ 为控制输入，$y$ 为可测输出，$b_i\neq 0$ 为已知控制增益，$f_i(\cdot)$ 为未知非线性项，$d_i$ 为外部扰动。定义参考信号 $\alpha_0=y_d$，并令
+为保证控制器递推主线与前两章保持一致，并突出本章讨论的重点仅来自输入受限环节，这里不再重复给出系统方程，而是继续采用第2.2.1节式\eqref{eq:sf_system}所定义的 $n$ 阶严格反馈形式不确定非线性系统作为名义对象；其中状态、输入、输出以及未知非线性项和外部扰动的含义均沿用第2章定义，在此基础上，输入饱和对实际控制通道的影响将在下一小节中单独引入。
+
+与第3章相比，本节不再重新展开广义扰动建模与二阶指令滤波器定义，而是默认继承其抗扰补偿结果；这里额外给出参考信号与误差变量的统一记法，目的是为下一小节引入饱和映射、输入失配以及抗饱和补偿动态作准备。定义参考信号 $\alpha_0=y_d$，并令
+对 $i=1,2,\ldots,n$，定义
 \begin{equation}
-z_i=x_i-\alpha_{i-1},\qquad i=1,2,\ldots,n,
+z_i=x_i-\alpha_{i-1}.
 \end{equation}
 其中 $\alpha_i$（$i=1,2,\ldots,n-1$）为虚拟控制函数，$z_i$ 为状态量与前一级虚拟控制器之间的误差。
 
@@ -79,16 +72,15 @@ z_i=x_i-\alpha_{i-1},\qquad i=1,2,\ldots,n,
 \end{equation}
 
 采用如下动态抗饱和补偿结构
-\begin{equation}\label{eq:ch5_aw_basic}
-  \left\{
-  \begin{aligned}
-    \dot \xi &= -\lambda \xi + \Delta_u,\qquad \lambda>0,\\
-    u_{\mathrm{aw}} &= -k_{\mathrm{aw}}\xi,\qquad k_{\mathrm{aw}}>0,\\
-    u_c &= u_c^\star + u_{\mathrm{aw}}
-         = u_c^\star - k_{\mathrm{aw}}\xi,
-  \end{aligned}
-  \right.
-\end{equation}
+其中 $\lambda>0$、$k_{\mathrm{aw}}>0$。采用如下动态抗饱和补偿结构
+\begin{subequations}\label{eq:ch5_aw_basic}
+\begin{align}
+  \dot \xi &= -\lambda \xi + \Delta_u,\\
+  u_{\mathrm{aw}} &= -k_{\mathrm{aw}}\xi,\\
+  u_c &= u_c^\star + u_{\mathrm{aw}},\\
+  u_c &= u_c^\star - k_{\mathrm{aw}}\xi.
+\end{align}
+\end{subequations}
 其中 $u_c^\star$ 表示未考虑输入饱和时的名义控制输入，$\xi$ 为抗饱和辅助状态。
 
 上述动态抗饱和结构仅作用于实际输入通道，与前级虚拟控制器的递推阶次无关。对于本章后续一般 $n$ 阶严格反馈系统设计，其作用对象为最后一级实际输入；当滚转通道退化为二阶验证模型时，可直接采用同样的结构。这里保留最基础的动态抗饱和形式：以饱和失配 $\Delta_u$ 直接驱动辅助状态 $\xi$，再由补偿项 $u_{\mathrm{aw}}=-k_{\mathrm{aw}}\xi$ 对期望输入进行修正。
@@ -111,21 +103,23 @@ z_i=x_i-\alpha_{i-1},\qquad i=1,2,\ldots,n,
   \xi(t)=e^{-\lambda t}\xi(0)+\int_0^t e^{-\lambda (t-\tau)}\Delta_u(\tau)\,d\tau,
 \end{equation}
 从而有
-\begin{equation}\label{eq:xi_bound}
+\begin{subequations}
+\begin{align}
   |\xi(t)|
-  \le e^{-\lambda t}|\xi(0)|
-  +\frac{1}{\lambda}\bigl(1-e^{-\lambda t}\bigr)\bar\Delta_u,
-\end{equation}
-\begin{equation}\label{eq:ch5_uaw_bound}
+  &\le e^{-\lambda t}|\xi(0)|
+  +\frac{1}{\lambda}\bigl(1-e^{-\lambda t}\bigr)\bar\Delta_u, \label{eq:xi_bound}\\
   |u_{\mathrm{aw}}(t)|
-  \le k_{\mathrm{aw}}e^{-\lambda t}|\xi(0)|
-  +\frac{k_{\mathrm{aw}}}{\lambda}\bigl(1-e^{-\lambda t}\bigr)\bar\Delta_u.
-\end{equation}
+  &\le k_{\mathrm{aw}}e^{-\lambda t}|\xi(0)|
+  +\frac{k_{\mathrm{aw}}}{\lambda}\bigl(1-e^{-\lambda t}\bigr)\bar\Delta_u. \label{eq:ch5_uaw_bound}
+\end{align}
+\end{subequations}
 特别地，
-\begin{equation}
-  \limsup_{t\to\infty}|\xi(t)| \le \frac{1}{\lambda}\bar\Delta_u,\qquad
-  \limsup_{t\to\infty}|u_{\mathrm{aw}}(t)| \le \frac{k_{\mathrm{aw}}}{\lambda}\bar\Delta_u.
-\end{equation}
+\begin{subequations}
+\begin{align}
+  \limsup_{t\to\infty}|\xi(t)| &\le \frac{1}{\lambda}\bar\Delta_u,\\
+  \limsup_{t\to\infty}|u_{\mathrm{aw}}(t)| &\le \frac{k_{\mathrm{aw}}}{\lambda}\bar\Delta_u.
+\end{align}
+\end{subequations}
 \end{lemma}
 \begin{proof}
 由式 \eqref{eq:ch5_aw_basic} 中关于 $\xi$ 的一阶线性动态作常数变易可直接得到式 \eqref{eq:ch5_xi_sol}。再结合 $|\Delta_u(t)|\le \bar\Delta_u$ 可得
@@ -141,9 +135,10 @@ z_i=x_i-\alpha_{i-1},\qquad i=1,2,\ldots,n,
 
 由引理~\ref{lem:ch5_aw1}可见，抗饱和补偿并不是直接静态抵消 $\Delta_u$，而是先通过稳定一阶动态对饱和失配进行整形，再由补偿项 $u_{\mathrm{aw}}$ 将这部分整形后的信息反馈到期望输入中。这样，当系统未触发饱和时，$\Delta_u=0$ 且 $\xi\to 0$，补偿通道自动退出；当系统进入饱和区时，补偿项只对有界失配作平滑响应，避免将饱和误差直接作为突变项注入递推闭环，从而减弱输入受限对后续误差动力学的破坏。其中，$\lambda$ 决定辅助状态对饱和失配的衰减速度，$k_{\mathrm{aw}}$ 决定补偿反馈强度。
 
-在递推设计过程中，将各通道中的未知非线性、外部扰动以及虚拟控制器导数近似误差统一并入等效不确定项 $\Delta_i$，并假设存在正常数 $\bar\Delta_i$ 使得
+在递推设计过程中，将高阶导数、非线性系统不确定性和外界扰动统一并入等效不确定项 $\Delta_i$，并假设存在正常数 $\bar\Delta_i$ 使得
+对 $i=1,2,\ldots,n$，有
 \begin{equation}\label{eq:ch5_delta}
-  |\Delta_i(t)|\le \bar\Delta_i,\qquad i=1,2,\ldots,n.
+  |\Delta_i(t)|\le \bar\Delta_i.
 \end{equation}
 
 \section{输入饱和约束下的预设阻尼比滑模反步控制器设计}[Controller design under input saturation]
@@ -151,9 +146,12 @@ z_i=x_i-\alpha_{i-1},\qquad i=1,2,\ldots,n,
 本节直接以第3章的二阶指令滤波抗扰预设阻尼比滑模反步控制器为基础，在末端输入层进一步加入饱和映射与抗饱和补偿动态。也就是说，前 $n-1$ 级虚拟控制器及其递推逻辑保持与第3章一致，广义扰动的描述与抗扰补偿仍由第3章的二阶指令滤波结构负责；本章新增的内容仅集中在实际输入端的饱和处理。换言之，二阶指令滤波能够较准确地表征并补偿系统广义扰动，但并不能单独解决执行器饱和问题，因此抗饱和补偿需要作为独立环节在最后一级输入端单独引入。
 
 首先定义积分变量
-\begin{equation}\label{eq:ch5_q}
-  q \triangleq \int_0^t z_1\,d\tau,\qquad \dot q = z_1,
-\end{equation}
+\begin{subequations}\label{eq:ch5_q}
+\begin{align}
+  q &\triangleq \int_0^t z_1\,d\tau,\\
+  \dot q &= z_1.
+\end{align}
+\end{subequations}
 并采用与前两章一致的积分型滑模面
 \begin{equation}\label{eq:ch5_s}
   s \triangleq z_n+\sum_{i=3}^{n-1}c_i z_i+c_2\left(z_2+(m_2-k_1)z_1+m_1q\right),
@@ -163,49 +161,46 @@ z_i=x_i-\alpha_{i-1},\qquad i=1,2,\ldots,n,
   \zeta_d=\frac{m_2}{2\sqrt{m_1}}.
 \end{equation}
 因此，本章在滑模面定义上与第2章、第3章保持一致：$k_1$ 用于增强第一层误差收敛，而阻尼比参数仍然通过 $(m_1,m_2)$ 注入主导二阶动力学。
-沿用第3章二阶指令滤波抗扰结构，对各级名义虚拟控制指令 $\alpha_i^0$ 采用二阶指令滤波器
-\begin{equation}\label{eq:ch5_obs_design}
-\begin{aligned}
+沿用第3章二阶指令滤波抗扰结构，对 $i=1,2,\ldots,n-1$ 的各级名义虚拟控制指令 $\alpha_i^0$ 采用二阶指令滤波器
+\begin{subequations}\label{eq:ch5_obs_design}
+\begin{align}
 \dot \xi_{i,1}&=\xi_{i,2},\\
-\dot \xi_{i,2}&=-2\zeta_{f,i}\omega_{f,i}\xi_{i,2}-\omega_{f,i}^2(\xi_{i,1}-\alpha_i^0),
-\qquad i=1,2,\ldots,n-1,
-\end{aligned}
-\end{equation}
-并定义滤波误差
-\begin{equation}\label{eq:ch5_tildeDelta}
-\tilde\alpha_i=\xi_{i,1}-\alpha_i^0,\qquad
-\tilde{\dot\alpha}_i=\xi_{i,2}-\dot\alpha_i^0,\qquad i=1,2,\ldots,n-1.
-\end{equation}
-进一步定义各通道广义扰动项
-\begin{equation}\label{eq:ch5_filter_dist}
-\left\{
-\begin{aligned}
+\dot \xi_{i,2}&=-2\zeta_{f,i}\omega_{f,i}\xi_{i,2}-\omega_{f,i}^2(\xi_{i,1}-\alpha_i^0).
+\end{align}
+\end{subequations}
+并对 $i=1,2,\ldots,n-1$ 定义滤波误差
+\begin{subequations}\label{eq:ch5_tildeDelta}
+\begin{align}
+\tilde\alpha_i&=\xi_{i,1}-\alpha_i^0,\\
+\tilde{\dot\alpha}_i&=\xi_{i,2}-\dot\alpha_i^0.
+\end{align}
+\end{subequations}
+进一步对 $i=2,3,\ldots,n-1$ 定义各通道广义扰动项
+\begin{subequations}\label{eq:ch5_filter_dist}
+\begin{align}
 \tilde\Delta_1&=f_1(x_1)+d_1+b_1\tilde\alpha_1,\\
-\tilde\Delta_i&=f_i(\bar x_i)+d_i+b_i\tilde\alpha_i,\quad i=2,3,\ldots,n-1,\\
-\tilde\Delta_n&=f_n(\bar x_n)+d_n,
-\end{aligned}
-\right.
-\end{equation}
-其中 $\tilde\alpha_i$ 由式\eqref{eq:ch5_tildeDelta} 定义。这样，未知非线性、外部扰动以及指令滤波误差均可统一并入各通道广义扰动项中。也就是说，本章沿用了第3章对广义扰动的处理方式：二阶指令滤波部分负责提供中间导数近似，并在此基础上对广义扰动给出统一表征和抑制；而输入饱和并不属于这一广义扰动描述范畴，因此仍需在末级输入端单独加入抗饱和环节。
+\tilde\Delta_i&=f_i(\bar x_i)+d_i+b_i\tilde\alpha_i,\\
+\tilde\Delta_n&=f_n(\bar x_n)+d_n.
+\end{align}
+\end{subequations}
+其中 $\tilde\alpha_i$ 由式\eqref{eq:ch5_tildeDelta} 定义。这样，可将高阶导数、非线性系统不确定性和外界扰动统一为各通道的广义扰动项。也就是说，本章沿用了第3章对广义扰动的处理方式：二阶指令滤波部分负责提供中间导数近似，并在此基础上对广义扰动给出统一表征和抑制；而输入饱和并不属于这一广义扰动描述范畴，因此仍需在末级输入端单独加入抗饱和环节。
 
 下面按与第3章相同的顺序设计虚拟控制器，只是在最后一级进一步考虑输入饱和。取
-\begin{equation}\label{eq:ch5_alpha12}
-\alpha_1^0=-\frac{1}{b_1}\left(k_1z_1-\dot y_d\right),
-\end{equation}
-\begin{equation}\label{eq:ch5_alpha2}
-\alpha_2^0=-\frac{1}{b_2}\left((m_2-k_1)z_2+\frac{m_1-k_1(m_2-k_1)}{b_1}z_1-\xi_{1,2}\right),
-\end{equation}
+\begin{subequations}
+\begin{align}
+\alpha_1^0 &= -\frac{1}{b_1}\left(k_1z_1-\dot y_d\right), \label{eq:ch5_alpha12}\\
+\alpha_2^0 &= -\frac{1}{b_2}\left((m_2-k_1)z_2+\frac{m_1-k_1(m_2-k_1)}{b_1}z_1-\xi_{1,2}\right), \label{eq:ch5_alpha2}
+\end{align}
+\end{subequations}
 为了保持与第3章一致的递推结构，进一步取
-\begin{equation}\label{eq:ch5_alpha3}
-\alpha_3^0=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3-\xi_{2,2}\right),
-\end{equation}
-\begin{equation}\label{eq:ch5_alphai}
-  \alpha_i^0=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}-\xi_{i-1,2}\right),\quad i=4,\ldots,n-2,
-\end{equation}
-\begin{equation}\label{eq:ch5_alpha_nm1}
-  \alpha_{n-1}^0=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}-\xi_{n-2,2}\right).
-\end{equation}
-上述虚拟控制器的作用与第3章完全一致：前两级通过 $k_1,m_1,m_2$ 共同构造低阶主导误差动力学，其中 $k_1$ 用于第一层稳定化，$(m_1,m_2)$ 用于塑造阻尼特性；后续各级通过递推消除中间误差耦合项，而未知非线性、外部扰动与指令滤波误差则统一并入广义扰动项。
+\begin{subequations}
+\begin{align}
+\alpha_3^0 &= -\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3-\xi_{2,2}\right), \label{eq:ch5_alpha3}\\
+  \alpha_i^0 &= -\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}-\xi_{i-1,2}\right), \label{eq:ch5_alphai}\\
+  \alpha_{n-1}^0 &= -\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}-\xi_{n-2,2}\right). \label{eq:ch5_alpha_nm1}
+\end{align}
+\end{subequations}
+上述虚拟控制器的作用与第3章完全一致：前两级通过 $k_1,m_1,m_2$ 共同构造低阶主导误差动力学，其中 $k_1$ 用于第一层稳定化，$(m_1,m_2)$ 用于塑造阻尼特性；后续各级通过递推消除中间误差耦合项，而高阶导数、非线性系统不确定性和外界扰动则统一为广义扰动项。
 
 在此基础上，若暂不考虑输入饱和，则第3章中的末端期望控制输入可写为
 \begin{equation}\label{eq:ch5_uc_nominal}
@@ -217,12 +212,13 @@ u_c^\star=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}-\xi_{n-1,2}
 u=\mathrm{sat}(u_c),
 \end{equation}
 由于抗饱和补偿仅作用于最后一级实际输入通道，因此在一般 $n$ 阶严格反馈系统中仍沿用式 \eqref{eq:ch5_aw_basic} 所给结构。于是末级辅助动态与补偿项分别取
-\begin{equation}\label{eq:ch5_xi_dyn}
-  \dot \xi = -\lambda \xi + \Delta_u,\qquad \lambda>0,
-\end{equation}
-\begin{equation}\label{eq:ch5_uaw}
-  u_{\mathrm{aw}}=-k_{\mathrm{aw}}\xi,\qquad k_{\mathrm{aw}}>0,
-\end{equation}
+其中 $\lambda>0$、$k_{\mathrm{aw}}>0$。于是末级辅助动态与补偿项分别取
+\begin{subequations}
+\begin{align}
+  \dot \xi &= -\lambda \xi + \Delta_u, \label{eq:ch5_xi_dyn}\\
+  u_{\mathrm{aw}} &= -k_{\mathrm{aw}}\xi. \label{eq:ch5_uaw}
+\end{align}
+\end{subequations}
 于是最终期望控制输入取为
 \begin{equation}\label{eq:ch5_uc_struct}
   u_c = u_c^\star + u_{\mathrm{aw}}.
@@ -249,36 +245,34 @@ u_c=u_c^\star-k_{\mathrm{aw}}\xi.
 式 \eqref{eq:ch5_sdot_aw} 表明，本章后续稳定性分析所使用的抗饱和项与式 \eqref{eq:ch5_aw_basic} 中给出的统一动态补偿结构完全一致；当后续考虑二阶滚转通道仿真与实验时，只需令 $n=2$ 且取 $b_n=b_{\phi}$，即可得到对应的二阶实现形式。
 
 将 \eqref{eq:ch5_uc_nominal} 与 \eqref{eq:ch5_uaw} 合并，可得
-\begin{equation}\label{eq:ch5_final}
-\begin{aligned}
+\begin{subequations}\label{eq:ch5_final}
+\begin{align}
 \alpha_1^0&=-\frac{1}{b_1}\left(k_1z_1-\dot y_d\right),\\
 \alpha_2^0&=-\frac{1}{b_2}\left((m_2-k_1)z_2+\frac{m_1-k_1(m_2-k_1)}{b_1}z_1-\xi_{1,2}\right),\\
 \alpha_3^0&=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3-\xi_{2,2}\right),\\
-\alpha_i^0&=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}-\xi_{i-1,2}\right),\quad i=4,\ldots,n-2,\\
+\alpha_i^0&=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}-\xi_{i-1,2}\right),\\
 \alpha_{n-1}^0&=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}-\xi_{n-2,2}\right),\\
 u_c&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}-\xi_{n-1,2}
 +\varepsilon\,\mathrm{sgn}(s)\right)-k_{\mathrm{aw}}\xi,\\
 u&=\mathrm{sat}(u_c),\\
 \dot\xi&=-\lambda\xi+\Delta_u.
-\end{aligned}
-\end{equation}
+\end{align}
+\end{subequations}
 
 根据上述控制器，闭环误差系统可写为
-\begin{equation}\label{eq:ch5_z_dyn}
-\left\{
-\begin{aligned}
+\begin{subequations}\label{eq:ch5_z_dyn}
+\begin{align}
   \dot z_1 &= -k_1z_1+b_1z_2+\tilde\Delta_1,\\
   \dot z_2 &= -(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+b_2z_3+\tilde\Delta_2,\\
   \dot z_3 &= -\frac{c_2b_2-c_4b_3}{c_3}z_3+b_3z_4+\tilde\Delta_3,\\
-  \dot z_i &= -\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_iz_{i+1}-b_{i-1}z_{i-1}+\tilde\Delta_i,\quad i=4,\ldots,n-2,\\
+  \dot z_i &= -\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_iz_{i+1}-b_{i-1}z_{i-1}+\tilde\Delta_i,\\
   \dot z_{n-1} &= -\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2}+\tilde\Delta_{n-1},\\
   \dot z_n &= -c_{n-1}b_{n-1}z_n-b_{n-1}z_{n-1}
              -\varepsilon\,\mathrm{sgn}(s)
-             -b_nk_{\mathrm{aw}}\xi+b_n\Delta_u+\tilde\Delta_n,
-\end{aligned}
-\right.
-\end{equation}
-其中 $\tilde\Delta_i$ 表示由未知非线性、外部扰动以及指令滤波误差共同形成的合成剩余项。于是由 \eqref{eq:ch5_s} 与 \eqref{eq:ch5_z_dyn} 可知，滑模变量满足
+             -b_nk_{\mathrm{aw}}\xi+b_n\Delta_u+\tilde\Delta_n.
+\end{align}
+\end{subequations}
+其中 $\tilde\Delta_i$ 表示将高阶导数、非线性系统不确定性和外界扰动统一为广义扰动项后的合成剩余项。于是由 \eqref{eq:ch5_s} 与 \eqref{eq:ch5_z_dyn} 可知，滑模变量满足
 \begin{equation}\label{eq:ch5_sdot_expand}
   \dot s
   =-\varepsilon\mathrm{sgn}(s)-b_nk_{\mathrm{aw}}\xi+\Delta_s+b_n\Delta_u,
@@ -301,8 +295,9 @@ u&=\mathrm{sat}(u_c),\\
 
 \paragraph{假设4.2}
 沿用第3章二阶指令滤波抗扰设计并满足引理 \ref{lem:ch4_obs1}--\ref{lem:ch4_obs2} 的条件，因此各通道广义扰动项有界，即存在正常数 $\bar{\tilde\Delta}_i$ 使得
+对 $i=1,2,\ldots,n$ 以及任意 $t\ge 0$，有
 \begin{equation}
-|\tilde\Delta_i(t)|\le \bar{\tilde\Delta}_i,\quad i=1,2,\ldots,n,\ \forall t\ge 0.
+|\tilde\Delta_i(t)|\le \bar{\tilde\Delta}_i.
 \end{equation}
 
 \paragraph{假设4.3}
@@ -310,13 +305,15 @@ u&=\mathrm{sat}(u_c),\\
 
 \paragraph{假设4.4}
 饱和失配项 $\Delta_u=\mathrm{sat}(u_c)-u_c$ 有界，即存在常数 $\bar\Delta_u>0$ 使得
+对任意 $t\ge 0$，有
 \begin{equation}
-|\Delta_u(t)|\le \bar\Delta_u,\quad \forall t\ge 0.
+|\Delta_u(t)|\le \bar\Delta_u.
 \end{equation}
 
 由假设4.2与滑模面定义 \eqref{eq:ch5_s} 可知，存在正常数 $\bar\Delta_s$ 使得
+对任意 $t\ge 0$，有
 \begin{equation}\label{eq:ch5_Deltas_bound}
-  |\Delta_s(t)|\le \bar\Delta_s,\qquad \forall t\ge 0.
+  |\Delta_s(t)|\le \bar\Delta_s.
 \end{equation}
 
 由控制律 \eqref{eq:ch5_final} 与滑模变量动态 \eqref{eq:ch5_sdot_expand} 可得
@@ -389,10 +386,12 @@ a_0=2\min\left\{\frac{c_2b_2-c_4b_3}{c_3},\frac{c_3b_3-c_5b_4}{c_4},\ldots,\frac
 由假设4.2、假设4.4及 \eqref{eq:xi_bound} 可知右端输入有界，因此 $z_3,\ldots,z_n$ 一致最终有界。
 
 进一步，由前两级误差动态
-\begin{equation}\label{eq:ch5_z12}
-\dot z_1=-k_1z_1+b_1z_2+\tilde\Delta_1,\qquad
-\dot z_2=-(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+b_2z_3+\tilde\Delta_2,
-\end{equation}
+\begin{subequations}\label{eq:ch5_z12}
+\begin{align}
+\dot z_1&=-k_1z_1+b_1z_2+\tilde\Delta_1,\\
+\dot z_2&=-(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+b_2z_3+\tilde\Delta_2.
+\end{align}
+\end{subequations}
 可知前两级误差通道是由有界输入 $z_3,\tilde\Delta_1,\tilde\Delta_2$ 驱动的稳定二阶子系统，因此 $z_1,z_2$ 一致最终有界。再由滑模面定义 \eqref{eq:ch5_s} 可将积分变量写为
 \begin{equation}
 q=\frac{1}{c_2m_1}\left(s-z_n-\sum_{i=3}^{n-1}c_i z_i-c_2z_2-c_2(m_2-k_1)z_1\right),
@@ -400,26 +399,16 @@ q=\frac{1}{c_2m_1}\left(s-z_n-\sum_{i=3}^{n-1}c_i z_i-c_2z_2-c_2(m_2-k_1)z_1\rig
 因此当 $s,z_1,\ldots,z_n$ 有界时，$q$ 亦一致最终有界。
 
 \begin{theorem}\label{thm:ch4_uub}
-考虑系统 \eqref{eq:ch5_sys}，采用控制律 \eqref{eq:ch5_final}。在假设4.1--假设4.4成立下，若参数满足
-\begin{equation}
-m_1>0,\ m_2>0,\ \lambda>0,\ k_{\mathrm{aw}}>0,
-\end{equation}
-\begin{equation}
-\frac{c_2b_2-c_4b_3}{c_3}>0,\quad
-\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}>0,\ i=4,\ldots,n-2,\quad
-\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}>0,
-\end{equation}
-\begin{equation}
-\varepsilon > \bar D_s
-= \bar\Delta_s + |b_n|\bar\Delta_u + \frac{k_{\mathrm{aw}}|b_n|}{\lambda}\bar\Delta_u,
-\end{equation}
+考虑第2.2.1节式\eqref{eq:sf_system}所示系统，采用控制律 \eqref{eq:ch5_final}。在假设4.1--假设4.4成立下，若参数满足
+$m_1>0$、$m_2>0$、$\lambda>0$、$k_{\mathrm{aw}}>0$、$\frac{c_2b_2-c_4b_3}{c_3}>0$、$\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}>0$，且对 $i=4,\ldots,n-2$ 有 $\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}>0$，并满足
+$\varepsilon>\bar D_s=\bar\Delta_s + |b_n|\bar\Delta_u + \frac{k_{\mathrm{aw}}|b_n|}{\lambda}\bar\Delta_u$，
 则闭环信号 $s,\xi,z_1,\ldots,z_n,q$ 一致最终有界。其中
-\begin{equation}
-  \limsup_{t\to\infty}|\xi(t)| \le \frac{1}{\lambda}\bar\Delta_u,
-\end{equation}
-\begin{equation}
-\dot V_s \le -(\varepsilon-\bar D_s)|s|.
-\end{equation}
+\begin{subequations}
+\begin{align}
+  \limsup_{t\to\infty}|\xi(t)| &\le \frac{1}{\lambda}\bar\Delta_u,\\
+\dot V_s &\le -(\varepsilon-\bar D_s)|s|.
+\end{align}
+\end{subequations}
 \end{theorem}
 \begin{proof}
 由引理~\ref{lem:ch5_aw1} 与假设4.4可得 \eqref{eq:xi_bound}。再由 \eqref{eq:ch5_Deltas_bound}、假设4.4及 \eqref{eq:xi_bound} 可得 \eqref{eq:ch5_dist_bound}。对 \eqref{eq:ch5_V_new} 求导得到 \eqref{eq:ch5_Vdot_expand_new}，从而得到 \eqref{eq:Vdot_final}。由于 $\varepsilon>\bar D_s$，可知 $s$ 一致最终有界。
@@ -439,10 +428,12 @@ m_1>0,\ m_2>0,\ \lambda>0,\ k_{\mathrm{aw}}>0,
 s=z_n+\sum_{i=3}^{n-1}c_i z_i+c_2\left(z_2+(m_2-k_1)z_1+m_1q\right),
 \end{equation}
 当饱和较弱或饱和持续时间较短时，$s$ 的最终界较小，且高阶误差 $z_3,\ldots,z_n$ 在递推控制作用下保持较小范围内有界，此时前两级主导误差通道近似满足
-\begin{equation}
-\dot z_1\approx -k_1z_1+b_1z_2,\qquad
-\dot z_2\approx -(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1,
-\end{equation}
+\begin{subequations}
+\begin{align}
+\dot z_1&\approx -k_1z_1+b_1z_2,\\
+\dot z_2&\approx -(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1.
+\end{align}
+\end{subequations}
 对第一式再求导并利用 $z_2=\frac{\dot z_1+k_1z_1}{b_1}$ 可得
 \begin{equation}
 \ddot z_1+m_2\dot z_1+m_1z_1\approx 0,
@@ -457,12 +448,16 @@ s=z_n+\sum_{i=3}^{n-1}c_i z_i+c_2\left(z_2+(m_2-k_1)z_1+m_1q\right),
 
 \section{数值仿真}[Numerical simulation]
 
-本节将式\eqref{eq:ch5_sys}所示四旋翼悬浮机滚转通道模型应用于本章控制方法进行仿真验证。仿真采用与第2章、第3章一致的单轴二阶验证框架，状态定义为 $x_1=\phi,\ x_2=\dot\phi$。在此基础上，先保留第3章已经建立的二阶指令滤波抗扰部分不变，使其继续负责滚转通道广义扰动的描述与抗扰补偿；随后仅在实际输入端额外加入抗饱和补偿环节，并重点比较未加入抗饱和补偿和加入抗饱和补偿两种控制器在输入受限且实际发生饱和时的差异。对于该滚转二阶通道，有第一层增益 $b_1=1$，末级输入增益 $b_2=b_{\phi}=1/J_{\phi}$。为了保持与前两章一致，仍选取三组阻尼比分别为 $\zeta_d=1.000$、$\zeta_d=0.707$ 和 $\zeta_d=0.625$。
+本节将第2.2.1节式\eqref{eq:sf_system}所对应的四旋翼悬浮机滚转通道模型应用于本章控制方法进行仿真验证。仿真采用与第2章、第3章一致的单轴二阶验证框架，状态定义为 $x_1=\phi,\ x_2=\dot\phi$。在此基础上，先保留第3章已经建立的二阶指令滤波抗扰部分不变，使其继续负责滚转通道广义扰动的描述与抗扰补偿；随后仅在实际输入端额外加入抗饱和补偿环节，并重点比较未加入抗饱和补偿和加入抗饱和补偿两种控制器在输入受限且实际发生饱和时的差异。对于该滚转二阶通道，有第一层增益 $b_1=1$，末级输入增益 $b_2=b_{\phi}=1/J_{\phi}$。为了保持与前两章一致，仍选取三组阻尼比分别为 $\zeta_d=1.000$、$\zeta_d=0.707$ 和 $\zeta_d=0.625$。
 
 滚转通道仿真中定义误差变量
-\begin{equation}\label{eq:ch5_sim_z}
-z_1=x_1-y_d,\qquad z_2=x_2-\xi_{1,1},\qquad q=\int_0^t z_1(\tau)\,d\tau,
-\end{equation}
+\begin{subequations}\label{eq:ch5_sim_z}
+\begin{align}
+z_1&=x_1-y_d,\\
+z_2&=x_2-\xi_{1,1},\\
+q&=\int_0^t z_1(\tau)\,d\tau.
+\end{align}
+\end{subequations}
 并取滑模面
 \begin{equation}\label{eq:ch5_sim_s}
 s=z_2+(m_2-k_1)z_1+m_1q.
@@ -472,18 +467,20 @@ s=z_2+(m_2-k_1)z_1+m_1q.
 u_c^\star=-\frac{1}{b_{\phi}}\left((m_2-k_1)z_2+\bigl[m_1-k_1(m_2-k_1)\bigr]z_1-\xi_{1,2}+\varepsilon\,\mathrm{sgn}(s)\right),
 \end{equation}
 其中
-\begin{equation}\label{eq:ch5_sim_alpha1}
-\alpha_1^0=-\frac{1}{b_{\phi}}\left(k_1z_1-\dot y_d\right),
-\end{equation}
-\begin{equation}\label{eq:ch5_sim_filter}
-\dot \xi_{1,1}=\xi_{1,2},\qquad
-\dot \xi_{1,2}=-2\zeta_f\omega_f\xi_{1,2}-\omega_f^2(\xi_{1,1}-\alpha_1^0).
-\end{equation}
+\begin{subequations}
+\begin{align}
+\alpha_1^0 &= -\frac{1}{b_{\phi}}\left(k_1z_1-\dot y_d\right), \label{eq:ch5_sim_alpha1}\\
+\dot \xi_{1,1} &= \xi_{1,2},\\
+\dot \xi_{1,2}&=-2\zeta_f\omega_f\xi_{1,2}-\omega_f^2(\xi_{1,1}-\alpha_1^0). \label{eq:ch5_sim_filter}
+\end{align}
+\end{subequations}
 在输入饱和约束下，实际输入为
-\begin{equation}\label{eq:ch5_sim_sat}
-u=\mathrm{sat}(u_c),\qquad
-\Delta_u=u-u_c.
-\end{equation}
+\begin{subequations}\label{eq:ch5_sim_sat}
+\begin{align}
+u&=\mathrm{sat}(u_c),\\
+\Delta_u&=u-u_c.
+\end{align}
+\end{subequations}
 
 两种对比控制器分别为：
 
@@ -493,10 +490,12 @@ u_c=u_c^\star.
 \end{equation}
 
 有抗饱和补偿时，
-\begin{equation}\label{eq:ch5_sim_aw}
-u_c=u_c^\star-k_{\mathrm{aw}}\xi,\qquad
-\dot\xi=-\lambda\xi+\Delta_u.
-\end{equation}
+\begin{subequations}\label{eq:ch5_sim_aw}
+\begin{align}
+u_c&=u_c^\star-k_{\mathrm{aw}}\xi,\\
+\dot\xi&=-\lambda\xi+\Delta_u.
+\end{align}
+\end{subequations}
 由式\eqref{eq:ch5_sim_sat}--\eqref{eq:ch5_sim_aw} 可见，输入受限引入的核心误差量可写为
 \begin{equation}\label{eq:ch4_delta_u}
 \Delta_u=u-u_c=\mathrm{sat}(u_c)-u_c,
@@ -539,8 +538,6 @@ u_c=u_c^\star-k_{\mathrm{aw}}\xi
   \addcontentsline{lof}{figure}{\protect\numberline{\thefigure}{#2}}%
   \par\vspace{-2.0em}\centering 图~\thefigure\quad #2\par
 }
-
-\subsection{跟踪常值信号}[Tracking constant reference under saturation]
 
 常值参考信号取为
 \begin{equation}
@@ -593,8 +590,6 @@ y_{d1}=5^\circ.
 
 \noindent
 由图\ref{fig:ch4_step_noaw_response}--图\ref{fig:ch4_step_aw_control}以及表\ref{tab:ch4_sigma_param}可见，在定点跟踪工况下，加入抗饱和补偿后输出超调得到抑制，误差回落时间缩短，控制输入在限幅附近的波动减小。等效阻尼比结果表明，抗饱和补偿后的闭环响应更接近目标阻尼比，从而说明所提方法能够在输入受限条件下较好保持阻尼比整定效果。
-
-\subsection{跟踪时变信号}[Tracking time-varying reference under saturation]
 
 时变参考信号取为
 \begin{equation}

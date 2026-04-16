@@ -182,9 +182,15 @@ def plot_family(
         DampingCase(0.625, "#00CC00", "-.", r"$\zeta = 0.625$"),
     ]
     t = next(iter(result_map.values()))["t"]
-    ref_style = {"color": "black", "linewidth": 2.0, "label": r"参考信号 $y_d$"}
+    ref_style = {"color": "black", "linewidth": 2.0, "label": "参考信号"}
+    zero_style = {"color": "black", "linewidth": 1.8, "label": "参考信号"}
     if key == "y":
         ax.plot(t, next(iter(result_map.values()))["yd"], **ref_style)
+        ref_for_inset = (next(iter(result_map.values()))["yd"], ref_style)
+    else:
+        zero_series = np.zeros_like(t)
+        ax.plot(t, zero_series, **zero_style)
+        ref_for_inset = (zero_series, zero_style)
     if key == "u":
         ax.axhline(U_MAX, color="#555555", linestyle=":", linewidth=1.4)
         ax.axhline(-U_MAX, color="#555555", linestyle=":", linewidth=1.4)
@@ -202,7 +208,7 @@ def plot_family(
         t,
         plotted,
         zoom_xlim,
-        ref_series=(next(iter(result_map.values()))["yd"], ref_style) if key == "y" else None,
+        ref_series=ref_for_inset,
         y_strategy=y_strategy,
         focus_quantile=focus_quantile,
     )

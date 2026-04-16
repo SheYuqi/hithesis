@@ -431,7 +431,9 @@ def add_zoom_inset(
         merged = np.concatenate(stacked)
         q_low = float(np.quantile(merged, focus_quantile))
         y_min = max(y_min, q_low)
-    pad = 0.05 * max(1e-6, y_max - y_min)
+    # Leave a bit more headroom so the reference line and tick labels are not
+    # visually pressed against the inset border.
+    pad = 0.08 * max(1e-6, y_max - y_min)
 
     x_axis_min, x_axis_max = ax.get_xlim()
     y_axis_min, y_axis_max = ax.get_ylim()
@@ -495,7 +497,7 @@ def add_zoom_inset(
     plt.setp(inset.get_yticklabels(), fontfamily="DejaVu Serif", fontweight="bold")
     if ylabel:
         inset.set_ylabel(ylabel, fontsize=FIG_FONT_SIZE, fontfamily=FIG_FONT_FAMILY, fontweight="normal")
-    inset.set_xlabel("时间 (s)", fontsize=FIG_FONT_SIZE, fontfamily=FIG_FONT_FAMILY, fontweight="normal")
+    inset.set_xlabel("")
     for spine in inset.spines.values():
         spine.set_linewidth(1.0)
     inset_side_right = best_box[0] >= 0.45
@@ -535,8 +537,8 @@ def annotate_step_overshoot(ax: plt.Axes, result_map: Dict[float, Dict[str, np.n
 
 
 def style_axes(ax: plt.Axes, xlabel: str, ylabel: str) -> None:
-    ax.set_xlabel(xlabel, fontfamily=FIG_FONT_FAMILY, fontweight="normal", labelpad=0.5)
-    ax.set_ylabel(ylabel, fontfamily=FIG_FONT_FAMILY, fontweight="normal", labelpad=0.5)
+    ax.set_xlabel(xlabel, fontfamily=FIG_FONT_FAMILY, fontweight="normal", labelpad=2.0)
+    ax.set_ylabel(ylabel, fontfamily=FIG_FONT_FAMILY, fontweight="normal", labelpad=1.0)
     ax.grid(True, linestyle=(0, (1.0, 5.0)), color="0.7", linewidth=0.8)
     ax.tick_params(direction="in", which="both", top=True, right=True, length=6, width=1.0)
     plt.setp(ax.get_xticklabels(), fontfamily="DejaVu Serif", fontweight="bold")
@@ -581,7 +583,8 @@ def build_figures(
         }
         for case in cases
     }
-    ref_style = {"color": "black", "linewidth": 2.0, "label": r"参考信号 $y_d$"}
+    ref_style = {"color": "black", "linewidth": 2.0, "label": "参考信号"}
+    zero_style = {"color": "black", "linewidth": 1.8, "label": "参考信号"}
     bs_style = {"color": "#4d4d4d", "linestyle": ":", "linewidth": 2.0, "label": r"SBC+$\zeta$"}
 
     panels = [
@@ -590,7 +593,7 @@ def build_figures(
             step_results,
             "y",
             "跟踪输出",
-            (0.56, 0.82),  #更改框选范围
+            (0.50, 1.00),
             "跟踪常值信号的跟踪响应",
         ),
         (
@@ -598,7 +601,7 @@ def build_figures(
             step_results,
             "e",
             "跟踪误差",
-            (0.56, 0.82),
+            (0.50, 1.00),
             "跟踪常值信号的跟踪误差",
         ),
         (
@@ -606,7 +609,7 @@ def build_figures(
             step_results,
             "u",
             "控制输入",
-            (0.56, 0.82),
+            (0.50, 1.00),
             "跟踪常值信号的控制输入",
         ),
         (
@@ -614,7 +617,7 @@ def build_figures(
             sine_results,
             "y",
             "跟踪输出",
-            (0.07, 0.22),
+            (0.00, 0.30),
             "跟踪变值信号的跟踪响应",
         ),
         (
@@ -622,7 +625,7 @@ def build_figures(
             sine_results,
             "e",
             "跟踪误差",
-            (0.07, 0.22),
+            (0.00, 0.30),
             "跟踪变值信号的跟踪误差",
         ),
         (
@@ -630,7 +633,7 @@ def build_figures(
             sine_results,
             "u",
             "控制输入",
-            (0.07, 0.22),
+            (0.00, 0.30),
             "跟踪变值信号的控制输入",
         ),
     ]
@@ -642,6 +645,11 @@ def build_figures(
         show_reference = key == "y"
         if show_reference:
             ax.plot(t, first["yd"], **ref_style)
+            ref_for_inset = (first["yd"], ref_style)
+        else:
+            zero_series = np.zeros_like(t)
+            ax.plot(t, zero_series, **zero_style)
+            ref_for_inset = (zero_series, zero_style)
         plotted = []
         ax.plot(t, (bs_step if "step" in filename else bs_sine)[key], **bs_style)
         plotted.append(((bs_step if "step" in filename else bs_sine)[key], bs_style))
@@ -651,11 +659,12 @@ def build_figures(
             ax.plot(t, data[key], **style)
             plotted.append((data[key], style))
         style_axes(ax, "时间 (s)", ylabel)
+        ax.margins(y=0.06)
         ax.set_xlim(0.0, duration)
         leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
         leg.get_frame().set_linewidth(0.8)
-        inset = add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(first["yd"], ref_style) if show_reference else None)
-        fig.subplots_adjust(left=0.108, right=0.995, bottom=0.09, top=0.992)
+        inset = add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=ref_for_inset)
+        fig.subplots_adjust(left=0.108, right=0.995, bottom=0.115, top=0.992)
         save_figure(fig, output_dir / filename)
 
     overview_order = [
@@ -689,6 +698,11 @@ def build_figures(
         show_reference = key == "y"
         if show_reference:
             ax.plot(t, first["yd"], **ref_style)
+            ref_for_inset = (first["yd"], ref_style)
+        else:
+            zero_series = np.zeros_like(t)
+            ax.plot(t, zero_series, **zero_style)
+            ref_for_inset = (zero_series, zero_style)
         plotted = []
         ax.plot(t, (bs_step if "step" in name else bs_sine)[key], **bs_style)
         plotted.append(((bs_step if "step" in name else bs_sine)[key], bs_style))
@@ -698,11 +712,12 @@ def build_figures(
             ax.plot(t, data[key], **style)
             plotted.append((data[key], style))
         style_axes(ax, "时间 (s)", ylabel_map[name])
+        ax.margins(y=0.06)
         ax.set_xlim(0.0, duration)
         leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
         leg.get_frame().set_linewidth(0.8)
-        inset = add_zoom_inset(ax, t, plotted, zoom_map[name], ref_series=(first["yd"], ref_style) if show_reference else None)
-    fig.subplots_adjust(left=0.07, right=0.995, bottom=0.05, top=0.995, hspace=0.26, wspace=0.16)
+        inset = add_zoom_inset(ax, t, plotted, zoom_map[name], ref_series=ref_for_inset)
+    fig.subplots_adjust(left=0.07, right=0.995, bottom=0.075, top=0.995, hspace=0.26, wspace=0.16)
     save_figure(fig, output_dir / "ch2_damping_overview")
 
 

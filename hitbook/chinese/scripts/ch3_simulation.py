@@ -277,10 +277,16 @@ def plot_family(
     ]
     first = next(iter(result_map.values()))
     t = first["t"]
-    ref_style = {"color": "black", "linewidth": 2.0, "label": r"参考信号 $y_d$"}
+    ref_style = {"color": "black", "linewidth": 2.0, "label": "参考信号"}
+    zero_style = {"color": "black", "linewidth": 1.8, "label": "参考信号"}
     plotted = []
     if key == "y":
         ax.plot(t, first["yd"], **ref_style)
+        ref_for_inset = (first["yd"], ref_style)
+    else:
+        zero_series = np.zeros_like(t)
+        ax.plot(t, zero_series, **zero_style)
+        ref_for_inset = (zero_series, zero_style)
     for case in cases:
         style = {
             "color": case.color,
@@ -294,7 +300,7 @@ def plot_family(
     ax.set_xlim(0.0, float(t[-1]))
     leg = ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.35")
     leg.get_frame().set_linewidth(0.8)
-    add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=(first["yd"], ref_style) if key == "y" else None)
+    add_zoom_inset(ax, t, plotted, zoom_xlim, ref_series=ref_for_inset)
     fig.subplots_adjust(left=0.115, right=0.985, bottom=0.11, top=0.985)
     save_figure(fig, output_dir / filename)
 

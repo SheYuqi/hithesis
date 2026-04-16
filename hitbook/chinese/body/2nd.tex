@@ -1,6 +1,6 @@
 % !Mode:: "TeX:UTF-8"
 
-\chapter{预设阻尼比滑模反步控制器设计与分析}[Preset damping-ratio sliding-mode backstepping control]
+\chapter{预设阻尼比滑模反步控制}[Preset damping-ratio sliding-mode backstepping control]
 
 \section{引言}[Introduction]
 
@@ -13,37 +13,29 @@
 
 \subsection{系统描述}[System description]
 
-本文考虑一类严格反馈结构不确定非线性系统（包含匹配扰动/建模误差），其一般形式写为
-\begin{equation}\label{eq:sf_system}
-\left\{
-\begin{aligned}
+作为后续各章递进设计的基准对象，本章首先考虑一类严格反馈结构不确定非线性系统，其一般形式写为
+\begin{subequations}\label{eq:sf_system}
+\begin{align}
   \dot{x}_1 &= b_1 x_2 + f_1(x_1) + d_1,\\
   \dot{x}_2 &= b_2 x_3 + f_2(x_1,x_2) + d_2,\\
-  &\ \ \vdots \\
+  &\notag \vdots\\
   \dot{x}_{n-1} &= b_{n-1} x_n + f_{n-1}(x_1,\dots,x_{n-1}) + d_{n-1},\\
   \dot{x}_n &= b_n u + f_n(x_1,\dots,x_n) + d_n,\\
-  y &= x_1,
-\end{aligned}
-\right.
-\end{equation}
+  y &= x_1.
+\end{align}
+\end{subequations}
 其中 $x=[x_1,\dots,x_n]^{\mathrm T}$ 为系统状态，$u\in\mathbb{R}$ 为控制输入，$y$ 为可测输出；
 $b_i\neq 0$ 为已知（或已知符号且有下界）的控制增益常数；$f_i(\cdot)$ 为未知非线性函数，
-$d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
+$d_i$ 为外部扰动。
+
+本节给出的系统形式主要服务于第2章的基准控制器设计：在保留严格反馈递推结构的前提下，利用神经网络对主要未知非线性进行在线逼近，并通过滑模鲁棒项抑制逼近残差与外界扰动，从而构造满足预设阻尼比设计要求的闭环误差系统。
 
 严格反馈结构是反步控制的典型适用对象。通过逐层设计虚拟控制量并构造误差变量，可递推得到稳定的闭环结构。
 然而，当 $f_i(\cdot)$ 与 $d_i$ 不可精确获知时，必须引入自适应项（例如神经网络项、滤波器观测/补偿项）以抵消不确定性影响。
 
 
-% 尽管式\eqref{eq:sf_system}覆盖高阶系统，本文的“预设阻尼比”指标主要面向二阶主导动态。
-% 因此在核心推导中，常将系统在误差坐标下化为如下二阶形式：
-% \begin{equation}\label{eq:2nd_general}
-%   \ddot{y} = \varphi + b\,u + \Delta,
-% \end{equation}
-% 其中 $b\neq 0$ 为已知或已知符号的控制增益；$\varphi$ 表示可建模/可近似的已知部分（或经坐标变换后得到的名义项）；
-% $\Delta$ 汇总了未知非线性、外部扰动、未建模动态以及后续引入观测误差、估计误差等因素。
-
 \begin{assumption}\label{assump:yd}
- $y_d$、$\dot{y}_d$、$\ddot{y}_d$ 是有界，$\dot{y}_d(0)=0$。
+ $y_d$、$\dot{y}_d$、$\ddot{y}_d$ 是有界。
 \end{assumption}
 
 \begin{assumption}\label{assump:fi}
@@ -61,27 +53,27 @@ $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
 
 \subsection{神经网络逼近与权值误差定义}[Preliminaries of neural-network approximation]
 
-为处理未知非线性项，本文采用径向基神经网络对系统非线性进行在线逼近。设 $\bar x_i=[x_1,\ldots,x_i]^{\mathrm T}$，$S_i(\bar x_i)\in\mathbb{R}^{l_i}$ 为已知基函数向量，$W_i\in\mathbb{R}^{l_i}$ 为待调整权值向量，则第 $i$ 级未知非线性的神经网络估计写为
+为处理未知非线性项，本文采用径向基神经网络对系统非线性进行在线逼近。设 $\bar x_i=[x_1,\ldots,x_i]^{\mathrm T}$，$S_i(\bar x_i)\in\mathbb{R}^{l_i}$ 为已知基函数向量，$W_i\in\mathbb{R}^{l_i}$ 为待调整权值向量。对 $i=1,2,\ldots,n$，第 $i$ 级未知非线性的神经网络估计写为
 \begin{equation}\label{eq:ch2_nn_general}
-  \hat f_i(\bar x_i)=W_i^{\mathrm T}S_i(\bar x_i),\qquad i=1,2,\ldots,n.
+  \hat f_i(\bar x_i)=W_i^{\mathrm T}S_i(\bar x_i).
 \end{equation}
 
 \begin{lemma}\label{lem:ch2_nn}\hfill\cite{Sanner1992}
-对任意紧集 $\Omega_i\subset \mathbb{R}^i$，若未知非线性函数 $f_i(\bar x_i)$ 在 $\Omega_i$ 上连续，则存在理想权值向量 $W_i^\ast\in\mathbb{R}^{l_i}$ 以及有界残差函数 $r_i(\bar x_i)$，使得
+对任意紧集 $\Omega_i\subset \mathbb{R}^i$，若未知非线性函数 $f_i(\bar x_i)$ 在 $\Omega_i$ 上连续，则存在理想权值向量 $W_i^\ast\in\mathbb{R}^{l_i}$ 以及有界残差函数 $r_i(\bar x_i)$。对任意 $\bar x_i\in \Omega_i$，有
 \begin{equation}\label{eq:ch2_nn_lemma}
-  f_i(\bar x_i)=W_i^{\ast\mathrm T}S_i(\bar x_i)+r_i(\bar x_i),\qquad \forall\, \bar x_i\in \Omega_i,
+  f_i(\bar x_i)=W_i^{\ast\mathrm T}S_i(\bar x_i)+r_i(\bar x_i),
 \end{equation}
-并且存在正常数 $\bar r_i>0$ 满足
+并且存在正常数 $\bar r_i>0$，满足对任意 $\bar x_i\in \Omega_i$ 都有
 \begin{equation}\label{eq:ch2_nn_residual}
-  |r_i(\bar x_i)|\le \bar r_i,\qquad \forall\, \bar x_i\in \Omega_i.
+  |r_i(\bar x_i)|\le \bar r_i.
 \end{equation}
 \end{lemma}
 
 引理~\ref{lem:ch2_nn}表明，在紧集范围内，未知非线性 $f_i(\bar x_i)$ 可以分解为理想神经网络输出以及有界逼近残差两部分。对本文而言，这一结论的作用不是单独研究神经网络本身，而是为后续反步递推中的未知非线性补偿提供统一表达：神经网络用于拟合主要非线性部分，而无法完全消除的剩余误差则并入鲁棒分析。
 
-进一步定义权值估计误差为
+进一步定义权值估计误差。对 $i=1,2,\ldots,n$，有
 \begin{equation}\label{eq:ch2_weight_error}
-  \tilde W_i\triangleq W_i^\ast-W_i,\qquad i=1,2,\ldots,n.
+  \tilde W_i\triangleq W_i^\ast-W_i.
 \end{equation}
 
 由式\eqref{eq:ch2_nn_general}--\eqref{eq:ch2_weight_error}可知，未知非线性可以分解为当前神经网络估计 + 权值误差项 + 最优逼近残差三部分。这一分解非常关键，因为后续李雅普诺夫推导中的交叉项正是通过权值自适应律来抵消，而无法完全消除的残差则进入最终有界项。
@@ -156,27 +148,25 @@ $d_i$ 为外部扰动、未建模动态或参数摄动等不确定项。
 \subsection{阻尼比定义}[Damping ratio definition]
 
 对于经典标准二阶系统：
-\begin{equation}\label{eq:ch2_std_2nd}
-\left\{
-\begin{aligned}
+\begin{subequations}\label{eq:ch2_std_2nd}
+\begin{align}
 \dot{x}_1&=x_2,\\
 \dot{x}_2&=-2\zeta\omega_nx_2-\omega_n^2x_1,\\
 y&=x_1,
-\end{aligned}
-\right.
-\end{equation}
+\end{align}
+\end{subequations}
 $\zeta$ 是阻尼比，$\omega_n$ 是系统的固有频率。
 
-在阶跃响应中，阻尼比可由相对超调量间接计算：
+在阶跃响应中，当 $0<M_p<1$ 时，阻尼比可由相对超调量间接计算：
 \begin{equation}\label{eq:ch2_zeta_from_mp}
-\zeta=\frac{-\ln(M_p)}{\sqrt{\pi^2+\ln^2(M_p)}},\qquad 0<M_p<1.
+\zeta=\frac{-\ln(M_p)}{\sqrt{\pi^2+\ln^2(M_p)}}.
 \end{equation}
 其中 $M_p$ 表示相对超调量。在跟踪控制中，当稳态值不存在或等于零时，上式不再直接适用。典型情况如系统跟踪正弦参考信号时，由于参考信号不恒定，传统阶跃定义难以直接刻画动态性能。针对这一问题，本文采用如下与反步设计一致的阻尼比定义。
 
 \begin{definition}\label{def:ch2_zeta}
-设误差 $e(t)=y(t)-y_d(t)$ 满足二阶目标模型
+设误差 $e(t)=y(t)-y_d(t)$ 满足二阶目标模型，其中 $m_1>0,\ m_2>0$，
 \begin{equation}\label{eq:ch2_err_model}
-\ddot e+m_2\dot e+m_1e=0,\qquad m_1>0,\ m_2>0,
+\ddot e+m_2\dot e+m_1e=0,
 \end{equation}
 则定义阻尼比为
 \begin{equation}\label{eq:ch2_zeta_def}
@@ -204,18 +194,16 @@ $\zeta$ 是阻尼比，$\omega_n$ 是系统的固有频率。
 
 \subsection{二阶类李雅普诺夫稳定性判据}[Second-order Lyapunov-like stability criterion]
 
-提出了一个二阶类李雅普诺夫稳定性判据，该判据证明了在二阶类李雅普诺夫不等式成立的情况下，系统输出可以以近似期望阻尼比去跟踪目标信号。此外，通过使用二阶类李雅普诺夫判据中的参数选择规则，可以把阻尼比要求直接映射为控制器参数。
+引用二阶类李雅普诺夫稳定性判据，该判据证明了在二阶类李雅普诺夫不等式成立的情况下，系统输出可以以近似期望阻尼比去跟踪目标信号。此外，通过使用二阶类李雅普诺夫判据中的参数选择规则，可以把阻尼比要求直接映射为控制器参数。
 
 考虑以下二阶系统：
-\begin{equation}\label{eq:ch2_2nd_sys}
-\left\{
-\begin{aligned}
+\begin{subequations}\label{eq:ch2_2nd_sys}
+\begin{align}
 \dot{x}_1&=x_2,\\
 \dot{x}_2&=f(t,x),\\
-y&=x_1,
-\end{aligned}
-\right.
-\end{equation}
+y&=x_1.
+\end{align}
+\end{subequations}
 其中 $x=[x_1,x_2]^\mathrm{T}\subset \mathbb{R}^2$ 表示状态向量且 $x(0)=[0,0]^\mathrm{T}$；$f:\mathbb{R}^+\times \mathbb{R}^2\to \mathbb{R}$ 是局部 Lipschitz 连续函数；$y\in\mathbb{R}$ 是系统的输出。
 
 二阶类李雅普诺夫稳定性判据由以下定理给出。
@@ -278,21 +266,21 @@ x_1(t)=\left(a_3\cos\beta t+a_4\sin\beta t\right)e^{-\alpha t},
 \end{lemma}
 
 证明：不等式\eqref{eq:ch2_lyap_ineq}是一个二阶非齐次微分不等式，去掉绝对值后得到如下两个不等式：
-\begin{equation}\label{eq:ch2_split}
-\begin{aligned}
+\begin{subequations}\label{eq:ch2_split}
+\begin{align}
 \ddot{V}(x_1)+m_1V(x_1)+m_2\dot{V}(x_1) &\le \delta,\\
 \ddot{V}(x_1)+m_1V(x_1)+m_2\dot{V}(x_1) &\ge -\delta.
-\end{aligned}
-\end{equation}
+\end{align}
+\end{subequations}
 这意味着不等式\eqref{eq:ch2_lyap_ineq}可以拆分成两个微分不等式。由于函数满足 Lipschitz 条件，可使用比较原理分析其解的上下界。
 
 考虑不等式\eqref{eq:ch2_split}的边界情形：
-\begin{equation}\label{eq:ch2_bound_upper}
-\ddot{V}(x^*)+m_1V(x^*)+m_2\dot{V}(x^*)=\delta,
-\end{equation}
-\begin{equation}\label{eq:ch2_bound_lower}
-\ddot{V}(x_*)+m_1V(x_*)+m_2\dot{V}(x_*)=-\delta.
-\end{equation}
+\begin{subequations}
+\begin{align}
+\ddot{V}(x^*)+m_1V(x^*)+m_2\dot{V}(x^*) &= \delta, \label{eq:ch2_bound_upper}\\
+\ddot{V}(x_*)+m_1V(x_*)+m_2\dot{V}(x_*) &= -\delta. \label{eq:ch2_bound_lower}
+\end{align}
+\end{subequations}
 
 根据比较原理，不等式\eqref{eq:ch2_lyap_ineq}的解满足
 \begin{equation}\label{eq:ch2_compare}
@@ -310,20 +298,20 @@ r^2+m_2r+m_1=\left(r+\frac{m_2}{2}\right)^2.
 \end{equation}
 
 则方程\eqref{eq:ch2_bound_upper}和\eqref{eq:ch2_bound_lower}的解为
-\begin{equation}\label{eq:ch2_bound_case1_sol}
-\begin{aligned}
+\begin{subequations}\label{eq:ch2_bound_case1_sol}
+\begin{align}
 x^*(t)&=(c_1+c_2t)e^{-\frac{m_2}{2}t}+c_3,\\
 x_*(t)&=(c_4+c_5t)e^{-\frac{m_2}{2}t}+c_6.
-\end{aligned}
-\end{equation}
+\end{align}
+\end{subequations}
 
 令名义解 $x_p(t)=(a_1+a_2t)e^{-\frac{m_2}{2}t}$，误差 $x_e(t)=x_1(t)-x_p(t)$，则有
-\begin{equation}\label{eq:ch2_bound_case1_err}
-\begin{aligned}
+\begin{subequations}\label{eq:ch2_bound_case1_err}
+\begin{align}
 x_e(t)&\ge (e_1+e_2t)e^{-\frac{m_2}{2}t}+c_6,\\
-x_e(t)&\le (e_3+e_4t)e^{-\frac{m_2}{2}t}+c_3,
-\end{aligned}
-\end{equation}
+x_e(t)&\le (e_3+e_4t)e^{-\frac{m_2}{2}t}+c_3.
+\end{align}
+\end{subequations}
 
 其中 $e_1=c_4-a_1,e_2=c_5-a_2,e_3=c_1-a_1,e_4=c_2-a_2$。
 
@@ -333,20 +321,20 @@ r^2+m_2r+m_1=\left[r+(\alpha+\beta\mathrm{i})\right]\left[r+(\alpha-\beta\mathrm
 \end{equation}
 
 即 $m_1=\alpha^2+\beta^2,m_2=2\alpha$，则方程\eqref{eq:ch2_bound_upper}和\eqref{eq:ch2_bound_lower}的解为
-\begin{equation}\label{eq:ch2_bound_case2_sol}
-\begin{aligned}
+\begin{subequations}\label{eq:ch2_bound_case2_sol}
+\begin{align}
 x^*(t)&=(c_7\cos\beta t+c_8\sin\beta t)e^{-\alpha t}+c_9,\\
 x_*(t)&=(c_{10}\cos\beta t+c_{11}\sin\beta t)e^{-\alpha t}+c_{12}.
-\end{aligned}
-\end{equation}
+\end{align}
+\end{subequations}
 
 令名义解 $x_q(t)=(a_3\cos\beta t+a_4\sin\beta t)e^{-\alpha t}$，则
-\begin{equation}\label{eq:ch2_bound_case2_err}
-\begin{aligned}
+\begin{subequations}\label{eq:ch2_bound_case2_err}
+\begin{align}
 x_e(t)&\ge (e_5\cos\beta t+e_6\sin\beta t)e^{-\alpha t}+c_{12},\\
-x_e(t)&\le (e_7\cos\beta t+e_8\sin\beta t)e^{-\alpha t}+c_9,
-\end{aligned}
-\end{equation}
+x_e(t)&\le (e_7\cos\beta t+e_8\sin\beta t)e^{-\alpha t}+c_9.
+\end{align}
+\end{subequations}
 
 其中 $e_5=c_{10}-a_3,e_6=c_{11}-a_4,e_7=c_7-a_3,e_8=c_8-a_4$。上述不等式表明误差函数 $x_e(t)$ 是实用稳定的（即误差有界并收敛）。
 
@@ -360,15 +348,13 @@ x_q(t)\approx x_p(t).
 
 \begin{remark}\label{rem:ch2_example_zeta}
 为了展示引理~\ref{lem:ch2_lemma1}、引理~\ref{lem:ch2_lemma2}及参数规则\eqref{eq:ch2_zeta_def}的使用，考虑以下三个系统：
-\begin{equation}\label{eq:ch2_ex_sys_hat}
-\ddot{\hat e}_1+m_2\dot{\hat e}_1+m_1\hat e_1=0.2,
-\end{equation}
-\begin{equation}\label{eq:ch2_ex_sys_check}
-\ddot{\check e}_1+m_2\dot{\check e}_1+m_1\check e_1=-0.2,
-\end{equation}
-\begin{equation}\label{eq:ch2_ex_sys_main}
-\ddot e_1+m_2\dot e_1+m_1 e_1=0.2\sin 5t.
-\end{equation}
+\begin{subequations}
+\begin{align}
+\ddot{\hat e}_1+m_2\dot{\hat e}_1+m_1\hat e_1 &= 0.2, \label{eq:ch2_ex_sys_hat}\\
+\ddot{\check e}_1+m_2\dot{\check e}_1+m_1\check e_1 &= -0.2, \label{eq:ch2_ex_sys_check}\\
+\ddot e_1+m_2\dot e_1+m_1 e_1 &= 0.2\sin 5t. \label{eq:ch2_ex_sys_main}
+\end{align}
+\end{subequations}
 初始条件取 $x_1(0)=x_2(0)=0$、$y_d=1$，即
 $\hat e_1(0)=\check e_1(0)=e_1(0)=x_1(0)-y_d=-1$，
 $\dot{\hat e}_1(0)=\dot{\check e}_1(0)=\dot e_1(0)=x_2(0)-\dot y_d=0$。
@@ -424,28 +410,31 @@ $\zeta_d=\frac{m_2}{2\sqrt{m_1}}=\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}\approx0.
 
 反步控制器的问题在于虚拟控制函数的时间导数会导致计算复杂性，而未知非线性若不被及时估计，则会直接进入误差系统并削弱阻尼比设计效果。因此，在一般严格反馈系统中，本文采用神经网络名义补偿 + 剩余不确定项统一分析的处理方式。
 
-考虑一类严格反馈形式的不确定非线性系统：
-\begin{equation}\label{eq:ch3_sys_mid}
-\left\{
-\begin{aligned}
-\dot x_i&=b_i x_{i+1}+f_i(x_i)+d_i,\quad i=1,\ldots,n-1,\\
-\dot x_n&=b_nu+f_n(x_n)+d_n,\\
-y&=x_1,
-\end{aligned}
-\right.
-\end{equation}
+考虑一类严格反馈形式的不确定非线性系统。对 $i=1,\ldots,n-1$，系统满足
+{\setlength{\abovedisplayskip}{6pt}
+\setlength{\belowdisplayskip}{6pt}
+\setlength{\abovedisplayshortskip}{2pt}
+\setlength{\belowdisplayshortskip}{4pt}
+\begin{subequations}\label{eq:ch3_sys_mid}
+\begin{align}
+\dot x_i&=b_i x_{i+1}+f_i(x_i)+d_i,\label{eq:ch3_sys_mid_a}\\
+\dot x_n&=b_nu+f_n(x_n)+d_n,\label{eq:ch3_sys_mid_b}\\
+y&=x_1.\label{eq:ch3_sys_mid_c}
+\end{align}
+\end{subequations}
+}
 其中 $x_i=[x_1,x_2,\ldots,x_i]^\mathrm{T}\in D_i\subset\mathbb{R}^i$，$u\in\mathbb{R}$，$y\subset\mathbb{R}$ 分别代表系统的状态、输入和输出。$f_i(x_i)$ 和 $d_i$ 分别代表系统的未建模动态和未知的外部扰动，$b_i$ 已知。
 
-在实际工程中，非线性函数 $f_i$ 往往并非完全已知。参照前述二阶推导，对第 $i$ 级非线性项取
-\begin{equation}\label{eq:ch2_hi_nn}
-  h_i(\bar x_i)=W_i^{\mathrm T}S_i(\bar x_i),\qquad i=1,2,\ldots,n,
-\end{equation}
-\begin{equation}\label{eq:ch2_hi_delta}
-  f_i(\bar x_i)=W_i^{\ast\mathrm T}S_i(\bar x_i)+r_i(\bar x_i),\qquad |r_i(\bar x_i)|\le \bar r_i,
-\end{equation}
-并进一步定义综合不确定项
+在实际工程中，非线性函数 $f_i$ 往往并非完全已知。参照前述二阶推导，对 $i=1,2,\ldots,n$，第 $i$ 级非线性项取
+\begin{subequations}
+\begin{align}
+  h_i(\bar x_i) &= W_i^{\mathrm T}S_i(\bar x_i), \label{eq:ch2_hi_nn}\\
+  f_i(\bar x_i) &= W_i^{\ast\mathrm T}S_i(\bar x_i)+r_i(\bar x_i). \label{eq:ch2_hi_delta}
+\end{align}
+\end{subequations}
+其中逼近残差满足 $|r_i(\bar x_i)|\le \bar r_i$。并进一步定义综合不确定项，其满足 $|\Delta_i|\le \bar\Delta_i$：
 \begin{equation}\label{eq:ch2_total_uncertainty}
-  \Delta_i(\bar x_i,t)\triangleq \tilde W_i^{\mathrm T}S_i(\bar x_i)+r_i(\bar x_i)+d_i(t),\qquad |\Delta_i|\le \bar\Delta_i.
+  \Delta_i(\bar x_i,t)\triangleq \tilde W_i^{\mathrm T}S_i(\bar x_i)+r_i(\bar x_i)+d_i(t).
 \end{equation}
 这样，$h_i(\bar x_i)$ 用于补偿神经网络当前估计到的主要非线性，$\tilde W_i^{\mathrm T}S_i(\bar x_i)$ 刻画权值估计误差，$r_i(\bar x_i)$ 和 $d_i(t)$ 分别表示最优逼近残差与外部扰动，三者共同构成后续稳定性分析中的剩余项。
 
@@ -464,88 +453,83 @@ y&=x_1,
 \end{equation}
 
 设计虚拟控制器形式如下：
-\begin{equation}\label{eq:ch3_alpha_mid}
-\begin{aligned}
-	\alpha_1&=-\frac{1}{b_1}(k_1z_1+h_1-\dot y_d),\\
-	\alpha_2&=-\frac{1}{b_2}\Big((m_2-k_1)z_2+\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+h_2-d\alpha_1\Big),\\
-\alpha_3&=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+h_3-d\alpha_2\right),\\
-\alpha_i&=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+h_i-d\alpha_{i-1}\right),\\
-\alpha_{n-1}&=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+h_{n-1}-d\alpha_{n-2}\right),\\
-u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-d\alpha_{n-1}+\varepsilon\,\mathrm{sgn}(s)\right).
-\end{aligned}
-\end{equation}
+\begin{subequations}\label{eq:ch3_alpha_mid}
+\begin{align}
+\alpha_1&=-\frac{1}{b_1}(k_1z_1+h_1-\dot y_d),\label{eq:ch3_alpha_mid_a}\\
+\alpha_2&=-\frac{1}{b_2}\Big((m_2-k_1)z_2+\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+h_2-d\alpha_1\Big),\label{eq:ch3_alpha_mid_b}\\
+\alpha_3&=-\frac{1}{b_3}\left(\frac{c_2b_2-c_4b_3}{c_3}z_3+h_3-d\alpha_2\right),\label{eq:ch3_alpha_mid_c}\\
+\alpha_i&=-\frac{1}{b_i}\left(\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_{i-1}z_{i-1}+h_i-d\alpha_{i-1}\right),\label{eq:ch3_alpha_mid_d}\\
+\alpha_{n-1}&=-\frac{1}{b_{n-1}}\left(\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-2}z_{n-2}+h_{n-1}-d\alpha_{n-2}\right),\label{eq:ch3_alpha_mid_e}\\
+u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-d\alpha_{n-1}+\varepsilon\,\mathrm{sgn}(s)\right).\label{eq:ch3_alpha_mid_f}
+\end{align}
+\end{subequations}
 
-神经网络权值更新律取为
+神经网络权值更新律取为，其中 $\Gamma_i=\Gamma_i^{\mathrm T}>0$、$\sigma_i>0$，且 $i=1,2,\ldots,n$，
 \begin{equation}\label{eq:ch2_nn_update_general}
-  \dot W_i=\Gamma_i\big(z_iS_i(\bar x_i)-\sigma_iW_i\big),\qquad
-  \Gamma_i=\Gamma_i^{\mathrm T}>0,\ \sigma_i>0,\quad i=1,2,\ldots,n.
+  \dot W_i=\Gamma_i\big(z_iS_i(\bar x_i)-\sigma_iW_i\big).
 \end{equation}
 式\eqref{eq:ch2_nn_update_general}与式\eqref{eq:ch2_nn_core_update}具有相同作用，即用误差驱动神经网络权值修正，同时利用 $\sigma$-修改项抑制参数漂移。
 
-其中，虚拟控制函数导数采用有限差分近似：
+其中，虚拟控制函数导数采用有限差分近似。对 $i=1,2,\ldots,n-1$，有
 \begin{equation}\label{eq:ch2_finite_difference}
-  d\alpha_i=\frac{\alpha_i(t+\Delta t)-\alpha_i(t)}{\Delta t},\qquad i=1,2,\ldots,n-1,
+  d\alpha_i=\frac{\alpha_i(t+\Delta t)-\alpha_i(t)}{\Delta t},
 \end{equation}
-其中 $\Delta t$ 为采样周期。按照有限差分展开，可进一步写成
+其中 $\Delta t$ 为采样周期。按照有限差分展开，对 $i=1,2,\ldots,n-1$ 可进一步写成
 \begin{equation}\label{eq:ch2_dalpha_expand}
-  d\alpha_i=\dot\alpha_i+O_i(\Delta t),\qquad i=1,2,\ldots,n-1,
+  d\alpha_i=\dot\alpha_i+O_i(\Delta t),
 \end{equation}
 其中 $O_i(\Delta t)$ 表示由有限差分引入的截断误差项。
 
 上式中，虚拟控制器序列用于逐层稳定中间误差，$h_i$ 用于补偿神经网络估计得到的主要非线性，$\Delta_i$ 与有限差分截断误差 $O_i(\Delta t)$ 共同构成闭环中的剩余不确定项。末端控制输入中的切换项用于增强抗扰能力。参数 $\varepsilon$ 越大，鲁棒性越强，但控制输入抖振风险也会增大，因此后续仿真中需要配合边界层或采样滤波进行折中。
 
 
-若暂时忽略神经网络权值误差、最优逼近残差、外部扰动以及有限差分截断误差，则可得到如下名义误差系统：
-\begin{equation}\label{eq:ch3_zdot_stab}
-\left\{
-\begin{aligned}
-	\dot z_1&=-k_1z_1+b_1z_2,\\
-	\dot z_2&=-(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+b_2z_3,\\
-\dot z_3&=-\frac{c_2b_2-c_4b_3}{c_3}z_3+b_3z_4,\\
-\dot z_i&=-\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_iz_{i+1}-b_{i-1}z_{i-1},\quad i=4,5,\ldots,n-2,\\
-\dot z_{n-1}&=-\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2},\\
-\dot z_n&=-c_{n-1}b_{n-1}z_n-b_{n-1}z_{n-1}-\varepsilon\,\mathrm{sgn}(s).
-\end{aligned}
-\right.
-\end{equation}
+若暂时忽略神经网络权值误差、最优逼近残差、外部扰动以及有限差分截断误差，则可得到如下名义误差系统。对 $i=4,5,\ldots,n-2$，
+\begin{subequations}\label{eq:ch3_zdot_stab}
+\begin{align}
+\dot z_1&=-k_1z_1+b_1z_2,\label{eq:ch3_zdot_stab_a}\\
+\dot z_2&=-(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+b_2z_3,\label{eq:ch3_zdot_stab_b}\\
+\dot z_3&=-\frac{c_2b_2-c_4b_3}{c_3}z_3+b_3z_4,\label{eq:ch3_zdot_stab_c}\\
+\dot z_i&=-\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_iz_{i+1}-b_{i-1}z_{i-1},\label{eq:ch3_zdot_stab_d}\\
+\dot z_{n-1}&=-\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2},\label{eq:ch3_zdot_stab_e}\\
+\dot z_n&=-c_{n-1}b_{n-1}z_n-b_{n-1}z_{n-1}-\varepsilon\,\mathrm{sgn}(s).\label{eq:ch3_zdot_stab_f}
+\end{align}
+\end{subequations}
 
 \begin{remark}\label{rem:ch3_remark23}
 本节中，所提出的预设阻尼比滑模反步控制方法与传统滑模反步法的主要区别在于虚拟控制函数 $\alpha_1$ 和 $\alpha_2$ 的设计。在传统滑模反步法中，常取
-\begin{equation}
-\alpha_1=\frac{-k_1z_1+\dot y_d}{c_1},\qquad
-\alpha_2=-\frac{k_2z_2-\dot\alpha_1+c_1z_1}{c_2},\quad k_1,k_2>0,
-\end{equation}
-该设计能够保证包括系统输出在内的所有状态指数稳定，但无法实现对阻尼比的显式预设。相比之下，本文改进方法在保留第一层稳定化增益 $k_1$ 的同时，将 $(m_2-k_1)$ 和 $m_1$ 注入低阶组合结构，使得由 $z_1$ 主导的二阶误差方程仍可整理为标准阻尼比形式，从而实现先稳定化、再塑形的统一设计。
+\begin{subequations}
+\begin{align}
+\alpha_1&=\frac{-k_1z_1+\dot y_d}{c_1},\\
+\alpha_2&=-\frac{k_2z_2-\dot\alpha_1+c_1z_1}{c_2}.
+\end{align}
+\end{subequations}
+其中 $k_1,k_2>0$。该设计能够保证包括系统输出在内的所有状态指数稳定，但无法实现对阻尼比的显式预设。相比之下，本文改进方法在保留第一层稳定化增益 $k_1$ 的同时，将 $(m_2-k_1)$ 和 $m_1$ 注入低阶组合结构，使得由 $z_1$ 主导的二阶误差方程仍可整理为标准阻尼比形式，从而实现先稳定化、再塑形的统一设计。
 \end{remark}
 
 \section{系统稳定性分析}[System stability analysis]\label{sec:ch3_stab2}
 
 在分析一般严格反馈闭环系统之前，先按照神经网络补偿项的基本推导说明其稳定性性质。考虑如下二阶误差系统
-\begin{equation}\label{eq:ch2_nn_z12}
-\left\{
-\begin{aligned}
-  \dot z_1 &= -k_1 z_1+z_2,\\
-  \dot z_2 &= -m_1 z_1-m_2 z_2+f(x)-W^{\mathrm T}S(x),
-\end{aligned}
-\right.
-\end{equation}
+\begin{subequations}\label{eq:ch2_nn_z12}
+\begin{align}
+  \dot z_1 &= -k_1 z_1+z_2, \label{eq:ch2_nn_z12a}\\
+  \dot z_2 &= -m_1 z_1-m_2 z_2+f(x)-W^{\mathrm T}S(x). \label{eq:ch2_nn_z12b}
+\end{align}
+\end{subequations}
 其中 $k_1,m_1,m_2>0$，$W$ 为神经网络当前权值，$S(x)$ 为基函数向量。若未知非线性满足
 \begin{equation}\label{eq:ch2_nn_core_approx}
-  f(x)=W^{\ast\mathrm T}S(x)+r(x),\qquad |r(x)|\le \bar r,
+  f(x)=W^{\ast\mathrm T}S(x)+r(x),
 \end{equation}
-并定义权值误差
+其中 $|r(x)|\le \bar r$。并定义权值误差
 \begin{equation}\label{eq:ch2_nn_core_tilde}
   \tilde W\triangleq W^\ast-W,
 \end{equation}
 则式\eqref{eq:ch2_nn_z12}可改写为
-\begin{equation}\label{eq:ch2_nn_core_sys}
-\left\{
-\begin{aligned}
-  \dot z_1 &= -k_1 z_1+z_2,\\
-  \dot z_2 &= -m_1 z_1-m_2 z_2+\tilde W^{\mathrm T}S(x)+r(x).
-\end{aligned}
-\right.
-\end{equation}
+\begin{subequations}\label{eq:ch2_nn_core_sys}
+\begin{align}
+  \dot z_1 &= -k_1 z_1+z_2, \label{eq:ch2_nn_core_sysa}\\
+  \dot z_2 &= -m_1 z_1-m_2 z_2+\tilde W^{\mathrm T}S(x)+r(x). \label{eq:ch2_nn_core_sysb}
+\end{align}
+\end{subequations}
 
 选取神经网络的权值更新律为
 \begin{equation}\label{eq:ch2_nn_core_update}
@@ -571,10 +555,11 @@ u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-d\alpha_{n-1}+\varep
   \dot V=-k_1m_1z_1^2-m_2z_2^2+r(x)z_2+\sigma\tilde W^{\mathrm T}\big(W^\ast-\tilde W\big).
 \end{equation}
 
-对余项使用 Young 不等式，有
+对余项使用 Young 不等式。取 $\varepsilon_i>0$，有
 \begin{equation}\label{eq:ch2_nn_core_young1}
-  r(x)z_2\le \frac{1}{4\varepsilon_i^2}z_2^2+\varepsilon_i^2r^2(x),\qquad \varepsilon_i>0,
+  r(x)z_2 \le \frac{1}{4\varepsilon_i^2}z_2^2+\varepsilon_i^2r^2(x).
 \end{equation}
+同时，
 \begin{equation}\label{eq:ch2_nn_core_young2}
   \sigma\tilde W^{\mathrm T}W^\ast-\sigma\tilde W^{\mathrm T}\tilde W
   \le -\frac{\sigma}{2}\tilde W^{\mathrm T}\tilde W+\frac{\sigma}{2}W^{\ast\mathrm T}W^\ast.
@@ -593,31 +578,30 @@ u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-d\alpha_{n-1}+\varep
 \begin{theorem}\label{thm:ch3_theorem22}
 在神经网络拟合关系\eqref{eq:ch2_hi_nn}、综合不确定项定义\eqref{eq:ch2_total_uncertainty}以及权值更新律\eqref{eq:ch2_nn_update_general}成立条件下，若 $k_1>0$ 且 $m_2>k_1$，则非线性系统\eqref{eq:ch3_sys_mid}在控制器\eqref{eq:ch3_alpha_mid}作用下，闭环信号一致最终有界，系统跟踪误差最终有界，并具有近似期望阻尼比 $\zeta$。此外：
 
-1）若 $m_2=2k,\ m_1=k^2,\ k>0$，则 $\zeta\approx1$；
+1）若取 $k>0$，并令 $m_2=2k$、$m_1=k^2$，则 $\zeta\approx1$；
 
-2）若 $m_2=2\alpha,\ m_1=\alpha^2+\beta^2,\ \alpha,\beta>0$，则
+2）若取 $\alpha>0$、$\beta>0$，并令 $m_2=2\alpha$、$m_1=\alpha^2+\beta^2$，则
 \begin{equation}
 \zeta\approx\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}.
 \end{equation}
 \end{theorem}
 \begin{proof}
-由前述神经网络补偿项的稳定性说明可知，采用神经网络估计 $h_i=W_i^{\mathrm T}S_i(\bar x_i)$ 并配合 $\sigma$-修改权值更新律后，神经网络权值误差项不会破坏李雅普诺夫导数的负定结构，其影响可统一并入有界剩余项。基于这一点，考虑第 $i$ 级神经网络权值误差项、最优逼近残差、外扰以及有限差分误差，定义各级合成扰动项
+由前述神经网络补偿项的稳定性说明可知，采用神经网络估计 $h_i=W_i^{\mathrm T}S_i(\bar x_i)$ 并配合 $\sigma$-修改权值更新律后，神经网络权值误差项不会破坏李雅普诺夫导数的负定结构，其影响可统一并入有界剩余项。基于这一点，考虑第 $i$ 级神经网络权值误差项、最优逼近残差、外扰以及有限差分误差。对 $i=2,\ldots,n$，定义各级合成扰动项
+存在常数 $\bar\Xi_i>0$ 使得
 \begin{equation}
-\Xi_i \triangleq \Delta_i + O_i(\Delta t),\qquad |\Xi_i|\le \bar\Xi_i,\quad i=2,\ldots,n.
+\Xi_i \triangleq \Delta_i + O_i(\Delta t).
 \end{equation}
-则实际误差系统可写为
-\begin{equation}\label{eq:ch3_zdot_mid}
-\left\{
-\begin{aligned}
-	\dot z_1&=-k_1z_1+b_1z_2,\\
-	\dot z_2&=-(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+b_2z_3+\Xi_2,\\
-\dot z_3&=-k_3 z_3+b_3z_4+\Xi_3,\\
-\dot z_i&=-k_i z_i+b_iz_{i+1}-b_{i-1}z_{i-1}+\Xi_i,\quad i=4,5,\ldots,n-2,\\
-\dot z_{n-1}&=-k_{n-1}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2}+\Xi_{n-1},\\
-\dot z_n&=-k_n z_n-b_{n-1}z_{n-1}-\varepsilon\,\mathrm{sgn}(s)+\Xi_n,
-\end{aligned}
-\right.
-\end{equation}
+且满足 $|\Xi_i|\le \bar\Xi_i$。则实际误差系统可写为。对 $i=4,5,\ldots,n-2$，有
+\begin{subequations}\label{eq:ch3_zdot_mid}
+\begin{align}
+\dot z_1&=-k_1z_1+b_1z_2,\label{eq:ch3_zdot_mid1}\\
+\dot z_2&=-(m_2-k_1)z_2-\frac{m_1-k_1(m_2-k_1)}{b_1}z_1+b_2z_3+\Xi_2,\label{eq:ch3_zdot_mid2}\\
+\dot z_3&=-k_3 z_3+b_3z_4+\Xi_3,\label{eq:ch3_zdot_mid3}\\
+\dot z_i&=-k_i z_i+b_iz_{i+1}-b_{i-1}z_{i-1}+\Xi_i,\label{eq:ch3_zdot_mid4}\\
+\dot z_{n-1}&=-k_{n-1}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2}+\Xi_{n-1},\label{eq:ch3_zdot_mid5}\\
+\dot z_n&=-k_n z_n-b_{n-1}z_{n-1}-\varepsilon\,\mathrm{sgn}(s)+\Xi_n.\label{eq:ch3_zdot_mid6}
+\end{align}
+\end{subequations}
 其中 $k_i>0$ 为由控制器参数确定的等效阻尼系数。
 
 选择李雅普诺夫函数
@@ -637,13 +621,15 @@ V_n=\frac{1}{2}\sum_{i=3}^{n}z_i^2,
 \le -a_0V_n+b_0,
 \end{equation}
 其中
-\begin{equation}
-a_0=2\min_{3\le i\le n}\left\{k_i-\frac{1}{2\mu_i}\right\}>0,\qquad
-b_0=\frac{1}{2}\sum_{i=3}^{n}\mu_i\bar\Xi_i^2.
-\end{equation}
-由比较引理可得
+\begin{subequations}
+\begin{align}
+a_0&=2\min_{3\le i\le n}\left\{k_i-\frac{1}{2\mu_i}\right\}>0,\\
+b_0&=\frac{1}{2}\sum_{i=3}^{n}\mu_i\bar\Xi_i^2.
+\end{align}
+\end{subequations}
+由比较引理可得，对 $t\ge 0$，有
 \begin{equation}\label{eq:ch3_vn_bound_mid}
-V_n(t)\le \left(V_n(0)-\frac{b_0}{a_0}\right)e^{-a_0t}+\frac{b_0}{a_0},\quad t\ge0.
+V_n(t)\le \left(V_n(0)-\frac{b_0}{a_0}\right)e^{-a_0t}+\frac{b_0}{a_0}.
 \end{equation}
 进一步得到
 \begin{equation}\label{eq:ch3_s_bound_mid}
@@ -652,7 +638,7 @@ V_n(t)\le \left(V_n(0)-\frac{b_0}{a_0}\right)e^{-a_0t}+\frac{b_0}{a_0},\quad t\g
 \end{equation}
 从而 $z_3,\ldots,z_n$ 一致最终有界。
 
-再由\eqref{eq:ch3_zdot_mid}前两式，对 $\dot z_1=-k_1z_1+b_1z_2$ 两边求导，并结合
+再由式\eqref{eq:ch3_zdot_mid1}和式\eqref{eq:ch3_zdot_mid2}，对 $\dot z_1=-k_1z_1+b_1z_2$ 两边求导，并结合
 \begin{equation}
 	z_2=\frac{\dot z_1+k_1z_1}{b_1}
 \end{equation}
@@ -678,34 +664,42 @@ V_n(t)\le \left(V_n(0)-\frac{b_0}{a_0}\right)e^{-a_0t}+\frac{b_0}{a_0},\quad t\g
 
 \section{数值仿真}[Numerical simulation]\label{sec:ch3_sim}
 
-本节针对一类单轴不确定二阶非线性系统开展数值仿真，目的是在神经网络补偿存在的条件下，直接考察阻尼比参数 $(m_1,m_2)$ 对输出瞬态响应的影响。为突出本章阻尼比可设定、参数可解释的核心思想，仿真对象取为归一化单轴系统
-\begin{equation}\label{eq:ch2_sim_sys}
-\dot x_1=x_2,\qquad
-\dot x_2=u+f(x),\qquad
-y=x_1,
-\end{equation}
+本节针对四旋翼悬浮机滚转通道的非线性系统开展数值仿真，目的是在神经网络补偿存在的条件下，直接考察阻尼比参数 $(m_1,m_2)$ 对输出瞬态响应的影响。为突出本章阻尼比可设定、参数可解释的核心思想，仿真对象取为归一化单轴系统
+\begin{subequations}\label{eq:ch2_sim_sys}
+\begin{align}
+\dot x_1 &= x_2,\\
+\dot x_2 &= u+f(x),\\
+y &= x_1.
+\end{align}
+\end{subequations}
 其中 $f(x)$ 为未知非线性项。仿真中用神经网络对 $f(x)$ 进行在线逼近，并采用与本章理论一致的二阶主导闭环结构来实现阻尼比预设。
 
 令跟踪误差为
-\begin{equation}\label{eq:ch2_sim_err}
-e_1=x_1-y_d,\qquad e_2=x_2-\dot y_d.
-\end{equation}
+\begin{subequations}\label{eq:ch2_sim_err}
+\begin{align}
+e_1 &= x_1-y_d,\\
+e_2 &= x_2-\dot y_d.
+\end{align}
+\end{subequations}
 为与前述控制设计保持一致，进一步定义
-\begin{equation}\label{eq:ch2_sim_z12}
-z_1=e_1,\qquad z_2=e_2+k_1e_1,
-\end{equation}
+\begin{subequations}\label{eq:ch2_sim_z12}
+\begin{align}
+z_1 &= e_1,\\
+z_2 &= e_2+k_1e_1.
+\end{align}
+\end{subequations}
 其中仿真中固定取 $k_1=5.0$，从而满足 $\dot z_1=-k_1z_1+z_2$。
 取神经网络估计项为
 \begin{equation}\label{eq:ch2_sim_nn}
   h(x)=W^{\mathrm T}S(x),
 \end{equation}
 其中 $S(x)$ 为基函数向量，$W$ 为在线调节权值。单轴仿真所采用的控制律与权值更新律分别为
-\begin{equation}\label{eq:ch2_sim_ctrl}
-u=\ddot y_d-h(x)-m_2z_2-\bigl(m_1-k_1m_2\bigr)z_1,
-\end{equation}
-\begin{equation}\label{eq:ch2_sim_update}
-  \dot W=\Gamma\big(z_2S(x)-\sigma W\big),
-\end{equation}
+\begin{subequations}
+\begin{align}
+u &= \ddot y_d-h(x)-m_2z_2-\bigl(m_1-k_1m_2\bigr)z_1, \label{eq:ch2_sim_ctrl}\\
+\dot W &= \Gamma\big(z_2S(x)-\sigma W\big), \label{eq:ch2_sim_update}
+\end{align}
+\end{subequations}
 其中 $\Gamma>0$ 为学习率矩阵，$\sigma>0$ 为 $\sigma$-修改因子。由式\eqref{eq:ch2_sim_z12} 与式\eqref{eq:ch2_sim_ctrl} 可知，该仿真实现与前述理论推导一致：第一层通过 $k_1$ 先稳定 $z_1$，第二层再通过 $m_1,m_2$ 形成主导二阶结构，因此可以直接用于验证在保留 $k_1$ 的条件下，改变 $(m_1,m_2)$ 是否仍能改变闭环瞬态形态这一问题。
 
 仿真任务包括常值跟踪与时变跟踪两类工况。常值参考信号取为
@@ -725,11 +719,13 @@ y_{d2}(t)=2.5+2.5\sin(0.2t).
 T=\frac{2\pi}{0.2}\approx 31.42~\mathrm{s}.
 \end{equation}
 为保证不同阻尼比情形下具有统一的动态快慢，并使闭环瞬态过程保持适中的快速响应特征，本节固定自然频率 $\omega_n=35.0$，仿真中输入增益取 $b=8000$，第一层反馈增益固定为 $k_1=5.0$，时变工况总时长取 $T=31.42~\mathrm{s}$。为与前文阻尼比参数表达保持一致，表\ref{tab:ch2_sigma_param}中同时保留 $\alpha$ 与 $\beta$，并分别给出常值目标 $y_{d1}$ 与时变目标 $y_{d2}$ 下的结果。其中，对欠阻尼情形按
-\begin{equation}
-m_1=\alpha^2+\beta^2,\qquad
-m_2=2\alpha,\qquad
-\zeta_d=\frac{\alpha}{\sqrt{\alpha^2+\beta^2}}
-\end{equation}
+\begin{subequations}
+\begin{align}
+m_1 &= \alpha^2+\beta^2,\\
+m_2 &= 2\alpha,\\
+\zeta_d &= \frac{\alpha}{\sqrt{\alpha^2+\beta^2}}.
+\end{align}
+\end{subequations}
 配置参数；对临界阻尼情形取 $\beta=0,\alpha=\omega_n$。另外，记由输出首个正向峰值误差反算得到的等效阻尼比为 $\zeta_{\mathrm{sim}}$，并与目标阻尼比 $\zeta_d$ 进行对比，结果见表\ref{tab:ch2_sigma_param}。
 \begin{table}[htbp]
   \centering
@@ -771,13 +767,13 @@ m_2=2\alpha,\qquad
   \chTwoFigCaption{fig:ch2_step_error}{跟踪常值信号 $y_{d1}$ 的跟踪误差}
 \end{minipage}
 
-\vspace{0.35em}
+\vspace{1.5em}
 
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
   \includegraphics[width=\textwidth]{ch2_sim/ch2_step_control.pdf}
-  \chTwoFigCaption{fig:ch2_step_control}{跟踪常值信号 $y_{d1}$ 的控制输入}
+  \chTwoFigCaption{fig:ch2_step_control}{跟踪常值信号 $y_{d1}$ 控制输入}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
@@ -786,26 +782,28 @@ m_2=2\alpha,\qquad
   \chTwoFigCaption{fig:ch2_sine_response}{跟踪时变信号 $y_{d2}$ 的跟踪响应}
 \end{minipage}
 
-\vspace{0.35em}
+\vspace{1.5em}
 
 \noindent
 \begin{minipage}[t]{0.485\textwidth}
   \centering
   \includegraphics[width=\textwidth]{ch2_sim/ch2_sine_error.pdf}
-  \chTwoFigCaption{fig:ch2_sine_error}{跟踪时变信号 $y_{d2}$ 的跟踪误差}
+  \chTwoFigCaption{fig:ch2_sine_error}{跟踪时变信号$y_{d2}$的跟踪误差}
 \end{minipage}
 \hspace{0.01\textwidth}
 \begin{minipage}[t]{0.485\textwidth}
   \centering
   \includegraphics[width=\textwidth]{ch2_sim/ch2_sine_control.pdf}
-  \chTwoFigCaption{fig:ch2_sine_control}{跟踪时变信号 $y_{d2}$ 的控制输入}
+  \chTwoFigCaption{fig:ch2_sine_control}{跟踪时变信号$y_{d2}$控制输入}
 \end{minipage}
+\vspace{1.5em}
+\noindent
+
+图中同时给出了滑模反步法基线曲线，用于与所提出的预设阻尼比设计结果进行对比。由图\ref{fig:ch2_step_response}和图\ref{fig:ch2_step_error}可知，在常值参考输入下，不同阻尼比对应的响应曲线呈现出明确的瞬态差异：滑模反步法基线曲线整体较为平缓，基本不产生明显超调；$\zeta_d=1.0$ 时响应同样接近单调收敛，而 $\zeta_d=0.707$ 与 $\zeta_d=0.625$ 时则依次表现出更明显的峰值和更快的上升过程。图\ref{fig:ch2_step_control}表明，在阻尼比减小的同时，控制输入初始阶段的调节动作也相应增强，这与更激进的瞬态整形需求相一致。
 
 \noindent
-图中同时给出了滑模反步法基线曲线 SBC+$\zeta$，用于与所提出的预设阻尼比设计结果进行对比。由图\ref{fig:ch2_step_response}和图\ref{fig:ch2_step_error}可知，在常值参考输入下，不同阻尼比对应的响应曲线呈现出明确的瞬态差异：SBC+$\zeta$ 曲线整体较为平缓，基本不产生明显超调；$\zeta_d=1.0$ 时响应同样接近单调收敛，而 $\zeta_d=0.707$ 与 $\zeta_d=0.625$ 时则依次表现出更明显的峰值和更快的上升过程。图\ref{fig:ch2_step_control}表明，在阻尼比减小的同时，控制输入初始阶段的调节动作也相应增强，这与更激进的瞬态整形需求相一致。
 
-\noindent
-由图\ref{fig:ch2_sine_response}--图\ref{fig:ch2_sine_control}可知，在时变参考信号下，三组阻尼比参数与 SBC+$\zeta$ 基线均能够保持稳定跟踪。相比于 SBC+$\zeta$，所提出方法在较小阻尼比参数下对轨迹变化的响应更为迅速，峰值略有抬升，但整体误差仍保持在较小范围内；神经网络补偿项有效抑制了未知非线性带来的稳态偏差，使得时变跟踪过程中不同阻尼比配置下的性能差异主要体现在瞬态形态而非失稳或持续振荡。由此表明，本章提出的方法不仅能够在常值跟踪中实现可解释的阻尼比整定，而且能够在时变跟踪任务下保持良好的动态品质与控制平滑性。
+由图\ref{fig:ch2_sine_response}--图\ref{fig:ch2_sine_control}可知，在时变参考信号下，三组阻尼比参数与滑模反步法基线均能够保持稳定跟踪。相比于滑模反步法基线，所提出方法在较小阻尼比参数下对轨迹变化的响应更为迅速，峰值略有抬升，但整体误差仍保持在较小范围内；神经网络补偿项有效抑制了未知非线性带来的稳态偏差，使得时变跟踪过程中不同阻尼比配置下的性能差异主要体现在瞬态形态而非失稳或持续振荡。由此表明，本章提出的方法不仅能够在常值跟踪中实现可解释的阻尼比整定，而且能够在时变跟踪任务下保持良好的动态品质与控制平滑性。
 \FloatBarrier
 \section{本章小结}[Summary]\label{sec:ch3_summary}
 
