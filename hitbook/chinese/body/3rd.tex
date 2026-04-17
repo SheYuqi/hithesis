@@ -19,7 +19,7 @@
 与第2章直接对未知非线性进行神经网络补偿的处理不同，本章进一步把每个通道中影响递推设计的未知非线性与外部扰动统一整理为广义扰动项，以便在二阶指令滤波框架下对其进行集中描述与补偿。为便于后续控制设计与稳定性分析，将第 $i$ 通道的未知非线性与外部扰动统一记为广义扰动
 对 $i=1,2,\ldots,n$，将第 $i$ 通道的未知非线性与外部扰动统一记为
 \begin{equation}\label{eq:ch3_hi_delta}
-\Delta_i(\bar x_i,t)\triangleq f_i(\bar x_i)+d_i(t).
+\Delta_i(\bar x_i,t)\triangleq f_i(\bar x_i)+d_i(t),
 \end{equation}
 并假设存在正常数 $\bar\Delta_i,\bar\Delta_{d,i}>0$ 使得
 \begin{subequations}
@@ -53,7 +53,7 @@
 \begin{subequations}
 \begin{align}
 h_{1,i}&=2\zeta_{f,i}\omega_{f,i},\\
-h_{2,i}&=\omega_{f,i}^2.
+h_{2,i}&=\omega_{f,i}^2,
 \end{align}
 \end{subequations}
 本章所应用的第 $i$ 级二阶指令滤波器的数学表达式如下：
@@ -62,7 +62,7 @@ h_{2,i}&=\omega_{f,i}^2.
 \begin{align}
 \dot r_{i,1} &= -h_{1,i}\bigl(r_{i,1}-\alpha_i^0(t)\bigr)+\dot r_{i,2},\\
 \dot r_{i,2} &= -h_{2,i}\bigl(r_{i,2}-\alpha_i^0(t)\bigr),\\
-y_{r,i} &= \dot r_{i,1}.
+y_{r,i} &= \dot r_{i,1},
 \end{align}
 \end{subequations}
 其中 $r_{i,1},r_{i,2}$ 为二阶指令滤波器的状态变量，$\alpha_i^0(t)$ 为二阶指令滤波器的已知输入信号，$y_{r,i}$ 为二阶指令滤波器的输出，$h_{1,i}$ 和 $h_{2,i}$ 为二阶指令滤波器待设计的正参数。二阶指令滤波器的特性可总结为如下引理。
@@ -71,7 +71,7 @@ y_{r,i} &= \dot r_{i,1}.
 当二阶指令滤波器的输入信号 $\alpha_i^0(t)$ 有三阶导数，且导数均有界，则存在正常数 $\bar\epsilon_i$ 满足：
 存在正常数 $\bar\epsilon_i$ 使得
 \begin{equation}\label{eq:ch3_filter_bound}
-\dot\alpha_i^0(t)=y_{r,i}+\epsilon_i.
+\dot\alpha_i^0(t)=y_{r,i}+\epsilon_i,
 \end{equation}
 并满足 $|\epsilon_i|\le \bar\epsilon_i$.
 \end{lemma}
@@ -97,14 +97,14 @@ V_{e1,i}=\frac{1}{2}e_{1,i}^2,
 \begin{subequations}
 \begin{align}
 a_{1,i}&=2\left(h_{2,i}-\frac{1}{4\zeta_{1,i}^2}\right),\\
-b_{1,i}&=\zeta_{1,i}^2\max\bigl((\ddot\alpha_i^0)^2\bigr).
+b_{1,i}&=\zeta_{1,i}^2\max\bigl((\ddot\alpha_i^0)^2\bigr),
 \end{align}
 \end{subequations}
 由式\eqref{eq:ch3_filter_error_dyn} 可解得 $V_{e1,i}$ 满足：
 \begin{equation}\label{eq:ch3_filter_state_form}
 V_{e1,i}(t)\le
 \left(V_{e1,i}(0)-\frac{b_{1,i}}{a_{1,i}}\right)e^{-a_{1,i}t}
-+\frac{b_{1,i}}{a_{1,i}}.
++\frac{b_{1,i}}{a_{1,i}},
 \end{equation}
 其中，$V_{e1,i}(0)$ 为 $V_{e1,i}$ 的初值。
 
@@ -113,11 +113,11 @@ V_{e1,i}(t)\le
 \left|e_{1,i}(t)\right|
 \le
 \sqrt{2\left(V_{e1,i}(0)-\frac{b_{1,i}}{a_{1,i}}\right)e^{-a_{1,i}t}+\frac{2b_{1,i}}{a_{1,i}}}
-\le |e_{1,i}(0)|.
+\le |e_{1,i}(0)|,
 \end{equation}
 当 $V_{e1,i}(0)>\frac{b_{1,i}}{a_{1,i}}$ 时成立。因此，输入信号 $\alpha_i^0(t)$ 的导数可以表示为：
 \begin{equation}\label{eq:ch3_filter_voc2}
-\dot\alpha_i^0(t)=\dot r_{i,2}+e_{1,i}(t).
+\dot\alpha_i^0(t)=\dot r_{i,2}+e_{1,i}(t),
 \end{equation}
 并有 $|e_{1,i}(t)|\le |e_{1,i}(0)|$.
 
@@ -156,14 +156,14 @@ V_{e3,i}=\frac{1}{2}e_{3,i}^2,
 \begin{subequations}
 \begin{align}
 a_{2,i}&=2\left(h_{2,i}-\frac{1}{4\zeta_{2,i}^2}\right),\\
-b_{2,i}&=\zeta_{2,i}^2\max\bigl((\alpha_i^{0(3)})^2\bigr).
+b_{2,i}&=\zeta_{2,i}^2\max\bigl((\alpha_i^{0(3)})^2\bigr),
 \end{align}
 \end{subequations}
 由式\eqref{eq:ch3_filter_e3dot} 得：
 \begin{equation}\label{eq:ch3_filter_e3bound}
 e_{3,i}^2(t)\le
 2\left(V_{e3,i}(0)-\frac{b_{2,i}}{a_{2,i}}\right)e^{-a_{2,i}t}+\frac{2b_{2,i}}{a_{2,i}}
-\le e_{3,i}^2(0).
+\le e_{3,i}^2(0),
 \end{equation}
 当 $V_{e3,i}(0)>\frac{b_{2,i}}{a_{2,i}}$ 时成立。
 
@@ -188,10 +188,9 @@ e_{3,i}^2(t)\le
 \begin{subequations}
 \begin{align}
 a_{3,i}&=2\left(h_{1,i}-\frac{1}{4\zeta_{3,i}^2}\right),\\
-b_{3,i}&=\zeta_{3,i}^2e_{3,i}^2(0).
+b_{3,i}&=\zeta_{3,i}^2e_{3,i}^2(0),
 \end{align}
 \end{subequations}
-
 而当 $t\to\infty$ 时，由式\eqref{eq:ch3_filter_e2dot} 和式\eqref{eq:ch3_filter_e3lim} 可得：
 \begin{equation}\label{eq:ch3_filter_e2bound2}
 \begin{aligned}
@@ -203,7 +202,7 @@ b_{3,i}&=\zeta_{3,i}^2e_{3,i}^2(0).
 \end{equation}
 其中
 \begin{equation}
-b_{3,i}^{0}=\frac{2\zeta_{3,i}^2b_{2,i}}{a_{2,i}}.
+b_{3,i}^{0}=\frac{2\zeta_{3,i}^2b_{2,i}}{a_{2,i}},
 \end{equation}
 由式\eqref{eq:ch3_filter_e2bound1} 和式\eqref{eq:ch3_filter_e2bound2} 可得：
 \begin{equation}
@@ -216,7 +215,7 @@ b_{3,i}^{0}=\frac{2\zeta_{3,i}^2b_{2,i}}{a_{2,i}}.
 \begin{equation}\label{eq:ch4_ws_bound}
 \lim_{t\to\infty}|e_{2,i}(t)|
 \le
-\sqrt{\frac{2b_{3,i}^{0}}{a_{3,i}}}.
+\sqrt{\frac{2b_{3,i}^{0}}{a_{3,i}}},
 \end{equation}
 于是式\eqref{eq:ch3_filter_bound} 成立，引理~\ref{lem:ch4_obs1} 证毕。
 
@@ -224,14 +223,14 @@ b_{3,i}^{0}=\frac{2\zeta_{3,i}^2b_{2,i}}{a_{2,i}}.
 \begin{subequations}
 \begin{align}
 \xi_{i,1}&\triangleq r_{i,1},\\
-\xi_{i,2}&\triangleq y_{r,i}=\dot r_{i,1}.
+\xi_{i,2}&\triangleq y_{r,i}=\dot r_{i,1},
 \end{align}
 \end{subequations}
 进一步定义指令滤波误差
 \begin{subequations}\label{eq:ch4_ws_def}
 \begin{align}
 \tilde\alpha_i&\triangleq \xi_{i,1}-\alpha_i^0,\\
-\tilde{\dot\alpha}_i&\triangleq \xi_{i,2}-\dot\alpha_i^0.
+\tilde{\dot\alpha}_i&\triangleq \xi_{i,2}-\dot\alpha_i^0,
 \end{align}
 \end{subequations}
 由于 $\tilde{\dot\alpha}_i=-\epsilon_i$，而由式\eqref{eq:ch4_st_observer}可得
@@ -257,7 +256,7 @@ b_{3,i}^{0}=\frac{2\zeta_{3,i}^2b_{2,i}}{a_{2,i}}.
 \begin{subequations}\label{eq:ch3_filter_compare_signal}
 \begin{align}
 z(t)&=\cos t,\\
-\dot z(t)&=-\sin t.
+\dot z(t)&=-\sin t,
 \end{align}
 \end{subequations}
 先给出二阶指令滤波器的对比设置。对式\eqref{eq:ch4_st_observer} 所定义的二阶指令滤波器，取
@@ -277,7 +276,7 @@ e_{\mathrm{NN}}(t)&=\dot z(t)-\hat{\dot z}_{\mathrm{NN}}(t). \label{eq:ch3_filte
 \end{subequations}
 其中基函数向量取为
 \begin{equation}
-S(\chi)=\bigl[\chi_1,\chi_2,\chi_1\chi_2,\sin\chi_1,\tanh\chi_2,1\bigr]^{\mathrm T}.
+S(\chi)=\bigl[\chi_1,\chi_2,\chi_1\chi_2,\sin\chi_1,\tanh\chi_2,1\bigr]^{\mathrm T},
 \end{equation}
 该对比试验只用于说明二阶指令滤波器在导数近似问题上的误差特性，不参与后续闭环控制器设计。仿真中取 $\lambda_\eta=1.5$、$\Gamma=8$、$\sigma=0.02$，其输出响应与估计误差分别如图\ref{fig:ch3_filter_nn_output}和图\ref{fig:ch3_filter_nn_error}所示。
 
@@ -332,7 +331,7 @@ S(\chi)=\bigl[\chi_1,\chi_2,\chi_1\chi_2,\sin\chi_1,\tanh\chi_2,1\bigr]^{\mathrm
 \begin{subequations}
 \begin{align}
 z_1&=x_1-y_d,\\
-z_i&=x_i-\xi_{i-1,1}.
+z_i&=x_i-\xi_{i-1,1},
 \end{align}
 \end{subequations}
 其中 $\xi_{i-1,1}$ 为上一层名义虚拟控制指令经二阶指令滤波器后的输出。为保留与第2章一致的低阶主导动态，在第一层引入积分变量
@@ -374,7 +373,7 @@ u &= -\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}-\xi_{n-1,2}+\varepsilo
 \dot r_{i,1} &= -h_{1,i}\bigl(r_{i,1}-\alpha_i^0\bigr)+\dot r_{i,2},\\
 \dot r_{i,2} &= -h_{2,i}\bigl(r_{i,2}-\alpha_i^0\bigr),\\
 \xi_{i,1} &= r_{i,1},\\
-\xi_{i,2} &= \dot r_{i,1}.
+\xi_{i,2} &= \dot r_{i,1},
 \end{align}
 \end{subequations}
 式\eqref{eq:ch4_obs_design} 中，$\xi_{i,1}$ 用作下一层误差构造所需的参考指令，$\xi_{i,2}$ 提供相应的导数近似，而参数 $h_{1,i}=2\zeta_{f,i}\omega_{f,i}$ 与 $h_{2,i}=\omega_{f,i}^2$ 由表\ref{tab:ch3_sigma_param}中的二阶指令滤波参数确定。因此，二阶指令滤波器的主要作用在于消除递推设计中的显式求导，并把由滤波引入的近似误差保留在可分析的有界通道内。
@@ -385,7 +384,7 @@ u &= -\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}-\xi_{n-1,2}+\varepsilo
 \begin{align}
 \bar\Delta_1&=f_1(x_1)+d_1+b_1\tilde\alpha_1,\\
 \bar\Delta_i&=f_i(\bar x_i)+d_i+b_i\tilde\alpha_i,\\
-\bar\Delta_n&=f_n(\bar x_n)+d_n.
+\bar\Delta_n&=f_n(\bar x_n)+d_n,
 \end{align}
 \end{subequations}
 其中 $\tilde\alpha_i$ 由式\eqref{eq:ch4_ws_def} 定义。可见，广义扰动项 $\bar\Delta_i$ 对应于将高阶导数、非线性系统不确定性和外界扰动统一为广义扰动项后的等效表达。因此，本章不再对未知项作分块补偿，而是将其统一归并到同一有界通道中，再由预设阻尼比主导结构与末端滑模鲁棒项协同抑制。
@@ -412,7 +411,7 @@ u &= -\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}-\xi_{n-1,2}+\varepsilo
 最后，式\eqref{eq:ch4_u} 中的切换项保证滑模到达性质。若把高阶剩余项统一记为 $d_s(t)$，则可得
 其中 $\varepsilon>0$，且存在常数 $\bar d_s>0$ 使得 $|d_s(t)|\le \bar d_s$。于是
 \begin{equation}\label{eq:ch4_reach}
-\dot s=-\varepsilon\,\mathrm{sgn}(s)+d_s(t).
+\dot s=-\varepsilon\,\mathrm{sgn}(s)+d_s(t),
 \end{equation}
 至此，二阶指令滤波抗扰预设阻尼比滑模反步控制器设计完成。
 
@@ -425,7 +424,7 @@ u &= -\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}-\xi_{n-1,2}+\varepsilo
 \begin{subequations}
 \begin{align}
 |\bar\Delta_i(t)|&\le \bar\Delta_i,\\
-|\dot{\bar\Delta}_1(t)|&\le \bar\Delta_{d,1}.
+|\dot{\bar\Delta}_1(t)|&\le \bar\Delta_{d,1},
 \end{align}
 \end{subequations}
 并且控制参数满足 $k_1>0$、$m_1>0$、$m_2>k_1$，则闭环误差信号一致最终有界，并保持由参数 $(m_1,m_2)$ 决定的近似预设阻尼比。进一步地，
@@ -443,7 +442,7 @@ u &= -\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}-\xi_{n-1,2}+\varepsilo
 \dot z_3 &= -\frac{c_2b_2-c_4b_3}{c_3}z_3+b_3z_4+\bar\Delta_3,\\
 \dot z_i &= -\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}z_i+b_iz_{i+1}-b_{i-1}z_{i-1}+\bar\Delta_i,\\
 \dot z_{n-1} &= -\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}z_{n-1}+b_{n-1}z_n-b_{n-2}z_{n-2}+\bar\Delta_{n-1},\\
-\dot z_n &= -c_{n-1}b_{n-1}z_n-b_{n-1}z_{n-1}-\varepsilon\,\mathrm{sgn}(s)+\bar\Delta_n.
+\dot z_n &= -c_{n-1}b_{n-1}z_n-b_{n-1}z_{n-1}-\varepsilon\,\mathrm{sgn}(s)+\bar\Delta_n,
 \end{align}
 \end{subequations}
 其中 $\bar\Delta_i$ 为式\eqref{eq:ch4_filter_dist} 定义的广义扰动项。由于未知非线性、外部扰动以及指令滤波输出误差均有界，因此存在常数 $\bar\Delta_i>0$ 使得 $|\bar\Delta_i(t)|\le \bar\Delta_i$。
@@ -464,7 +463,7 @@ V_h=0.5\sum_{i=3}^{n} z_i^2
 \end{equation}
 其中
 \begin{equation}
-a_0=2\min\left\{\frac{c_2b_2-c_4b_3}{c_3},\frac{c_3b_3-c_5b_4}{c_4},\ldots,\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}},c_{n-1}b_{n-1}\right\}>0.
+a_0=2\min\left\{\frac{c_2b_2-c_4b_3}{c_3},\frac{c_3b_3-c_5b_4}{c_4},\ldots,\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}},c_{n-1}b_{n-1}\right\}>0,
 \end{equation}
 由比较引理可知 $z_3,\cdots,z_n$ 一致最终有界，因此存在常数 $c_0>0$ 与 $\bar z_3>0$ 使得
 \begin{equation}\label{eq:ch4_238}
@@ -477,7 +476,7 @@ V_s=\frac{1}{2}s^2,
 \end{equation}
 由式\eqref{eq:ch4_reach}有
 \begin{equation}\label{eq:ch4_Vs_dot}
-\dot V_s=s\dot s\le -(\varepsilon-\bar d_s)|s|.
+\dot V_s=s\dot s\le -(\varepsilon-\bar d_s)|s|,
 \end{equation}
 当 $\varepsilon>\bar d_s$ 时，$s$ 一致最终有界并收敛到滑模面邻域，从而高阶误差与滑模变量共同有界。
 
@@ -487,13 +486,13 @@ z_2=\frac{\dot z_1+k_1z_1-\bar\Delta_1}{b_1}
 \end{equation}
 代入 $\dot z_2$，可得
 \begin{equation}\label{eq:ch4_239}
-\ddot z_1+m_2\dot z_1+m_1z_1=b_1b_2z_3+b_1\bar\Delta_2+\dot{\bar\Delta}_1+(m_2-k_1)\bar\Delta_1.
+\ddot z_1+m_2\dot z_1+m_1z_1=b_1b_2z_3+b_1\bar\Delta_2+\dot{\bar\Delta}_1+(m_2-k_1)\bar\Delta_1,
 \end{equation}
 由于 $f_i(\bar x_i)$、$d_i$ 及其导数有界，且由引理~\ref{lem:ch4_obs1}--引理~\ref{lem:ch4_obs2}知指令滤波输出误差及其导数有界，因此存在正常数 $\delta$ 使得
 \begin{equation}\label{eq:ch4_239_bound}
 \left|\ddot z_1+m_2\dot z_1+m_1z_1\right|
 \le |b_1b_2|\,|z_3|+|b_1|\,|\bar\Delta_2|+|\dot{\bar\Delta}_1|+(m_2-k_1)|\bar\Delta_1|
-\le \delta.
+\le \delta,
 \end{equation}
 于是式\eqref{eq:ch4_239_bound}与第2章二阶类李雅普诺夫不等式同构，从而可得：在广义扰动有界条件下，低阶主导误差最终有界，并保持由 $m_1,m_2$ 主导的近似预设阻尼比。再结合式\eqref{eq:ch4_237} 所给高阶误差子系统的一致最终有界性，可知闭环误差整体满足一致最终有界性质。
 
@@ -516,12 +515,12 @@ z_2=\frac{\dot z_1+k_1z_1-\bar\Delta_1}{b_1}
 \begin{subequations}\label{eq:ch3_sim_z}
 \begin{align}
 z_1&=x_1-y_d,\\
-z_2&=x_2-\xi_{1,1}.
+z_2&=x_2-\xi_{1,1},
 \end{align}
 \end{subequations}
 其中 $\xi_{1,1}$ 为名义虚拟控制指令 $\alpha_1^0$ 经二阶指令滤波器后的输出。名义虚拟控制函数设计为
 \begin{equation}\label{eq:ch3_sim_alpha1}
-\alpha_1^0=-\frac{1}{b_1}\left(k_1z_1-\dot y_d\right).
+\alpha_1^0=-\frac{1}{b_1}\left(k_1z_1-\dot y_d\right),
 \end{equation}
 对应的二阶指令滤波器为
 \begin{subequations}\label{eq:ch3_sim_obs}
@@ -529,16 +528,16 @@ z_2&=x_2-\xi_{1,1}.
 \dot r_1&=-h_1(r_1-\alpha_1^0)+\dot r_2,\\
 \dot r_2&=-h_2(r_2-\alpha_1^0),\\
 \xi_{1,1}&=r_1,\\
-\xi_{1,2}&=\dot r_1.
+\xi_{1,2}&=\dot r_1,
 \end{align}
 \end{subequations}
 为突出抗扰恢复特性，仿真部分采用保留 $k_1$ 主导结构的二阶简化实现，不再额外引入积分变量 $q$。对应滑模面取为
 \begin{equation}\label{eq:ch3_sim_s}
-s=z_2+(m_2-k_1)z_1.
+s=z_2+(m_2-k_1)z_1,
 \end{equation}
 控制输入 $u$ 设计为
 \begin{equation}\label{eq:ch3_sim_u}
-u=-\frac{1}{b_2}\left((m_2-k_1)z_2+\frac{m_1-k_1(m_2-k_1)}{b_1}z_1-\xi_{1,2}+\varepsilon\,\mathrm{sgn}(s)\right).
+u=-\frac{1}{b_2}\left((m_2-k_1)z_2+\frac{m_1-k_1(m_2-k_1)}{b_1}z_1-\xi_{1,2}+\varepsilon\,\mathrm{sgn}(s)\right),
 \end{equation}
 其中 $m_1,m_2$ 为预设阻尼比参数，$k_1$ 为第一层稳定化增益，$\xi_{1,2}$ 为二阶指令滤波器给出的导数近似，且滤波参数满足 $h_1=2\zeta_f\omega_f,\ h_2=\omega_f^2$。对于本节所采用的归一化单轴系统，有 $b_1=1,\ b_2=1$。为与第2章保持一致并保证各组结果具有可比性，本章仿真统一固定 $k_1=5.0$。这种仿真实现用于突出二阶指令滤波抗扰结构对扰动恢复过程的影响，而不作为前述积分型滑模面定理的逐项数值复现。作为对比，神经网络补偿方法沿用第2章的神经网络逼近思想，并在相同外界扰动作用下运行；二阶指令滤波抗扰方法则通过指令滤波导数近似与滑模鲁棒项共同抑制未知非线性和外界扰动。因此，左右两列图分别对应神经网络方法与二阶指令滤波方法，而颜色仍用于区分不同阻尼比配置。
 
@@ -547,7 +546,7 @@ u=-\frac{1}{b_2}\left((m_2-k_1)z_2+\frac{m_1-k_1(m_2-k_1)}{b_1}z_1-\xi_{1,2}+\va
 d(t)=
 \begin{cases}
 0, & t<1.5,\\
-850\,e^{-1.25(t-1.5)}\sin\!\bigl(8.8(t-1.5)\bigr)+48\sin(2.7t), & t\ge 1.5.
+850\,e^{-1.25(t-1.5)}\sin\!\bigl(8.8(t-1.5)\bigr)+48\sin(2.7t), & t\ge 1.5,
 \end{cases}
 \end{equation}
 式\eqref{eq:ch3_sim_disturbance}由两部分构成：第一项为在 $t=1.5\ \mathrm{s}$ 注入的衰减振荡型瞬态扰动，用于模拟外界突加扰动或参数突变带来的短时冲击；第二项为在 $t\ge 1.5\ \mathrm{s}$ 后持续作用的低频正弦扰动，用于反映周期性外界干扰对闭环跟踪的长期影响。这样设置的目的是同时考察控制器的瞬时恢复能力与持续抗扰能力。
@@ -570,7 +569,7 @@ d(t)=
 
 常值参考信号取为
 \begin{equation}
-y_{d1}=5^\circ.
+y_{d1}=5^\circ,
 \end{equation}
 为突出抗扰性能，常值信号仿真在 $t=1.5\ \mathrm{s}$ 后加入等效外部扰动。除沿用第2章中的 $b,k_1,\omega_n,\Delta t$ 与总时长外，表\ref{tab:ch3_sigma_param}在阻尼比参数基础上补充给出了第3章新增的二阶指令滤波参数 $\zeta_f$ 与 $\omega_f$，并给出常值参考曲线在扰动注入前由超调量反算得到的等效阻尼比。图\ref{fig:ch3_step_nn_response}--图\ref{fig:ch3_step_cf_control}给出了常值参考下的 6 张对比图，其中左列为神经网络补偿方法，右列为二阶指令滤波抗扰方法，三行分别为跟踪输出、跟踪误差和控制输入。
 
@@ -645,7 +644,7 @@ y_{d1}=5^\circ.
 
 时变参考信号取为
 \begin{equation}
-y_{d2}(t)=2.5+2.5\sin(0.2t).
+y_{d2}(t)=2.5+2.5\sin(0.2t),
 \end{equation}
 控制器与滤波结构保持不变，仍采用第\ref{eq:ch4_alpha1}--\ref{eq:ch4_u}式与第\ref{eq:ch4_obs_design}式，并沿用表\ref{tab:ch3_sigma_param}中的二阶指令滤波参数设置。为与第2章保持一致，时变工况下同样取总时长 $T=\frac{2\pi}{0.2}\approx31.42~\mathrm{s}$，从而完整覆盖一个正弦周期。与常值信号工况相同，本小节仍在动态参考输入下叠加外部扰动，以验证两种方法在连续激励和扰动共同作用下的鲁棒跟踪能力。图\ref{fig:ch3_sine_nn_response}--图\ref{fig:ch3_sine_cf_control}给出了时变参考下的 6 张对比图，排版与定点跟踪部分保持一致。
 

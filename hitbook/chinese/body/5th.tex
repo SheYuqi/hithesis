@@ -60,15 +60,15 @@ x_{2,1}&=\dot\theta,\\
 x_{1,2}&=\phi,\\
 x_{2,2}&=\dot\phi,\\
 x_{1,3}&=\psi,\\
-x_{2,3}&=\dot\psi.
+x_{2,3}&=\dot\psi,
 \end{align}
 \end{subequations}
-在考虑外部扰动和未建模动态的情况下，四旋翼悬浮机的状态空间模型可写成
+在考虑外部扰动和未建模动态的情况下，四旋翼悬浮机的状态空间模型可写成如下形式：
 \begin{subequations}\label{eq:ch5_hover_model}
 \begin{align}
 \dot x_{1,i} &= x_{2,i},\\
 \dot x_{2,i} &= \frac{1}{J_i}u_i + h_i(x_i,d_i(t)),\\
-i &= 1,2,3.
+i &= 1,2,3,
 \end{align}
 \end{subequations}
 其中 $x_i=[x_{1,i},x_{2,i}]^{\mathrm T}$ 为第 $i$ 个姿态通道的状态变量，$h_i(x_i,d_i(t))$ 表示该通道中的未建模非线性和外部扰动，$J_i$ 表示对应转轴的转动惯量。三个姿态通道的广义控制输入分别取为
@@ -76,7 +76,7 @@ i &= 1,2,3.
 \begin{align}
 u_1&=L(F_1-F_3),\\
 u_2&=L(F_4-F_2),\\
-u_3&=-\tau_1+\tau_2-\tau_3+\tau_4.
+u_3&=-\tau_1+\tau_2-\tau_3+\tau_4,
 \end{align}
 \end{subequations}
 其中 $F_j$ 和 $\tau_j$ 分别表示第 $j$ 个电机产生的推力和反扭矩，$L$ 为旋翼到质心的力臂长度。若以 $V_j$ 表示第 $j$ 个电机的驱动电压，则有
@@ -84,7 +84,7 @@ u_3&=-\tau_1+\tau_2-\tau_3+\tau_4.
 \begin{subequations}\label{eq:ch5_force_torque_voltage}
 \begin{align}
 F_j&=K_fV_j,\\
-\tau_j&=K_{\tau}V_j.
+\tau_j&=K_{\tau}V_j,
 \end{align}
 \end{subequations}
 其中 $K_f$ 和 $K_{\tau}$ 为正常数。
@@ -95,7 +95,7 @@ F_j&=K_fV_j,\\
 V_1 &= \frac{u_m}{4K_f}-\frac{u_3}{4K_{\tau}}+\frac{u_1}{2LK_f},\\
 V_2 &= \frac{u_m}{4K_f}+\frac{u_3}{4K_{\tau}}-\frac{u_2}{2LK_f},\\
 V_3 &= \frac{u_m}{4K_f}-\frac{u_3}{4K_{\tau}}-\frac{u_1}{2LK_f},\\
-V_4 &= \frac{u_m}{4K_f}+\frac{u_3}{4K_{\tau}}+\frac{u_2}{2LK_f}.
+V_4 &= \frac{u_m}{4K_f}+\frac{u_3}{4K_{\tau}}+\frac{u_2}{2LK_f},
 \end{align}
 \end{subequations}
 其中 $u_m$ 为维持平台悬停所需的偏置输入。这样，四电机驱动问题便可转化为俯仰、横滚和偏航三个姿态通道的控制问题。
@@ -124,7 +124,7 @@ V_4 &= \frac{u_m}{4K_f}+\frac{u_3}{4K_{\tau}}+\frac{u_2}{2LK_f}.
 \begin{align}
 \eta_1&=\theta,\\
 \eta_2&=\phi,\\
-\eta_3&=\psi.
+\eta_3&=\psi,
 \end{align}
 \end{subequations}
 相应的参考信号记为
@@ -132,7 +132,7 @@ V_4 &= \frac{u_m}{4K_f}+\frac{u_3}{4K_{\tau}}+\frac{u_2}{2LK_f}.
 \begin{align}
 \eta_{d,1}&=\theta_d,\\
 \eta_{d,2}&=\phi_d,\\
-\eta_{d,3}&=\psi_d.
+\eta_{d,3}&=\psi_d,
 \end{align}
 \end{subequations}
 对每个姿态通道定义跟踪误差
@@ -141,7 +141,7 @@ V_4 &= \frac{u_m}{4K_f}+\frac{u_3}{4K_{\tau}}+\frac{u_2}{2LK_f}.
 \begin{align}
 e_i&=\eta_i-\eta_{d,i},\\
 z_{1,i}&=e_i,\\
-z_{2,i}&=\dot e_i+k_{1,i}e_i.
+z_{2,i}&=\dot e_i+k_{1,i}e_i,
 \end{align}
 \end{subequations}
 其中 $k_{1,i}>0$ 为第一层稳定化增益。为便于与第3章和第4章保持一致，进一步定义积分变量与积分型滑模面
@@ -149,7 +149,7 @@ z_{2,i}&=\dot e_i+k_{1,i}e_i.
 \begin{subequations}\label{eq:ch5_sliding_surface}
 \begin{align}
 s_i&=\dot e_i+m_{2,i}e_i+m_{1,i}q_i,\\
-q_i&=\int_0^t e_i(\tau)\,d\tau.
+q_i&=\int_0^t e_i(\tau)\,d\tau,
 \end{align}
 \end{subequations}
 其中参数 $m_{1,i}$ 和 $m_{2,i}$ 分别由各通道的自然频率和预设阻尼比确定，即
@@ -162,15 +162,15 @@ m_{2,i}&=2\zeta_i\omega_{n,i}.
 
 按照第2章的单轴实现思路，对 $i=1,2,3$ 的姿态通道取神经网络估计项
 \begin{equation}\label{eq:ch5_nn_est}
-\hat h_i(x_i)=W_i^{\mathrm T}S_i(x_i).
+\hat h_i(x_i)=W_i^{\mathrm T}S_i(x_i),
 \end{equation}
 并对 $i=1,2,3$ 采用权值更新律，其中 $\Gamma_i=\Gamma_i^{\mathrm T}>0$、$\sigma_i>0$：
 \begin{equation}\label{eq:ch5_nn_update}
-\dot W_i=\Gamma_i\bigl(z_{2,i}S_i(x_i)-\sigma_iW_i\bigr).
+\dot W_i=\Gamma_i\bigl(z_{2,i}S_i(x_i)-\sigma_iW_i\bigr),
 \end{equation}
 其中 $S_i(x_i)$ 为基函数向量，$W_i$ 为在线调节权值。对 $i=1,2,3$，四旋翼悬浮机三个姿态通道的神经网络预设阻尼比控制律可写为
 \begin{equation}\label{eq:ch5_pdr_smb}
-u_i=J_i\left(\ddot\eta_{d,i}-\hat h_i(x_i)-m_{2,i}z_{2,i}-\bigl(m_{1,i}-k_{1,i}m_{2,i}\bigr)z_{1,i}\right).
+u_i=J_i\left(\ddot\eta_{d,i}-\hat h_i(x_i)-m_{2,i}z_{2,i}-\bigl(m_{1,i}-k_{1,i}m_{2,i}\bigr)z_{1,i}\right),
 \end{equation}
 式 \eqref{eq:ch5_pdr_smb} 与式 \eqref{eq:ch5_nn_update} 对应第2章神经网络预设阻尼比控制方法在四旋翼悬浮机平台上的实物实现，其中 $\hat h_i(x_i)$ 用于在线拟合主要未知非线性，$m_{1,i},m_{2,i}$ 用于塑造预设阻尼比对应的主导二阶动态。为便于工程对比，实验1同时给出传统 预设阻尼比的滑模反步控制方法的结果和加入神经网络补偿不确定性的预设阻尼比滑模反步控制方法的结果；该基线主要用于比较控制输入抖振与稳态波动，而阻尼比的可解释调节规律主要结合神经网络方法进行观察。
 
@@ -178,7 +178,7 @@ u_i=J_i\left(\ddot\eta_{d,i}-\hat h_i(x_i)-m_{2,i}z_{2,i}-\bigl(m_{1,i}-k_{1,i}m
 \begin{subequations}\label{eq:ch5_do_pdr_smb}
 \begin{align}
 u_i&=-J_i\left(m_{2,i}\dot e_i+m_{1,i}e_i+\hat h_i(x_i)+\bar\Delta_i-\ddot\eta_{d,i}+\varepsilon_i\,\mathrm{sgn}(s_i)\right),\\
-i&=1,2,3.
+i&=1,2,3,
 \end{align}
 \end{subequations}
 与式 \eqref{eq:ch5_pdr_smb} 相比，式 \eqref{eq:ch5_do_pdr_smb} 的主要区别在于引入了二阶指令滤波抗扰机制，用以降低显式求导带来的实现复杂性，并减弱非线性系统不确定性和外界扰动对姿态跟踪过程的破坏。
@@ -190,7 +190,7 @@ u_{c,i} &=-J_i\left(m_{2,i}\dot e_i+m_{1,i}e_i+\hat h_i(x_i)+\bar\Delta_i-\ddot\
 +\varepsilon_i\,\mathrm{sgn}(s_i)\right)-k_{\mathrm{aw},i}\xi_i,\\
 u_i &= \mathrm{sat}(u_{c,i}),\\
 \dot\xi_i &=-\lambda_i\xi_i+\big(u_i-u_{c,i}\big),\\
-i &= 1,2,3.
+i &= 1,2,3,
 \end{align}
 \end{subequations}
 式 \eqref{eq:ch5_sat_controller} 中，$k_{\mathrm{aw},i}\xi_i$ 为最基础的抗饱和补偿项，用于削弱输入限幅对原有预设阻尼比瞬态性能的破坏；$\lambda_i$ 为辅助动态的调节参数。由此得到三个姿态通道的组合控制输入 $u_1,u_2,u_3$ 后，再利用式 \eqref{eq:ch5_voltage_alloc} 即可求得四个电机的电压指令 $V_1,V_2,V_3,V_4$，从而实现基于本文第2章、第3章和第4章理论的四旋翼悬浮机平台控制器部署。

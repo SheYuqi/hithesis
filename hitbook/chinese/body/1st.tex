@@ -13,13 +13,13 @@
 \begin{align}
 \dot{x}_1 &= x_2,\label{eq:intro_second_order_a}\\
 \dot{x}_2 &= -2\zeta\omega_n x_2-\omega_n^2 x_1,\label{eq:intro_second_order_b}\\
-y &= x_1.\label{eq:intro_second_order_c}
+y &= x_1,\label{eq:intro_second_order_c}
 \end{align}
 \end{subequations}
 其中 $\zeta \in (0,1)$ 为阻尼比、$\omega_n>0$ 为自然频率。由超调量与阻尼比的解析关系可得阻尼比表达式
 对 $0<M_p<1$，有
 \begin{equation}\label{eq:intro_mp}
-  \zeta = \frac{-\ln(M_p)}{\sqrt{\pi^2+\ln^2(M_p)}}.
+  \zeta = \frac{-\ln(M_p)}{\sqrt{\pi^2+\ln^2(M_p)}},
 \end{equation}
 该关系表明：在欠阻尼范围内，阻尼比越大通常超调越小，系统响应更平稳；阻尼比越小则响应更快，但振荡更强。工程设计中，若能将阻尼比作为显式指标嵌入控制律与稳定性分析，则可将凭经验调参转化为按指标选择参数，显著提升控制器的稳定性和鲁棒性\cite{ref38}。但对非线性不确定系统而言，误差很难天然呈现为 \eqref{eq:intro_second_order} 的标准形式；同时鲁棒补偿项、观测误差、扰动注入等都会破坏理想二阶结构。因此，需要一种能够在非线性鲁棒控制框架下依然保持阻尼比可解释可映射的理论工具\cite{ref57,ref58,ref64,ref65,ref66}。本文面向一类 $n$ 阶严格反馈不确定非线性系统，围绕预设阻尼比的滑模反步控制设计开展研究。核心目标是在滑模反步控制递推框架中引入二阶类李雅普诺夫稳定性准则，将阻尼比相关参数直接嵌入李雅普诺夫不等式，从而实现对阻尼比的一调节；进一步结合神经网络对未知非线性进行拟合、二阶指令滤波抗扰机制与输入约束处理，形成可落地的控制方案，并通过四旋翼悬浮机实物实验验证方法的有效性。
 
