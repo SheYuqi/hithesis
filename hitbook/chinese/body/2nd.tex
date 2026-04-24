@@ -725,7 +725,9 @@ m_2 &= 2\alpha,\\
 \end{align}
 \end{subequations}
 配置参数；对临界阻尼情形取 $\beta=0,\alpha=\omega_n$。另外，记由输出首个正向峰值误差反算得到的等效阻尼比为 $\zeta_{\mathrm{sim}}$，并与目标阻尼比 $\zeta_d$ 进行对比，结果见表\ref{tab:ch2_sigma_param}。
-\begin{table}[htbp]
+由表\ref{tab:ch2_sigma_param}可知，在两组目标信号下，仿真辨识得到的 $\zeta_{\mathrm{sim}}$ 与目标阻尼比 $\zeta_d$ 均保持较好一致性。其中，$\zeta_d=1.000$ 时两类响应均接近临界阻尼；当 $\zeta_d=0.707$ 时，由于取 $\alpha=\beta$，所得阻尼比与标准欠阻尼情形一致，且在 $y_{d1}$ 与 $y_{d2}$ 下反算得到的 $\zeta_{\mathrm{sim}}$ 分别为 $0.713$ 和 $0.721$；当 $\zeta_d=0.625$ 时，对应的 $\zeta_{\mathrm{sim}}$ 分别为 $0.632$ 和 $0.641$，与目标值偏差仍较小。上述结果说明，在第一层显式保留 $k_1$ 后，本章提出的参数映射关系在神经网络补偿闭环下仍具有较好的阻尼比可解释性。
+
+\begin{table}[!htbp]
   \centering
   \caption{第2章数值仿真中预设阻尼比参数与实现结果}
   \label{tab:ch2_sigma_param}
@@ -743,8 +745,19 @@ m_2 &= 2\alpha,\\
     \bottomrule
   \end{tabular}
 \end{table}
+\FloatBarrier
 
-由表\ref{tab:ch2_sigma_param}可知，在两组目标信号下，仿真辨识得到的 $\zeta_{\mathrm{sim}}$ 与目标阻尼比 $\zeta_d$ 均保持较好一致性。其中，$\zeta_d=1.000$ 时两类响应均接近临界阻尼；当 $\zeta_d=0.707$ 时，由于取 $\alpha=\beta$，所得阻尼比与标准欠阻尼情形一致，且在 $y_{d1}$ 与 $y_{d2}$ 下反算得到的 $\zeta_{\mathrm{sim}}$ 分别为 $0.713$ 和 $0.721$；当 $\zeta_d=0.625$ 时，对应的 $\zeta_{\mathrm{sim}}$ 分别为 $0.632$ 和 $0.641$，与目标值偏差仍较小。上述结果说明，在第一层显式保留 $k_1$ 后，本章提出的参数映射关系在神经网络补偿闭环下仍具有较好的阻尼比可解释性。图\ref{fig:ch2_step_response}--图\ref{fig:ch2_sine_control}进一步给出了常值信号与时变信号下的跟踪响应、跟踪误差及控制输入曲线。
+结合上述结果，本章参数整定可按如下流程进行。首先根据目标瞬态指标（超调量与收敛速度）选取 $\zeta_d$ 与名义自然频率 $\omega_n$，并按
+\begin{subequations}
+\begin{align}
+  \alpha &= \zeta_d\omega_n,\\
+  \beta &= \omega_n\sqrt{1-\zeta_d^2},\\
+  m_1 &= \omega_n^2,\quad m_2 = 2\zeta_d\omega_n,
+\end{align}
+\end{subequations}
+得到阻尼比映射参数。其次在满足稳定裕度的前提下固定第一层反馈增益 $k_1$，再通过滑模增益与神经网络学习参数的协同调整，在“响应速度-超调水平-控制输入峰值”之间取得折中。若超调偏大，可优先增大 $\zeta_d$（或等价增大 $\alpha/\beta$ 比值）；若响应偏慢，可适当提高 $\omega_n$（即同步增大 $m_1,m_2$）。本文仿真中在固定 $k_1=5.0$ 条件下，仅通过 $(\alpha,\beta)$ 调整即可实现三组典型阻尼比响应，表明该整定流程具有较好的可操作性。
+
+图\ref{fig:ch2_step_response}--图\ref{fig:ch2_sine_control}进一步给出了常值信号与时变信号下的跟踪响应、跟踪误差及控制输入曲线。
 
 \newcommand{\chTwoFigCaption}[2]{%
   \refstepcounter{figure}\label{#1}%

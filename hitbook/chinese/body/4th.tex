@@ -588,13 +588,19 @@ y_{d1}=5^\circ,
   \chFourFigCaption{fig:ch4_step_aw_control}{常值信号 $y_{d1}$ 有抗饱和补偿的控制输入}
 \end{minipage}
 
+\vspace{0.8em}
+
 \noindent
+
 由图\ref{fig:ch4_step_noaw_response}--图\ref{fig:ch4_step_aw_control}以及表\ref{tab:ch4_sigma_param}可见，在定点跟踪工况下，加入抗饱和补偿后输出超调得到抑制，误差回落时间缩短，控制输入在限幅附近的波动减小。等效阻尼比结果表明，抗饱和补偿后的闭环响应更接近目标阻尼比，从而说明所提方法能够在输入受限条件下较好保持阻尼比整定效果。
+
+结合上述结果，本章参数整定可按“先阻尼比主导、再抗饱和补偿”的顺序进行：首先依据期望瞬态指标选取 $\zeta_d$ 与 $\omega_n$，并由 $\alpha=\zeta_d\omega_n$、$\beta=\omega_n\sqrt{1-\zeta_d^2}$ 计算得到 $m_1=\omega_n^2,\ m_2=2\zeta_d\omega_n$；其次固定第一层增益 $k_1$ 与第3章二阶指令滤波参数 $(\zeta_f,\omega_f)$，确保在有无抗饱和补偿对比中主导动态与抗扰通道保持一致；最后在给定限幅 $u_{\max}$ 下联合整定 $(k_{\mathrm{aw}},\lambda,\varepsilon)$，其中 $k_{\mathrm{aw}}$ 主要决定受限区间内的补偿强度，$\lambda$ 主要决定辅助状态对饱和失配的衰减速度，$\varepsilon$ 满足鲁棒包络条件并兼顾抖振抑制。工程上可按“先增大 $k_{\mathrm{aw}}$ 抑制削顶超调，再调 $\lambda$ 改善恢复速度，最后微调 $\varepsilon$ 折中鲁棒性与输入平滑性”的步骤迭代，使受限工况下响应尽量保持由 $(m_1,m_2)$ 所设定的阻尼比区分度。
 
 时变参考信号取为
 \begin{equation}
-y_{d2}(t)=2.5+2.5\sin(0.2t),
+y_{d2}(t)=2.5+2.5\sin(0.2t).
 \end{equation}
+
 为与前两章的时变工况保持一致，仿真总时长统一取 $T=\frac{2\pi}{0.2}\approx31.42~\mathrm{s}$，从而完整覆盖一个正弦周期。该工况用于验证连续激励下输入受限对跟踪性能的累积影响。图\ref{fig:ch4_sine_noaw_response}--图\ref{fig:ch4_sine_aw_control}给出了时变参考下的 6 张对比图，仿真图片的位置与定点信号的位置是对应的。
 
 \noindent
@@ -639,6 +645,8 @@ y_{d2}(t)=2.5+2.5\sin(0.2t),
   \includegraphics[width=\textwidth]{ch4_sim/ch4_sine_aw_control.pdf}
   \chFourFigCaption{fig:ch4_sine_aw_control}{时变信号 $y_{d2}$ 有抗饱和补偿的控制输入}
 \end{minipage}
+
+\vspace{0.8em}
 
 \noindent
 由图\ref{fig:ch4_sine_noaw_response}--图\ref{fig:ch4_sine_aw_control}可知，在时变参考下，无抗饱和补偿时更容易出现幅值削顶和误差放大；加入抗饱和补偿后，控制输入虽仍受到限幅约束，但输出恢复阶段的波动较小，时变跟踪误差更稳定。由此说明，即使在输入幅值受限的条件下，所提控制器仍能保持阻尼比参数的区分度，并改善受限工况下的跟踪品质。
