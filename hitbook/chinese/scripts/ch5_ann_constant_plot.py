@@ -19,7 +19,7 @@ ANN_STYLES = {
 YLABELS = {'roll': '滚转角 (deg)', 'pitch': '俯仰角 (deg)', 'yaw': '偏航角 (deg)'}
 ERROR_YLABELS = {'roll': '滚转误差 (deg)', 'pitch': '俯仰误差 (deg)', 'yaw': '偏航误差 (deg)'}
 XLIM = (0.0, 60.0)
-ZOOM = {'pitch': (0.0, 1.5), 'roll': (0.0, 1.5), 'yaw': (0.3, 2.3)}
+ZOOM = {'pitch': (0.0, 1.5), 'roll': (0.0, 1.5), 'yaw': (0.3, 20.3)}
 
 plt.rcParams.update({
     'font.family': 'serif',

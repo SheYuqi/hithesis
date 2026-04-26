@@ -221,7 +221,8 @@ y&=x_1,
 
 \end{lemma}
 
-证明：方程\eqref{eq:ch2_lyap_eq}的特征方程为
+\begin{proof}
+方程\eqref{eq:ch2_lyap_eq}的特征方程为
 \begin{equation}\label{eq:ch2_char}
 r^2+m_2r+m_1=0.
 \end{equation}
@@ -250,9 +251,10 @@ x_1(t)=\left(a_3\cos\beta t+a_4\sin\beta t\right)e^{-\alpha t},
 \end{equation}
 
 至此，引理 1 得证。
+\end{proof}
 
 \begin{lemma}\label{lem:ch2_lemma2}\hfill\cite{ref58}
-由于系统中存在未知的非线性项和外部扰动，实际上很难严格满足引理 1 中的等式\eqref{eq:ch2_lyap_eq}，因此将其推广为如下形式：
+由于系统中存在未知的非线性项，实际上很难严格满足引理 1 中的等式\eqref{eq:ch2_lyap_eq}，因此将其推广为如下形式：
 若存在常数 $m_1,m_2>0$，$0\le\delta<+\infty$，以及一个函数 $V(x_1)=x_1$，使得
 \begin{equation}\label{eq:ch2_lyap_ineq}
 \left|\ddot{V}(x_1)+m_1V(x_1)+m_2\dot{V}(x_1)\right|\le\delta,
@@ -265,7 +267,8 @@ x_1(t)=\left(a_3\cos\beta t+a_4\sin\beta t\right)e^{-\alpha t},
 
 \end{lemma}
 
-证明：不等式\eqref{eq:ch2_lyap_ineq}是一个二阶非齐次微分不等式，去掉绝对值后得到如下两个不等式：
+\begin{proof}
+不等式\eqref{eq:ch2_lyap_ineq}是一个二阶非齐次微分不等式，去掉绝对值后得到如下两个不等式：
 \begin{subequations}\label{eq:ch2_split}
 \begin{align}
 \ddot{V}(x_1)+m_1V(x_1)+m_2\dot{V}(x_1) &\le \delta,\\
@@ -344,6 +347,7 @@ x_q(t)\approx x_p(t).
 \end{equation}
 
 也就是说，方程\eqref{eq:ch2_lyap_eq}与不等式\eqref{eq:ch2_lyap_ineq}的解在稳定性与阻尼比上是近似的。由此，引理 2.3 的结论得证\cite{ref58}。
+\end{proof}
 
 
 \begin{remark}\label{rem:ch2_example_zeta}
@@ -584,12 +588,11 @@ u&=-\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}+h_n-d\alpha_{n-1}+\varep
 \end{equation}
 \end{theorem}
 \begin{proof}
-由前述神经网络补偿项的稳定性说明可知，采用神经网络估计 $h_i=W_i^{\mathrm T}S_i(\bar x_i)$ 并配合 $\sigma$-修改权值更新律后，神经网络权值误差项不会破坏李雅普诺夫导数的负定结构，其影响可统一并入有界剩余项。基于这一点，考虑第 $i$ 级神经网络权值误差项、最优逼近残差、外扰以及有限差分误差。对 $i=2,\ldots,n$，定义各级合成扰动项
-存在常数 $\bar\Xi_i>0$ 使得
+由前述神经网络补偿项的稳定性说明可知，采用神经网络估计 $h_i=W_i^{\mathrm T}S_i(\bar x_i)$ 并配合 $\sigma$-修改权值更新律后，神经网络权值误差项不会破坏李雅普诺夫导数的负定结构，其影响可统一并入有界剩余项。基于这一点，考虑第 $i$ 级神经网络权值误差项、最优逼近残差、外扰以及有限差分误差。对 $i=2,\ldots,n$，定义各级合成扰动项存在常数 $\bar\Xi_i>0$ 使得
 \begin{equation}
 \Xi_i \triangleq \Delta_i + O_i(\Delta t),
 \end{equation}
-且满足 $|\Xi_i|\le \bar\Xi_i$。则实际误差系统可写为。对 $i=4,5,\ldots,n-2$，有
+且满足 $|\Xi_i|\le \bar\Xi_i$。对 $i=4,5,\ldots,n-2$，有
 \begin{subequations}\label{eq:ch3_zdot_mid}
 \begin{align}
 \dot z_1&=-k_1z_1+b_1z_2,\label{eq:ch3_zdot_mid1}\\
