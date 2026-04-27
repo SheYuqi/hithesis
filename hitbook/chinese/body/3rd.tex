@@ -14,10 +14,17 @@
 
 \subsection{系统描述}[System description]
 
-持与第2章基准递推结构一致，本章直接沿用第2.2.1节式\eqref{eq:sf_system}所给的 $n$ 阶严格反馈形式不确定非线性系统作为研究对象，其中状态、输入、输出以及未知非线性项和外部扰动的含义均与第2章保持一致。本章关注点不再是单纯的神经网络补偿，而是如何在递推过程中通过二阶指令滤波避免虚拟控制导数爆炸，并围绕广义扰动构造统一的抗扰分析框架。
+与第2章的基准递推结构一致，本章仍考虑 $n$ 阶严格反馈形式不确定非线性系统，但进一步在各通道中显式引入外部扰动。对 $i=1,\ldots,n-1$，系统写为
+\begin{subequations}\label{eq:ch3_sys_dist}
+\begin{align}
+\dot x_i &= b_i x_{i+1}+f_i(\bar x_i)+d_i(t),\\
+\dot x_n &= b_nu+f_n(\bar x_n)+d_n(t),\\
+y &= x_1,
+\end{align}
+\end{subequations}
+其中状态、输入、输出及未知非线性项的含义与第2章保持一致。本章在此基础上引入二阶指令滤波器处理虚拟控制导数，并将各通道中的未知非线性与外部扰动统一并入广义扰动项，以构造统一的抗扰分析框架。
 
-与第2章直接对未知非线性进行神经网络补偿的处理不同，本章进一步把每个通道中影响递推设计的未知非线性与外部扰动统一整理为广义扰动项，以便在二阶指令滤波框架下对其进行集中描述与补偿。为便于后续控制设计与稳定性分析，将第 $i$ 通道的未知非线性与外部扰动统一记为广义扰动
-对 $i=1,2,\ldots,n$，将第 $i$ 通道的未知非线性与外部扰动统一记为
+为便于后续控制设计与稳定性分析，对 $i=1,2,\ldots,n$，将第 $i$ 通道的未知非线性与外部扰动统一记为
 \begin{equation}\label{eq:ch3_hi_delta}
 \Delta_i(\bar x_i,t)\triangleq f_i(\bar x_i)+d_i(t),
 \end{equation}
@@ -29,8 +36,7 @@
 \end{align}
 \end{subequations}
 
-其中扰动 $d_i(t)$ 未知但有界，满足：
-对 $i=1,\ldots,n$，扰动 $d_i(t)$ 满足
+其中扰动 $d_i(t)$ 未知但有界。对 $i=1,\ldots,n$，有
 \begin{subequations}\label{eq:ch4_d_bound}
 \begin{align}
 \left|d_i(t)\right|&\le d_{i,\max},\\
@@ -65,7 +71,7 @@ h_{2,i}&=\omega_{f,i}^2,
 y_{r,i} &= \dot r_{i,1},
 \end{align}
 \end{subequations}
-其中 $r_{i,1},r_{i,2}$ 为二阶指令滤波器的状态变量，$\alpha_i^0(t)$ 为二阶指令滤波器的已知输入信号，$y_{r,i}$ 为二阶指令滤波器的输出，$h_{1,i}$ 和 $h_{2,i}$ 为二阶指令滤波器待设计的正参数。需要说明的是，文献\cite{ref6}主要研究未知控制方向下的命令滤波自适应反步控制问题，其控制对象与闭环设计目标和本文并不相同。本文在此仅借鉴其中关于命令滤波误差有界性的分析思路，并针对式\eqref{eq:ch4_st_observer}所定义的二阶指令滤波器、本文的符号体系及后续预设阻尼比控制需求，重新给出如下两个辅助引理及其证明。
+其中 $r_{i,1},r_{i,2}$ 为二阶指令滤波器的状态变量，$\alpha_i^0(t)$ 为二阶指令滤波器的已知输入信号，$y_{r,i}$ 为二阶指令滤波器的输出，$h_{1,i}$ 和 $h_{2,i}$ 为二阶指令滤波器待设计的正参数。
 
 \begin{lemma}\label{lem:ch4_obs1}\hfill\cite{ref6}
 当二阶指令滤波器的输入信号 $\alpha_i^0(t)$ 有三阶导数，且导数均有界，则存在正常数 $\bar\epsilon_i$ 使得
@@ -352,7 +358,6 @@ s=z_n+\sum_{i=3}^{n-1}c_iz_i+c_2\left(z_2+(m_2-k_1)z_1+m_1q\right),
 \dot s=\dot z_n+\sum_{i=3}^{n-1}c_i\dot z_i+c_2\left(\dot z_2+(m_2-k_1)\dot z_1+m_1z_1\right).
 \end{equation}
 
-与第2章低阶主导误差子系统的处理方式保持一致，以下保留第一通道已知增益 $b_1$，不再作单位增益归一化处理。这样既能维持一般严格反馈系统的原始结构，又便于后续将低阶主导误差整理为含显式 $b_1$ 的二阶形式。
 
 接着按照第2章的 $n$ 阶滑模反步递推思路构造名义虚拟控制器。本章直接利用二阶指令滤波器提供各级名义虚拟控制导数近似，并将高阶导数、非线性系统不确定性和外界扰动统一为广义扰动项。则名义虚拟控制指令取为
 \begin{subequations}
@@ -409,8 +414,12 @@ u &= -\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}-\xi_{n-1,2}+\varepsilo
 可见，保留 $b_1$ 后，第一层误差与第二层误差之间的耦合强度由 $b_1$ 显式决定，而 $k_1$ 主要增强第一层误差收敛，$m_1,m_2$ 仍决定主导二阶阻尼特性。
 上式给出了从 $z_1$ 到 $z_n$ 的显式误差递推关系，其中第 $1$、$2$ 层负责预设阻尼比主导动态塑形，其余各层则通过二阶指令滤波与反步递推逐级构造有界的高阶误差通道。
 
-最后，式\eqref{eq:ch4_u} 中的切换项保证滑模到达性质。若把高阶剩余项统一记为 $d_s(t)$，则可得
-其中 $\varepsilon>0$，且存在常数 $\bar d_s>0$ 使得 $|d_s(t)|\le \bar d_s$。于是
+最后，式\eqref{eq:ch4_u} 中的切换项保证滑模到达性质。将由广义扰动项和滤波近似误差线性组合而成的滑模面合成剩余项记为
+\begin{equation}
+d_s(t)\triangleq \dot s+\varepsilon\,\mathrm{sgn}(s),
+\end{equation}
+则由式\eqref{eq:ch4_z1_dyn}--式\eqref{eq:ch3_zn_dyn}可将滑模面动态整理为
+其中 $\varepsilon>0$，且由各级广义扰动项有界可知，存在常数 $\bar d_s>0$ 使得 $|d_s(t)|\le \bar d_s$。于是
 \begin{equation}\label{eq:ch4_reach}
 \dot s=-\varepsilon\,\mathrm{sgn}(s)+d_s(t),
 \end{equation}
@@ -421,14 +430,23 @@ u &= -\frac{1}{b_n}\left(c_{n-1}b_{n-1}z_n+b_{n-1}z_{n-1}-\xi_{n-1,2}+\varepsilo
 本节首先给出本章控制器对应的阻尼比形式结论，再进一步展开闭环稳定性证明。
 
 \begin{theorem}\label{thm:ch3_damping_ratio}
-考虑控制律\eqref{eq:ch4_alpha1}--\eqref{eq:ch4_u}、二阶指令滤波器\eqref{eq:ch4_obs_design}以及广义扰动项\eqref{eq:ch4_filter_dist} 所对应的闭环系统。若各级广义扰动项有界，且低阶通道所对应广义扰动满足足够光滑并存在有界导数，即存在正常数 $\bar\Delta_i>0$ 与 $\bar\Delta_{d,1}>0$ 使得
+考虑控制律\eqref{eq:ch4_alpha1}--\eqref{eq:ch4_u}、二阶指令滤波器\eqref{eq:ch4_obs_design}以及广义扰动项\eqref{eq:ch4_filter_dist} 所对应的闭环系统。若各级广义扰动项有界，滑模面动态中的合成剩余项 $d_s(t)$ 有界，且低阶通道所对应广义扰动满足足够光滑并存在有界导数，即存在正常数 $\bar\Delta_i>0$、$\bar\Delta_{d,1}>0$ 与 $\bar d_s>0$ 使得
 \begin{subequations}
 \begin{align}
 |\bar\Delta_i(t)|&\le \bar\Delta_i,\\
 |\dot{\bar\Delta}_1(t)|&\le \bar\Delta_{d,1},
 \end{align}
 \end{subequations}
-并且控制参数满足 $k_1>0$、$m_1>0$、$m_2>k_1$，则闭环误差信号一致最终有界，并保持由参数 $(m_1,m_2)$ 决定的近似预设阻尼比。进一步地，
+且 $|d_s(t)|\le \bar d_s$，并且控制参数满足 $k_1>0$、$m_1>0$、$m_2>k_1$、$\varepsilon>\bar d_s$ 以及
+\begin{equation}
+\begin{aligned}
+\frac{c_2b_2-c_4b_3}{c_3}&>0,\\
+\frac{c_{i-1}b_{i-1}-c_{i+1}b_i}{c_i}&>0,\quad i=4,\ldots,n-2,\\
+\frac{c_{n-2}b_{n-2}-b_{n-1}}{c_{n-1}}&>0,\\
+c_{n-1}b_{n-1}&>0,
+\end{aligned}
+\end{equation}
+则闭环误差信号一致最终有界，并保持由参数 $(m_1,m_2)$ 决定的近似预设阻尼比。进一步地，
 
 1）若取 $k>0$，并令 $m_2=2k$、$m_1=k^2$，则系统主导阻尼比满足 $\zeta\approx1$。
 
@@ -468,7 +486,7 @@ a_0=2\min\left\{\frac{c_2b_2-c_4b_3}{c_3},\frac{c_3b_3-c_5b_4}{c_4},\ldots,\frac
 \end{equation}
 由比较引理可知 $z_3,\cdots,z_n$ 一致最终有界，因此存在常数 $c_0>0$ 与 $\bar z_3>0$ 使得
 \begin{equation}\label{eq:ch4_238}
-|z_3(t)|\le \sqrt{2c_0}\,e^{-at}+\bar z_3.
+|z_3(t)|\le \sqrt{2c_0}\,e^{-a_0 t/2}+\bar z_3.
 \end{equation}
 
 进一步考虑滑模面到达性质。取
@@ -690,36 +708,6 @@ y_{d2}(t)=2.5+2.5\sin(0.2t),
 \noindent
 由图\ref{fig:ch3_sine_nn_response}--图\ref{fig:ch3_sine_cf_control}可知，在时变跟踪工况下，二阶指令滤波抗扰方法在连续激励和外部扰动共同作用下仍能保持更小的误差边界和更稳定的控制输入，而神经网络方法的恢复时间相对较长。这说明在相同阻尼比与滤波参数设置下，二阶指令滤波方法在各组工况下均表现出较短的扰动恢复时间和较小的扰动影响范围。换言之，当系统同时受到未知非线性变化和外界扰动影响时，利用指令滤波器生成平滑中间信号及导数近似，有助于减弱扰动经递推结构放大的趋势，因此其整体抗扰效果优于仅依赖传统神经网络在线逼近的基准方法。
 
-为进一步量化比较两种方法在受扰工况下的跟踪性能，按全时域采样误差统计得到平均绝对误差（MAE）、均方误差（MSE）和均方根误差（RMSE），结果如表\ref{tab:ch3_tracking_metrics}所示。
-
-\begin{table}[htbp]
-  \centering
-  \caption{第3章受扰工况下不同方法的跟踪误差统计}
-  \label{tab:ch3_tracking_metrics}
-  \begin{tabular}{cccccc}
-    \toprule
-    目标信号 & $\zeta_d$ & 方法 & MAE & MSE & RMSE \\
-    \midrule
-    \multirow{6}{*}{$y_{d1}$}
-      & 1.000 & 神经网络方法 & 0.040937 & 0.031935 & 0.178703 \\
-      & 1.000 & 二阶指令滤波方法 & 0.009621 & 0.026657 & 0.163271 \\
-      & 0.707 & 神经网络方法 & 0.039818 & 0.027932 & 0.167129 \\
-      & 0.707 & 二阶指令滤波方法 & 0.008491 & 0.022709 & 0.150694 \\
-      & 0.625 & 神经网络方法 & 0.039957 & 0.027199 & 0.164922 \\
-      & 0.625 & 二阶指令滤波方法 & 0.008568 & 0.021936 & 0.148108 \\
-    \midrule
-    \multirow{6}{*}{$y_{d2}$}
-      & 1.000 & 神经网络方法 & 0.036384 & 0.010477 & 0.102356 \\
-      & 1.000 & 二阶指令滤波方法 & 0.005526 & 0.006637 & 0.081469 \\
-      & 0.707 & 神经网络方法 & 0.036149 & 0.009706 & 0.098519 \\
-      & 0.707 & 二阶指令滤波方法 & 0.005086 & 0.005773 & 0.075978 \\
-      & 0.625 & 神经网络方法 & 0.036295 & 0.009584 & 0.097896 \\
-      & 0.625 & 二阶指令滤波方法 & 0.005122 & 0.005592 & 0.074779 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\FloatBarrier
 
 \section{本章小结}[Summary]
 

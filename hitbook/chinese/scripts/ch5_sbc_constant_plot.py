@@ -41,7 +41,7 @@ def save_dual(fig, out_path: Path):
 
 for axis in ['pitch', 'roll', 'yaw']:
     traces = {}
-    t = None
+    time_series = {}
     for folder, label in DAMPINGS:
         if axis == 'roll':
             base = ROOT / ROLL_MAP[folder]
@@ -49,9 +49,15 @@ for axis in ['pitch', 'roll', 'yaw']:
         else:
             base = ROOT / folder
             arr_name = f'{axis}.csv'
-        if t is None:
-            t = np.loadtxt(base / 'time.csv', delimiter=',')
-        traces[label] = np.rad2deg(np.loadtxt(base / arr_name, delimiter=','))
+        t_local = np.loadtxt(base / 'time.csv', delimiter=',')
+        y_local = np.rad2deg(np.loadtxt(base / arr_name, delimiter=','))
+        n = min(len(t_local), len(y_local))
+        time_series[label] = t_local[:n]
+        traces[label] = y_local[:n]
+
+    common_n = min(len(v) for v in traces.values())
+    t = time_series['1.000'][:common_n]
+    traces = {label: trace[:common_n] for label, trace in traces.items()}
 
     ref = float(np.mean([y[-500:].mean() for y in traces.values()]))
     fig, ax = plt.subplots(figsize=(6.1, 3.7), dpi=220)

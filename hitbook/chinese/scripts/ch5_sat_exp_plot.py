@@ -20,8 +20,10 @@ LABELS = {'roll': '滚转角 (deg)', 'pitch': '俯仰角 (deg)', 'yaw': '偏航�
 ERROR_LABELS = {'roll': '滚转误差 (deg)', 'pitch': '俯仰误差 (deg)', 'yaw': '偏航误差 (deg)'}
 U_LABELS = {'roll': '滚转控制输入 (V)', 'pitch': '俯仰控制输入 (V)', 'yaw': '偏航控制输入 (V)'}
 FOCUS_OVERRIDES = {
+    ('constant_sat', 'roll', 'output'): {'window': (0.0, 10.8), 'inset_rect': [0.10, 0.12, 0.55, 0.45]},
     ('constant_sat', 'pitch', 'output'): {'window': (0.0, 10.8), 'y_bounds': (2.7, 5.4), 'inset_rect': [0.10, 0.12, 0.55, 0.45]},
     ('constant_sat', 'yaw', 'output'): {'window': (0.0, 12.0), 'y_bounds': (2.5, 6.5), 'inset_rect': [0.10, 0.12, 0.55, 0.45]},
+    ('sine_sat', 'roll', 'output'): {'window': (2.2, 15.0), 'inset_rect': [0.10, 0.12, 0.55, 0.45]},
 }
 DEFAULT_INSET_RECT = [0.10, 0.12, 0.55, 0.45]
 
@@ -97,7 +99,7 @@ def load_control(top: str, variant: str, axis: str):
     return t, traces
 
 
-def scale_controls(traces, axis=None, variant=None):
+def scale_controls(traces, axis=None, variant=None, mode=None):
     if variant != 'sat':
         return {k: np.asarray(v).copy() for k, v in traces.items()}
     scaled = {}
@@ -217,7 +219,7 @@ def paired_control_ylim(mode: str, axis: str):
     all_series = []
     for variant in ['base', 'sat']:
         _, traces = load_control(mode, variant, axis)
-        traces = scale_controls(traces, axis=axis, variant=variant)
+        traces = scale_controls(traces, axis=axis, variant=variant, mode=mode)
         all_series.extend(list(traces.values()))
     ymin = min(float(y.min()) for y in all_series)
     ymax = max(float(y.max()) for y in all_series)
@@ -227,7 +229,7 @@ def paired_control_ylim(mode: str, axis: str):
 
 def pick_focus_window(mode: str, axis: str):
     t, base_traces = load_control(mode, 'base', axis)
-    base_traces = scale_controls(base_traces, axis=axis, variant='base')
+    base_traces = scale_controls(base_traces, axis=axis, variant='base', mode=mode)
     intervals = saturation_intervals(t, base_traces)
     if not intervals:
         return (0.0, min(5.0, float(t[-1])))
@@ -291,7 +293,7 @@ def region_bounds(t, traces, window):
 def plot_single(mode: str, axis: str, variant: str):
     t, traces = load_axis(mode, variant, axis)
     _, u_traces = load_control(mode, variant, axis)
-    u_traces = scale_controls(u_traces, axis=axis, variant=variant)
+    u_traces = scale_controls(u_traces, axis=axis, variant=variant, mode=mode)
     intervals = saturation_intervals(t, u_traces)
     fig, ax = plt.subplots(figsize=(6.1, 3.7), dpi=220)
     styles = {
@@ -334,7 +336,7 @@ def plot_single(mode: str, axis: str, variant: str):
 
 def plot_control(mode: str, axis: str, variant: str):
     t, traces = load_control(mode, variant, axis)
-    traces = scale_controls(traces, axis=axis, variant=variant)
+    traces = scale_controls(traces, axis=axis, variant=variant, mode=mode)
     intervals = saturation_intervals(t, traces)
     fig, ax = plt.subplots(figsize=(6.1, 3.7), dpi=220)
     styles = {
